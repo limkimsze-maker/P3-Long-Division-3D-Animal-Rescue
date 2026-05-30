@@ -98,7 +98,7 @@
     .topRight{display:none}
     .bottomTip{bottom:10px; font-size:13px; padding:9px 12px}
     .pad{transform:scale(.82); transform-origin:bottom left}
-    .fireBtn,.lookBtn,.tiltStack{transform:scale(.82); transform-origin:bottom right}
+    .fireBtn,.tiltStack{transform:scale(.82); transform-origin:bottom right}
   }
 </style>
 </head>
@@ -134,7 +134,6 @@
     <button id="tiltUpBtn" aria-label="Look up">▲</button>
     <button id="tiltDownBtn" aria-label="Look down">▼</button>
   </div>
-  <button class="lookBtn" id="lookBtn">LOOK</button>
   <button class="fireBtn" id="fireBtn">RESCUE</button>
 </div>
 
@@ -179,6 +178,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 const algorithmTemplate = `
 <!doctype html>
@@ -420,6 +420,12 @@ const algorithmTemplate = `
   };
 
   let audioCtx = null;
+
+// Uploaded animal model files in your GitHub repository root.
+// IMPORTANT: GitHub filenames are case-sensitive. These must match exactly.
+const animalModelFiles = ["Cow.glb", "Elephant.glb"];
+let gltfLoader = null;
+const modelCache = {};
   function ensureAudio(){ const Ctx = window.AudioContext || window.webkitAudioContext; if (!Ctx) return null; if (!audioCtx) audioCtx = new Ctx(); if (audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{}); return audioCtx; }
   function beep(freq=.440,dur=.1,type='sine',gain=.12){
     const ctx=ensureAudio(); if(!ctx) return;
@@ -841,6 +847,82 @@ let scene, camera, renderer, clock, yaw = 0, pitch = -0.08, keys = {}, animals =
 let lookDrag = {active:false, x:0, y:0};
 let audioCtx = null;
 
+// Uploaded animal model files in your GitHub repository root.
+// IMPORTANT: GitHub filenames are case-sensitive. These must match exactly.
+const animalModelFiles = ["Cow.glb", "Elephant.glb"];
+let gltfLoader = null;
+const modelCache = {};
+
+function initModelLoader(){
+  if (THREE.GLTFLoader) {
+    gltfLoader = new THREE.GLTFLoader();
+  } else {
+    console.warn("GLTFLoader not available. Falling back to simple shape animals.");
+  }
+}
+
+function cloneGLTFScene(source){
+  // Basic clone works for these static animal models.
+  // If later you use animated/skinned models, we can upgrade this with SkeletonUtils.
+  return source.clone(true);
+}
+
+function fitModelToPod(model, targetHeight=1.8){
+  // Centre and scale the uploaded model so different GLB sizes appear consistently.
+  model.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(model);
+  const size = new THREE.Vector3();
+  const center = new THREE.Vector3();
+  box.getSize(size);
+  box.getCenter(center);
+
+  const maxDim = Math.max(size.x, size.y, size.z) || 1;
+  const scale = targetHeight / maxDim;
+  model.scale.multiplyScalar(scale);
+
+  // Recompute after scale, then move base to y=0 and centre to x/z.
+  model.updateMatrixWorld(true);
+  const box2 = new THREE.Box3().setFromObject(model);
+  const center2 = new THREE.Vector3();
+  box2.getCenter(center2);
+  const minY = box2.min.y;
+
+  model.position.x += -center2.x;
+  model.position.z += -center2.z;
+  model.position.y += -minY;
+  return model;
+}
+
+function loadAnimalModel(fileName, fallbackAnimal, group){
+  if (!gltfLoader || !fileName) return;
+
+  if (modelCache[fileName]) {
+    const model = cloneGLTFScene(modelCache[fileName]);
+    fitModelToPod(model, 1.9);
+    model.position.y = 1.2;
+    group.add(model);
+    fallbackAnimal.visible = false;
+    return;
+  }
+
+  gltfLoader.load(
+    "./" + fileName,
+    (gltf) => {
+      modelCache[fileName] = gltf.scene;
+      const model = cloneGLTFScene(gltf.scene);
+      fitModelToPod(model, 1.9);
+      model.position.y = 1.2;
+      group.add(model);
+      fallbackAnimal.visible = false;
+    },
+    undefined,
+    (err) => {
+      console.warn("Could not load animal model:", fileName, err);
+      // Keep fallback shape animal visible.
+    }
+  );
+}
+
 function buildMissionList(){
   allMissions = [];
   let id = 0;
@@ -1098,6 +1180,11 @@ function makeAnimalPod(m, x, z){
   label.position.y=4.4;
   group.add(label);
 
+  // Try to replace the placeholder shape animal with your uploaded GLB models.
+  // Uses Cow.glb and Elephant.glb alternately. If a model fails to load, the fallback animal remains.
+  const modelFile = animalModelFiles[m.id % animalModelFiles.length];
+  loadAnimalModel(modelFile, animal, group);
+
   return {mission:m, group, animal, cage, label, completed:false};
 }
 
@@ -1301,8 +1388,6 @@ document.querySelectorAll(".pad button[data-key]").forEach(btn=>{
   btn.addEventListener("pointerleave", ()=>{keys[code]=false;});
 });
 document.getElementById("fireBtn").addEventListener("pointerdown", e=>{ e.preventDefault(); fireRescueBeam(); });
-document.getElementById("lookBtn").addEventListener("pointerdown", e=>{ e.preventDefault(); renderer.domElement.requestPointerLock?.(); });
-
 document.getElementById("tiltUpBtn").addEventListener("pointerdown", e=>{ e.preventDefault(); pitch = Math.max(-1.45, pitch - 0.22); });
 document.getElementById("tiltDownBtn").addEventListener("pointerdown", e=>{ e.preventDefault(); pitch = Math.min(1.35, pitch + 0.22); });
 
@@ -1331,6 +1416,7 @@ lookZone.addEventListener("pointermove", e=>{
   lookZone.addEventListener(type, ()=>{ lookDrag.active = false; });
 });
 
+initModelLoader();
 buildMissionList();
 init3D();
 updateHUD();
