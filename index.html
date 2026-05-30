@@ -423,7 +423,16 @@ const algorithmTemplate = `
 
 // Uploaded animal model files in your GitHub repository root.
 // IMPORTANT: GitHub filenames are case-sensitive. These must match exactly.
-const animalModelFiles = ["Cow.glb", "Elephant.glb"];
+// World 1 now uses Cow, Elephant and Horse.
+const animalModelsByWorld = [
+  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 1: Division Facts
+  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 2: temporary until more animals are added
+  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 3: temporary until more animals are added
+  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 4: temporary until more animals are added
+  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 5: temporary until more animals are added
+  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 6: temporary until more animals are added
+  ["Cow.glb", "Elephant.glb", "Horse.glb"]  // World 7: temporary until more animals are added
+];
 let gltfLoader = null;
 const modelCache = {};
   function ensureAudio(){ const Ctx = window.AudioContext || window.webkitAudioContext; if (!Ctx) return null; if (!audioCtx) audioCtx = new Ctx(); if (audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{}); return audioCtx; }
@@ -849,7 +858,16 @@ let audioCtx = null;
 
 // Uploaded animal model files in your GitHub repository root.
 // IMPORTANT: GitHub filenames are case-sensitive. These must match exactly.
-const animalModelFiles = ["Cow.glb", "Elephant.glb"];
+// World 1 now uses Cow, Elephant and Horse.
+const animalModelsByWorld = [
+  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 1: Division Facts
+  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 2: temporary until more animals are added
+  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 3: temporary until more animals are added
+  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 4: temporary until more animals are added
+  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 5: temporary until more animals are added
+  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 6: temporary until more animals are added
+  ["Cow.glb", "Elephant.glb", "Horse.glb"]  // World 7: temporary until more animals are added
+];
 let gltfLoader = null;
 const modelCache = {};
 
@@ -1182,7 +1200,8 @@ function makeAnimalPod(m, x, z){
 
   // Try to replace the placeholder shape animal with your uploaded GLB models.
   // Uses Cow.glb and Elephant.glb alternately. If a model fails to load, the fallback animal remains.
-  const modelFile = animalModelFiles[m.id % animalModelFiles.length];
+  const worldModels = animalModelsByWorld[m.worldIndex] || ["Cow.glb", "Elephant.glb", "Horse.glb"];
+  const modelFile = worldModels[m.id % worldModels.length];
   loadAnimalModel(modelFile, animal, group);
 
   return {mission:m, group, animal, cage, label, completed:false};
