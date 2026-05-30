@@ -1,514 +1,162 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>3D Animal Rescue Division Mission</title>
+  <link rel="icon" href="./kimsze_sharp16.ico?v=20260111a" sizes="any">
+  <link rel="shortcut icon" href="./kimsze_sharp16.ico?v=20260111a">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>3D Animal Rescue Division Mission</title>
 
-<!--
-3D Animal Rescue Division Mission
-Designed by Lim Kim Sze © 2026
+  <style>
+    :root{
+      --bg:#e8fbff; --card:#ffffff; --ink:#0f2a4a; --muted:#60738c; --line:#d8e4f2;
+      --shadow:0 18px 40px rgba(15,42,74,.16); --radius:22px;
+      --pink:#ff2d7a; --navy:#0f2a4a; --green:#22c55e; --gold:#ffd166; --blue:#60a5fa;
+      --cols:3; --roofR:14px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%; margin:0; overflow:hidden; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink); background:#bfefff;}
+    #game{position:fixed; inset:0;}
+    canvas{display:block}
 
-Original child-friendly 3D division game.
-Uses Three.js CDN only. No Minecraft/Roblox/Mojang/Microsoft assets.
--->
+    .hud{
+      position:fixed; top:12px; left:12px; z-index:5; width:min(430px,calc(100vw - 24px));
+      background:rgba(15,42,74,.78); color:#fff; border:2px solid rgba(120,230,255,.55);
+      box-shadow:0 0 18px rgba(75,210,255,.32); border-radius:18px; padding:13px 16px; backdrop-filter:blur(4px);
+    }
+    .hud h1{margin:0 0 6px; font-size:18px; color:#bff4ff; letter-spacing:.3px}
+    .hud .line{display:flex; justify-content:space-between; gap:12px; font-size:17px; font-weight:900}
+    .hud .world{margin-top:8px; color:#fff4bf; font-size:13px; font-weight:800; line-height:1.28}
+    .hud .small{margin-top:7px; font-size:12px; opacity:.9; line-height:1.25}
 
-<style>
-  :root{
-    --navy:#12345a;
-    --sky:#dff6ff;
-    --mint:#dff9e8;
-    --cream:#fff3d4;
-    --pink:#ff6fae;
-    --green:#2fbf71;
-    --orange:#ffb84d;
-    --red:#ff5a6e;
-    --purple:#8d5cf6;
-    --dark:#10233f;
-  }
-  html,body{
-    margin:0;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    font-family: "Comic Sans MS", "Trebuchet MS", Arial, sans-serif;
-    background:#bdefff;
-    color:var(--dark);
-    touch-action:none;
-  }
-  #game{
-    position:fixed;
-    inset:0;
-  }
-  canvas{
-    display:block;
-  }
+    .topRight{
+      position:fixed; top:12px; right:12px; z-index:5; background:rgba(15,42,74,.70); color:#fff;
+      border:2px solid rgba(255,255,255,.35); border-radius:14px; padding:10px 13px; font-size:13px; line-height:1.25;
+    }
+    .bottomTip{
+      position:fixed; left:50%; bottom:16px; transform:translateX(-50%); z-index:5; width:min(860px,calc(100vw - 28px));
+      background:rgba(15,42,74,.84); color:#fff; border-radius:18px; padding:13px 18px; text-align:center;
+      font-weight:900; box-shadow:0 10px 25px rgba(0,0,0,.18);
+    }
+    .bottomTip .sub{display:block; margin-top:3px; font-size:12px; opacity:.85; font-weight:700}
+    #centerDot{position:fixed; left:50%; top:50%; width:14px; height:14px; margin-left:-7px; margin-top:-7px; border-radius:50%; z-index:4; pointer-events:none; border:2px solid white; background:rgba(255,255,255,.35); box-shadow:0 0 8px #1a355f}
 
-  .hud{
-    position:fixed;
-    top:12px;
-    left:12px;
-    z-index:5;
-    background:rgba(8,24,48,.78);
-    color:white;
-    border:2px solid rgba(142,236,255,.75);
-    box-shadow:0 0 14px rgba(65,215,255,.45);
-    border-radius:14px;
-    padding:12px 14px;
-    min-width:270px;
-    backdrop-filter:blur(4px);
-  }
-  .hud h1{
-    margin:0 0 6px;
-    font-size:18px;
-    letter-spacing:.5px;
-    color:#bff4ff;
-  }
-  .hud .row{
-    font-size:17px;
-    font-weight:bold;
-    display:flex;
-    justify-content:space-between;
-    gap:12px;
-  }
-  .hud .small{
-    margin-top:6px;
-    font-size:12px;
-    opacity:.9;
-    line-height:1.25;
-  }
-  .hud .world{
-    margin-top:7px;
-    font-size:13px;
-    color:#fff4bf;
-    line-height:1.25;
-  }
+    .screen{position:fixed; inset:0; z-index:20; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,rgba(220,250,255,.96),rgba(255,244,211,.96)); padding:18px}
+    .card{width:min(980px,96vw); max-height:94vh; overflow:auto; background:#fff; border-radius:28px; box-shadow:0 18px 55px rgba(20,50,90,.22); border:3px solid rgba(255,255,255,.9); padding:24px}
+    .title{margin:0 0 8px; font-size:clamp(30px,4.5vw,54px); line-height:1; font-weight:1000; color:#0d315d}
+    .lead{font-size:18px; line-height:1.45; color:#445d7a; font-weight:700}
+    .btn{border:1px solid var(--line); border-radius:16px; padding:12px 15px; background:#fff; color:var(--ink); font-weight:1000; font-family:inherit; cursor:pointer; touch-action:manipulation; user-select:none}
+    .btn.primary{background:#0f2a4a; border-color:#0f2a4a; color:#fff}
+    .btn.green{background:#e8f8ee; border-color:#bfe9cb; color:#146b2b}
+    .btn.gold{background:#fff3df; border-color:#ffd59a; color:#8a4c00}
+    .btn.pink{background:#ffe8f2; border-color:#ffc1da; color:#a10f4a}
+    .worldGrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:18px 0}
+    .worldCard{padding:14px; border-radius:18px; background:#f5fbff; border:2px solid #d7e9f7; font-weight:750}
+    .worldCard b{color:#12345a}
 
-  .topRight{
-    position:fixed;
-    top:12px;
-    right:12px;
-    z-index:5;
-    background:rgba(8,24,48,.70);
-    color:white;
-    border:2px solid rgba(255,255,255,.35);
-    border-radius:14px;
-    padding:10px 13px;
-    font-size:13px;
-    line-height:1.25;
-    max-width:330px;
-  }
+    /* mobile controls */
+    #mobileControls{position:fixed; inset:0; pointer-events:none; z-index:6}
+    .pad{position:absolute; left:16px; bottom:92px; width:145px; height:145px; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:6px; pointer-events:auto}
+    .pad button,.fireBtn,.lookBtn{border:0; border-radius:16px; background:rgba(15,42,74,.68); color:#fff; font-weight:1000; font-family:inherit; font-size:20px; box-shadow:0 4px 0 rgba(0,0,0,.25)}
+    .pad .empty{opacity:0; pointer-events:none}
+    .fireBtn{position:absolute; right:18px; bottom:106px; width:92px; height:92px; border-radius:50%; pointer-events:auto; background:rgba(255,90,110,.86); font-size:17px}
+    .lookBtn{position:absolute; right:120px; bottom:118px; width:74px; height:74px; border-radius:50%; pointer-events:auto; background:rgba(44,123,229,.86); font-size:14px}
+    .credit{position:fixed; right:8px; bottom:4px; z-index:7; font-size:11px; color:rgba(255,255,255,.9); text-shadow:0 1px 3px rgba(0,0,0,.7); pointer-events:none}
 
-  .bottomTip{
-    position:fixed;
-    left:50%;
-    bottom:16px;
-    transform:translateX(-50%);
-    z-index:5;
-    width:min(780px, calc(100vw - 32px));
-    background:rgba(8,24,48,.82);
-    color:white;
-    border-radius:16px;
-    padding:13px 18px;
-    text-align:center;
-    font-weight:bold;
-    box-shadow:0 10px 25px rgba(0,0,0,.18);
-  }
-  .bottomTip .sub{
-    display:block;
-    margin-top:3px;
-    font-size:12px;
-    opacity:.85;
-    font-weight:normal;
-  }
+    /* Mission panel infused with user's long-division algorithm style */
+    #missionPanel{position:fixed; inset:0; z-index:15; display:none; align-items:center; justify-content:center; background:rgba(9,24,48,.58); padding:12px}
+    .missionShell{width:min(1180px,98vw); max-height:96vh; overflow:auto; background:#f3f6fb; border-radius:28px; box-shadow:0 22px 60px rgba(0,0,0,.28); border:1px solid var(--line)}
+    .missionTop{background:#fff; border-bottom:1px solid var(--line); padding:14px 16px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap}
+    .missionTop h2{margin:0; font-size:clamp(22px,3vw,38px); font-weight:1000; color:var(--ink)}
+    .exprPill{background:rgba(34,197,94,.08); border:1px solid rgba(34,197,94,.22); border-radius:18px; padding:10px 12px; display:flex; align-items:center; gap:12px; font-weight:1000; white-space:nowrap}
+    .exprPill .big{font-size:clamp(22px,3vw,34px)}
+    .exprAns{min-width:88px; height:40px; border-radius:12px; border:2px solid rgba(111,140,82,.65); background:rgba(201,232,160,.35); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:1000}
 
-  #centerDot{
-    position:fixed;
-    left:50%;
-    top:50%;
-    width:14px;
-    height:14px;
-    margin-left:-7px;
-    margin-top:-7px;
-    border-radius:50%;
-    z-index:4;
-    pointer-events:none;
-    border:2px solid white;
-    box-shadow:0 0 8px #1a355f;
-    background:rgba(255,255,255,.3);
-  }
+    .missionBody{display:grid; grid-template-columns:1fr 330px; gap:14px; padding:14px}
+    .algoCard,.sideCard{background:#fff; border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px}
+    .algoCard h3,.sideCard h3{margin:0 0 8px; font-size:32px; font-weight:1000}
+    .smallMuted{font-size:13px; color:var(--muted); font-weight:850; line-height:1.35}
+    .algoWrap{background:#fff; border:1px solid var(--line); border-radius:18px; padding:12px; overflow:auto; margin-top:12px}
+    .algoGrid{width:max-content; margin:auto; --remW:0px}
+    .algoLabels{display:grid; grid-template-columns:48px repeat(var(--cols), 92px) var(--remW); font-weight:1000; font-size:14px; text-align:center}
+    .algoLabels .sp{opacity:0}
+    .algoLabels .lab{padding:9px 0; border-bottom:1px solid rgba(15,42,74,.10)}
+    .place-o{background:linear-gradient(180deg,#edf9f3 0%, #dff2e8 100%); color:#0f766e}
+    .place-t{background:linear-gradient(180deg,#fff7e8 0%, #f7ead1 100%); color:#b45309}
+    .place-h{background:linear-gradient(180deg,#f4f0ff 0%, #e8e0fb 100%); color:#6d28d9}
+    .algoTable{border-radius:16px; overflow:hidden; border:1px solid rgba(15,42,74,.12); background:#fff}
+    .algoRow{display:grid; grid-template-columns:48px repeat(var(--cols), 92px) var(--remW); position:relative}
+    .algoCell{height:58px; display:flex; align-items:center; justify-content:center; font-weight:1000; font-size:34px; color:#0f2a4a; position:relative; border:0}
+    .algoCell.divisor{font-size:30px; background:#fff7ea; color:#8a4c00}
+    .algoRow.quot .algoCell{height:52px; font-size:28px; background:#fff}
+    .algoRow.divd{position:relative}
+    .roofLayer{position:absolute; inset:0; pointer-events:none; z-index:9}
+    .roofLayer svg{width:100%; height:100%; display:block}
+    .algoRow.subRow::after{content:""; position:absolute; left:48px; right:0; bottom:-1px; height:4px; background:var(--navy); pointer-events:none}
+    .qIn,.wIn{width:56px; height:42px; border-radius:12px; border:2px solid rgba(111,140,82,.65); background:rgba(201,232,160,.35); font-size:26px; font-weight:1000; text-align:center; outline:none}
+    .wIn{width:64px}
+    .qIn.active,.wIn.active{outline:4px solid rgba(255,45,122,.45); outline-offset:3px; border-color:var(--pink); background:#fff1f6}
+    .qIn.done,.wIn.done{background:#e8f8ee; border-color:#87c99b}
+    .qIn.bad,.wIn.bad{outline:4px solid rgba(239,68,68,.35); outline-offset:3px; border-color:#ef4444; background:#fff1f2}
+    .remWrap{display:flex; align-items:center; justify-content:center; gap:6px; font-weight:1000}
+    .remTag{font-size:14px}
+    .blank{color:transparent}
+    .answerLine{margin-top:8px; font-size:15px; font-weight:1000; color:var(--muted); text-align:center}
 
-  .screen{
-    position:fixed;
-    inset:0;
-    z-index:20;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:linear-gradient(180deg, rgba(215,250,255,.95), rgba(255,244,211,.96));
-    padding:18px;
-  }
-  .card{
-    width:min(920px, 96vw);
-    max-height:94vh;
-    overflow:auto;
-    background:white;
-    border-radius:28px;
-    box-shadow:0 18px 55px rgba(20,50,90,.22);
-    border:3px solid rgba(255,255,255,.9);
-    padding:24px;
-  }
-  .title{
-    margin:0 0 8px;
-    font-size:clamp(28px, 4vw, 50px);
-    color:#0d315d;
-  }
-  .lead{
-    font-size:18px;
-    line-height:1.45;
-    color:#445d7a;
-  }
-  .btn{
-    border:0;
-    border-radius:18px;
-    padding:13px 20px;
-    background:linear-gradient(180deg, #44d883, #1fae60);
-    color:white;
-    font-family:inherit;
-    font-weight:bold;
-    font-size:18px;
-    cursor:pointer;
-    box-shadow:0 8px 0 #15854a, 0 12px 20px rgba(0,0,0,.15);
-    margin:6px;
-  }
-  .btn:active{
-    transform:translateY(4px);
-    box-shadow:0 4px 0 #15854a, 0 8px 14px rgba(0,0,0,.15);
-  }
-  .btn.secondary{
-    background:linear-gradient(180deg, #66b7ff, #2c7be5);
-    box-shadow:0 8px 0 #1f5fae, 0 12px 20px rgba(0,0,0,.15);
-  }
-  .btn.warn{
-    background:linear-gradient(180deg, #ffb85c, #ff8f2a);
-    box-shadow:0 8px 0 #c86614, 0 12px 20px rgba(0,0,0,.15);
-  }
-  .worldGrid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(230px,1fr));
-    gap:12px;
-    margin:18px 0;
-  }
-  .worldCard{
-    padding:14px;
-    border-radius:18px;
-    background:#f5fbff;
-    border:2px solid #d7e9f7;
-  }
-  .worldCard b{ color:#12345a; }
+    .stepBox{border:2px solid rgba(255,45,122,.65); border-radius:18px; padding:14px; background:#fff}
+    .stepTitle{font-size:34px; font-weight:1000; color:var(--pink); text-decoration:underline; text-underline-offset:6px; margin:0 0 8px}
+    .stepText{font-size:16px; font-weight:1000; margin:0; color:#0f2a4a; line-height:1.3}
+    .feedback{margin-top:12px; border-radius:16px; padding:12px; font-weight:1000; line-height:1.3; border:1px solid transparent; min-height:54px}
+    .feedback.ok{background:rgba(34,197,94,.10); border-color:rgba(34,197,94,.25); color:#14532d}
+    .feedback.bad{background:rgba(239,68,68,.10); border-color:rgba(239,68,68,.25); color:#7f1d1d}
+    .feedback.info{background:#eef4ff; border-color:#d6e4ff; color:#1f4f9c}
+    .actionBtns{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:12px}
+    .stepBar{height:14px; border-radius:999px; background:#e8edf3; overflow:hidden; margin-top:12px}
+    .stepFill{height:100%; width:0%; background:linear-gradient(90deg,#22c55e,#60a5fa); transition:.35s}
+    .matToggle{display:none}
+    .miniMat{margin-top:12px; border:1px solid var(--line); border-radius:16px; overflow:hidden; display:grid; grid-template-columns:repeat(var(--cols),1fr)}
+    .matCol{min-height:90px; padding:8px; border-right:1px solid rgba(15,42,74,.08)}
+    .matCol:last-child{border-right:0}
+    .matHead{font-size:12px; font-weight:1000; text-align:center; margin-bottom:5px}
+    .discPile{display:flex; flex-wrap:wrap; gap:4px; justify-content:center}
+    .disc{width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:1000; box-shadow:0 4px 8px rgba(0,0,0,.13)}
+    .disc.h{background:#ff6fae; border:2px solid #c92a6e}.disc.t{background:#ffbd59; border:2px solid #bf7600}.disc.o{background:#54c7ff; border:2px solid #0a7fb0}
 
-  #missionPanel{
-    position:fixed;
-    inset:0;
-    z-index:15;
-    display:none;
-    align-items:center;
-    justify-content:center;
-    background:rgba(9,24,48,.55);
-    padding:12px;
-  }
-  .divisionCard{
-    width:min(1040px, 98vw);
-    max-height:96vh;
-    overflow:auto;
-    background:white;
-    border-radius:28px;
-    padding:18px;
-    box-shadow:0 22px 60px rgba(0,0,0,.28);
-  }
-  .divisionHeader{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    gap:12px;
-    flex-wrap:wrap;
-    border-bottom:2px solid #e4edf7;
-    padding-bottom:10px;
-    margin-bottom:12px;
-  }
-  .divisionHeader h2{
-    margin:0;
-    color:#0d315d;
-    font-size:30px;
-  }
-  .prompt{
-    background:#eef8ff;
-    border:2px solid #c9e9ff;
-    border-radius:18px;
-    padding:12px 14px;
-    font-size:20px;
-    font-weight:bold;
-    color:#12345a;
-    flex:1;
-    min-width:280px;
-  }
-  .algoWrap{
-    display:flex;
-    gap:18px;
-    align-items:flex-start;
-    justify-content:center;
-    flex-wrap:wrap;
-  }
-  .algorithmBox{
-    background:#fbfdff;
-    border:2px solid #dae8f2;
-    border-radius:22px;
-    padding:18px;
-    overflow:auto;
-  }
-  .placeRow{
-    display:grid;
-    grid-template-columns:80px repeat(4, 104px);
-    align-items:center;
-    text-align:center;
-    font-weight:bold;
-    margin-left:0;
-  }
-  .place{
-    padding:10px 0;
-    border-radius:0;
-    color:#0d315d;
-  }
-  .p0{background:#f3e8ff;color:#7b3ed1;}
-  .p1{background:#fff2d7;color:#a35c00;}
-  .p2{background:#dff7e5;color:#0c8063;}
-  .p3{background:#e4f0ff;color:#2c62aa;}
-  .longGrid{
-    display:grid;
-    grid-template-columns:80px repeat(4, 104px);
-    grid-auto-rows:74px;
-    align-items:center;
-    text-align:center;
-    font-size:40px;
-    font-weight:bold;
-    color:#12345a;
-  }
-  .cell{
-    min-height:74px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    position:relative;
-    background:rgba(255,255,255,.5);
-    border-bottom:1px solid rgba(18,52,90,.06);
-  }
-  .col0{background:linear-gradient(180deg,#f6efff,#f2e9ff);}
-  .col1{background:linear-gradient(180deg,#fff6df,#fff0cf);}
-  .col2{background:linear-gradient(180deg,#eaffef,#def8e6);}
-  .col3{background:linear-gradient(180deg,#eaf4ff,#dcecff);}
-  .divisor{
-    font-size:36px;
-    color:#965300;
-  }
-  .bracket{
-    border-left:8px solid #0d315d;
-    border-top:5px solid #0d315d;
-    border-top-left-radius:25px;
-  }
-  .lineTop{ border-top:5px solid #0d315d; }
-  .lineBottom{ border-bottom:5px solid #0d315d; }
-  .minus{
-    font-size:42px;
-    color:#0d315d;
-    font-weight:bold;
-  }
-  .inputSlot{
-    width:72px;
-    height:54px;
-    border-radius:16px;
-    background:#edfadf;
-    border:4px solid #98b77f;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    box-sizing:border-box;
-    font-size:34px;
-    color:#0d315d;
-  }
-  .inputSlot.active{
-    border-color:#ff70ad;
-    box-shadow:0 0 0 7px rgba(255,112,173,.23), 0 0 18px rgba(255,112,173,.6);
-    animation:pulse 1.1s infinite alternate;
-  }
-  .inputSlot.filled{
-    background:#e6f7ff;
-    border-color:#6eacd4;
-  }
-  @keyframes pulse{
-    from{ transform:scale(1); }
-    to{ transform:scale(1.05); }
-  }
-  .choicePanel{
-    width:min(360px, 95vw);
-    background:#fff9ed;
-    border:2px solid #ffe0aa;
-    border-radius:22px;
-    padding:16px;
-  }
-  .choicePanel h3{
-    margin:0 0 10px;
-    color:#0d315d;
-    font-size:24px;
-  }
-  .choiceGrid{
-    display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    gap:10px;
-  }
-  .choice{
-    min-height:64px;
-    border:0;
-    border-radius:18px;
-    background:linear-gradient(180deg,#ffffff,#eaf7ff);
-    box-shadow:0 6px 0 #98c7e2;
-    font-size:28px;
-    font-weight:bold;
-    color:#12345a;
-    font-family:inherit;
-    cursor:pointer;
-  }
-  .choice:active{
-    transform:translateY(3px);
-    box-shadow:0 3px 0 #98c7e2;
-  }
-  .feedback{
-    margin-top:12px;
-    background:#eef8ff;
-    border-radius:16px;
-    padding:12px;
-    min-height:48px;
-    font-size:17px;
-    line-height:1.35;
-    color:#284763;
-  }
-  .stepBar{
-    height:16px;
-    border-radius:999px;
-    background:#e8edf3;
-    overflow:hidden;
-    margin-top:10px;
-  }
-  .stepFill{
-    height:100%;
-    width:0%;
-    background:linear-gradient(90deg,#2fbf71,#61d9ff);
-    transition:.35s;
-  }
-
-  #mobileControls{
-    position:fixed;
-    inset:0;
-    pointer-events:none;
-    z-index:6;
-  }
-  .pad{
-    position:absolute;
-    left:16px;
-    bottom:92px;
-    width:145px;
-    height:145px;
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    grid-template-rows:repeat(3,1fr);
-    gap:6px;
-    pointer-events:auto;
-  }
-  .pad button, .fireBtn, .lookBtn{
-    border:0;
-    border-radius:16px;
-    background:rgba(8,24,48,.68);
-    color:white;
-    font-weight:bold;
-    font-family:inherit;
-    font-size:20px;
-    box-shadow:0 4px 0 rgba(0,0,0,.25);
-  }
-  .pad .empty{opacity:0; pointer-events:none;}
-  .fireBtn{
-    position:absolute;
-    right:18px;
-    bottom:106px;
-    width:92px;
-    height:92px;
-    border-radius:50%;
-    pointer-events:auto;
-    background:rgba(255,90,110,.82);
-    font-size:18px;
-  }
-  .lookBtn{
-    position:absolute;
-    right:120px;
-    bottom:118px;
-    width:74px;
-    height:74px;
-    border-radius:50%;
-    pointer-events:auto;
-    background:rgba(44,123,229,.82);
-    font-size:14px;
-  }
-  .credit{
-    position:fixed;
-    right:8px;
-    bottom:4px;
-    z-index:7;
-    font-size:11px;
-    color:rgba(255,255,255,.86);
-    text-shadow:0 1px 3px rgba(0,0,0,.7);
-    pointer-events:none;
-  }
-
-  @media(max-width:720px){
-    .hud{min-width:210px; padding:9px 10px;}
-    .hud h1{font-size:15px;}
-    .hud .row{font-size:14px;}
-    .topRight{display:none;}
-    .bottomTip{bottom:10px; font-size:13px; padding:9px 12px;}
-    .divisionHeader h2{font-size:24px;}
-    .prompt{font-size:16px;}
-    .algorithmBox{padding:10px;}
-    .placeRow{grid-template-columns:50px repeat(4, 72px);}
-    .longGrid{grid-template-columns:50px repeat(4, 72px); grid-auto-rows:58px; font-size:30px;}
-    .cell{min-height:58px;}
-    .inputSlot{width:54px;height:42px;font-size:26px;border-radius:12px;}
-    .divisor{font-size:30px;}
-    .minus{font-size:30px;}
-    .choicePanel{width:100%;}
-    .choice{min-height:56px;font-size:24px;}
-    .pad{transform:scale(.86); transform-origin:bottom left;}
-    .fireBtn{transform:scale(.86); transform-origin:bottom right;}
-  }
-</style>
+    @media(max-width:900px){
+      .topRight{display:none}
+      .hud{font-size:12px; padding:10px; width:calc(100vw - 24px)}
+      .hud h1{font-size:15px}.hud .line{font-size:14px}
+      .missionBody{grid-template-columns:1fr}
+      .sideCard{order:-1}
+      .algoCard h3,.sideCard h3{font-size:24px}
+      .algoWrap{padding:8px}
+      .algoLabels{grid-template-columns:42px repeat(var(--cols), 72px) var(--remW); font-size:12px}
+      .algoRow{grid-template-columns:42px repeat(var(--cols), 72px) var(--remW)}
+      .algoCell{height:52px; font-size:28px}
+      .algoRow.quot .algoCell{height:46px}
+      .qIn,.wIn{width:48px;height:36px;font-size:22px}
+      .algoCell.divisor{font-size:26px}
+      .pad{transform:scale(.86); transform-origin:bottom left}
+      .fireBtn,.lookBtn{transform:scale(.86); transform-origin:bottom right}
+      .bottomTip{bottom:10px; font-size:13px; padding:9px 12px}
+    }
+  </style>
+  <script src="https://cdn.counter.dev/script.js" data-id="825e93b6-ce99-40ef-8bcc-125f13297433" data-utcoffset="8"></script>
 </head>
+
 <body>
 <div id="game"></div>
 <div id="centerDot"></div>
 
-<div class="hud" id="hud">
+<div class="hud">
   <h1>ANIMAL RESCUE DIVISION MISSION</h1>
-  <div class="row"><span>Score: <span id="scoreText">0/0</span></span><span>Health: <span id="healthText">♥♥♥</span></span></div>
+  <div class="line"><span>Score: <span id="scoreText">0/0</span></span><span>Health: <span id="healthText">♥♥♥</span></span></div>
   <div class="world" id="worldText">World 1: Division Facts</div>
-  <div class="small">Walk near a glowing rescue pod. Complete the guided long division steps to save the animal.</div>
+  <div class="small">Walk near a rescue pod. Use the long-division algorithm to save the animal.</div>
 </div>
 
-<div class="topRight">
-  Mouse-look: click the game<br>
-  Move: WASD / Arrow keys • Click/F: rescue beam • ESC unlocks
-</div>
-
-<div class="bottomTip" id="bottomTip">
-  Start Mission: Walk to a glowing animal rescue pod.
-  <span class="sub">This game teaches long division step by step: Divide → Multiply → Subtract → Bring Down.</span>
-</div>
+<div class="topRight">Mouse-look: click the game<br>Move: WASD / Arrow keys • Click/F: rescue beam • ESC unlocks</div>
+<div class="bottomTip" id="bottomTip">Walk to a glowing animal rescue pod.<span class="sub">Learn long division step by step.</span></div>
 
 <div id="mobileControls">
   <div class="pad">
@@ -519,17 +167,12 @@ Uses Three.js CDN only. No Minecraft/Roblox/Mojang/Microsoft assets.
   <button class="lookBtn" id="lookBtn">LOOK</button>
   <button class="fireBtn" id="fireBtn">RESCUE</button>
 </div>
-
 <div class="credit">Designed by Lim Kim Sze © 2026</div>
 
 <div class="screen" id="startScreen">
   <div class="card">
     <h1 class="title">3D Animal Rescue Division Mission</h1>
-    <p class="lead">
-      Pupils explore a friendly 3D rescue park. Each animal rescue teaches one part of long division.
-      By the end, pupils practise division facts, regrouping, zeros in quotient, first digit smaller than divisor,
-      and remainders.
-    </p>
+    <p class="lead">Explore a friendly 3D animal park. Each rescue opens a guided long-division board based on your algorithm layout: place-value columns, long-division roof, red active boxes, Check Step and hints.</p>
     <div class="worldGrid">
       <div class="worldCard"><b>World 1:</b> Division Facts<br>8 ÷ 2 = 4</div>
       <div class="worldCard"><b>World 2:</b> Clean Division<br>86 ÷ 2, 864 ÷ 2</div>
@@ -539,1092 +182,326 @@ Uses Three.js CDN only. No Minecraft/Roblox/Mojang/Microsoft assets.
       <div class="worldCard"><b>World 6:</b> Remainder Rescue<br>1-digit, 2-digit, 3-digit remainders</div>
       <div class="worldCard"><b>World 7:</b> Master Mission<br>Mixed long division</div>
     </div>
-    <button class="btn" id="startBtn">Start Rescue Mission</button>
-    <button class="btn secondary" id="howBtn">How to Play</button>
-    <p class="lead" style="font-size:14px;margin-bottom:0;">
-      Note: This is an original blocky/low-poly classroom game. It does not use Minecraft, Roblox, or branded assets.
-    </p>
-  </div>
-</div>
-
-<div class="screen" id="howScreen" style="display:none;">
-  <div class="card">
-    <h1 class="title">How to Play</h1>
-    <p class="lead">
-      Walk to an animal rescue pod. A guided long division board will appear.
-      Fill one highlighted box at a time. You may click an answer choice or use the rescue beam outside the panel.
-    </p>
-    <p class="lead">
-      The game follows this routine: <b>Divide → Multiply → Subtract → Bring Down → Repeat.</b>
-      Some missions teach the important placeholder idea: if the first digit is too small, the answer has
-      <b>0 in that place value</b>.
-    </p>
-    <button class="btn" id="backStartBtn">Back</button>
+    <button class="btn primary" id="startBtn">Start Rescue Mission</button>
+    <p class="lead" style="font-size:14px;margin-bottom:0;">Original child-friendly design. No Minecraft, Roblox, or branded assets.</p>
   </div>
 </div>
 
 <div id="missionPanel">
-  <div class="divisionCard">
-    <div class="divisionHeader">
+  <div class="missionShell">
+    <div class="missionTop">
       <div>
-        <h2 id="missionTitle">Rescue Mission</h2>
-        <div class="stepBar"><div class="stepFill" id="stepFill"></div></div>
+        <h2 id="missionTitle">Animal Rescue</h2>
+        <div class="smallMuted">Fill the <b>red-boxed spaces</b>, then press <b>Check Step</b>. The question digits are given.</div>
       </div>
-      <div class="prompt" id="stepPrompt">Step prompt</div>
-      <button class="btn warn" id="closeMissionBtn">Exit Mission</button>
+      <div class="exprPill">
+        <div class="big"><span id="pillDividend">246</span> ÷ <span id="pillDivisor">2</span> =</div>
+        <div class="exprAns" id="pillAns">?</div>
+      </div>
     </div>
 
-    <div class="algoWrap">
-      <div class="algorithmBox">
-        <div class="placeRow">
-          <div></div>
-          <div class="place p0" id="label0">Thousands</div>
-          <div class="place p1" id="label1">Hundreds</div>
-          <div class="place p2" id="label2">Tens</div>
-          <div class="place p3" id="label3">Ones</div>
-        </div>
-        <div class="longGrid" id="longGrid"></div>
-      </div>
+    <div class="missionBody">
+      <section class="algoCard">
+        <h3>Algorithm</h3>
+        <div class="smallMuted">This board is infused from your long-division algorithm: place-value colours, quotient boxes, working boxes, roof line and remainder box.</div>
+        <div class="algoWrap"><div id="algoFit"></div></div>
+        <div class="answerLine" id="answerLine">Answer: —</div>
+        <div class="matToggle" id="matHost"></div>
+      </section>
 
-      <div class="choicePanel">
-        <h3>Choose / Shoot</h3>
-        <div class="choiceGrid" id="choiceGrid"></div>
-        <div class="feedback" id="feedbackBox">Read the prompt. Choose the correct step.</div>
-        <button class="btn secondary" id="hintBtn" style="font-size:16px;padding:10px 14px;">Show Hint</button>
-      </div>
+      <aside class="sideCard">
+        <div class="stepBox">
+          <div class="stepTitle" id="stepTitle">STEP 1</div>
+          <p class="stepText" id="stepText">Divide the first place.</p>
+        </div>
+        <div class="stepBar"><div class="stepFill" id="stepFill"></div></div>
+        <div class="feedback info" id="feedbackBox">Read the prompt. Fill the active red box.</div>
+        <div class="actionBtns">
+          <button class="btn green" id="btnCheck">✔ Check Step</button>
+          <button class="btn gold" id="btnHint">Hint</button>
+          <button class="btn pink" id="btnExit">Exit Mission</button>
+        </div>
+      </aside>
     </div>
   </div>
 </div>
 
-<div class="screen" id="winScreen" style="display:none;">
-  <div class="card" style="text-align:center;">
-    <div style="font-size:92px;">🏆</div>
+<div class="screen" id="winScreen" style="display:none">
+  <div class="card" style="text-align:center">
+    <div style="font-size:92px">🏆</div>
     <h1 class="title">I AM A DIVISION RESCUE HERO!</h1>
-    <p class="lead">
-      All animals have been rescued. You have practised division facts, clean division, regrouping,
-      zero placeholders, first-digit-too-small questions, and remainders.
-    </p>
-    <button class="btn" id="restartBtn">Play Again</button>
+    <p class="lead">All animals have been rescued. You have practised division facts, clean division, regrouping, zero placeholders, first-digit-too-small questions, and remainders.</p>
+    <button class="btn primary" id="restartBtn">Play Again</button>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-
 <script>
-/* =========================
-   DATA: WORLDS + QUESTIONS
-   ========================= */
+(() => {
+  const $ = id => document.getElementById(id);
 
-const WORLDS = [
-  {
-    name:"World 1: Division Facts",
-    focus:"Basic 1-digit ÷ 1-digit. Build recall before long division.",
-    color:0x6ee7b7,
-    questions:[
-      {dividend:8, divisor:2},
-      {dividend:9, divisor:3},
-      {dividend:6, divisor:2}
-    ]
-  },
-  {
-    name:"World 2: Clean Division",
-    focus:"2-digit and 3-digit ÷ 1-digit, no regrouping.",
-    color:0x93c5fd,
-    questions:[
-      {dividend:86, divisor:2},
-      {dividend:69, divisor:3},
-      {dividend:864, divisor:2},
-      {dividend:963, divisor:3}
-    ]
-  },
-  {
-    name:"World 3: First Digit Too Small",
-    focus:"The first digit is smaller than the divisor. Pupils learn to look at the next place value.",
-    color:0xfcd34d,
-    questions:[
-      {dividend:48, divisor:6},
-      {dividend:35, divisor:5},
-      {dividend:304, divisor:7, forceLeadingZero:true},
-      {dividend:126, divisor:4}
-    ]
-  },
-  {
-    name:"World 4: Regrouping Rescue",
-    focus:"Temporary remainders during working are regrouped to the next place.",
-    color:0xf9a8d4,
-    questions:[
-      {dividend:75, divisor:3},
-      {dividend:86, divisor:4},
-      {dividend:864, divisor:4},
-      {dividend:875, divisor:5}
-    ]
-  },
-  {
-    name:"World 5: Zero Power",
-    focus:"Zeros in the quotient: 0 in the middle or at the end matters.",
-    color:0xc4b5fd,
-    questions:[
-      {dividend:816, divisor:4},
-      {dividend:824, divisor:4},
-      {dividend:840, divisor:4},
-      {dividend:630, divisor:3}
-    ]
-  },
-  {
-    name:"World 6: Remainder Rescue",
-    focus:"Final remainders after the last digit.",
-    color:0xfdba74,
-    questions:[
-      {dividend:7, divisor:2},
-      {dividend:85, divisor:4},
-      {dividend:865, divisor:4},
-      {dividend:304, divisor:7, forceLeadingZero:true}
-    ]
-  },
-  {
-    name:"World 7: Master Mission",
-    focus:"Mixed practice. Pupils decide what the algorithm needs.",
-    color:0x67e8f9,
-    questions:[
-      {dividend:96, divisor:4},
-      {dividend:432, divisor:6},
-      {dividend:912, divisor:8},
-      {dividend:728, divisor:7},
-      {dividend:304, divisor:7, forceLeadingZero:true},
-      {dividend:905, divisor:5}
-    ]
+  const WORLDS = [
+    {name:"World 1: Division Facts", focus:"Basic 1-digit ÷ 1-digit. Build recall before long division.", color:0x6ee7b7, qs:[{d:8,v:2},{d:9,v:3},{d:6,v:2}]},
+    {name:"World 2: Clean Division", focus:"2-digit and 3-digit ÷ 1-digit, no regrouping.", color:0x93c5fd, qs:[{d:86,v:2},{d:69,v:3},{d:864,v:2},{d:963,v:3}]},
+    {name:"World 3: First Digit Too Small", focus:"First digit is smaller than divisor. Learn the 0 placeholder idea.", color:0xfcd34d, qs:[{d:48,v:6},{d:35,v:5},{d:304,v:7,zero:true},{d:126,v:4}]},
+    {name:"World 4: Regrouping Rescue", focus:"Temporary remainders are regrouped to the next place.", color:0xf9a8d4, qs:[{d:75,v:3},{d:86,v:4},{d:864,v:4},{d:875,v:5}]},
+    {name:"World 5: Zero Power", focus:"Zeros in the quotient: 0 in the middle or at the end matters.", color:0xc4b5fd, qs:[{d:816,v:4},{d:824,v:4},{d:840,v:4},{d:630,v:3}]},
+    {name:"World 6: Remainder Rescue", focus:"Final remainders after the last digit.", color:0xfdba74, qs:[{d:7,v:2},{d:85,v:4},{d:865,v:4},{d:304,v:7,zero:true}]},
+    {name:"World 7: Master Mission", focus:"Mixed practice. Pupils decide what the algorithm needs.", color:0x67e8f9, qs:[{d:96,v:4},{d:432,v:6},{d:912,v:8},{d:728,v:7},{d:304,v:7,zero:true},{d:905,v:5}]}
+  ];
+  const animalsNames = ["Bunny","Panda","Otter","Koala","Deer","Fox","Penguin","Kitten","Puppy","Turtle","Chick","Hamster"];
+
+  let missions=[], score=0, health=3, completed=new Set(), active=null, calc=null, stepIndex=0, inputs={};
+  let scene,camera,renderer,clock,yaw=0,pitch=0,keys={},animals=[],raycaster=new THREE.Raycaster(),mouseLocked=false,playerHeight=1.7,particles=[];
+  let audioCtx=null;
+
+  function buildMissions(){
+    missions=[]; let id=0;
+    WORLDS.forEach((w,wi)=>w.qs.forEach(q=>missions.push({id:id++, worldIndex:wi, worldName:w.name, focus:w.focus, dividend:q.d, divisor:q.v, forceZero:!!q.zero, animal:animalsNames[id%animalsNames.length]})));
   }
-];
 
-const animalNames = ["Bunny","Panda","Otter","Koala","Deer","Fox","Penguin","Kitten","Puppy","Turtle","Chick","Hamster"];
+  function init3D(){
+    scene=new THREE.Scene(); scene.background=new THREE.Color(0xc9f5ff); scene.fog=new THREE.Fog(0xc9f5ff,45,130);
+    camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,1000); camera.position.set(0,playerHeight,11);
+    renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.shadowMap.enabled=true; $("game").appendChild(renderer.domElement);
+    clock=new THREE.Clock();
+    scene.add(new THREE.HemisphereLight(0xffffff,0x73b7df,1.2));
+    const sun=new THREE.DirectionalLight(0xffffff,.9); sun.position.set(16,24,10); sun.castShadow=true; scene.add(sun);
+    makeWorld(); makePods();
+    addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight)});
+    document.addEventListener("keydown",e=>{keys[e.code]=true; if(e.code==="KeyF") fireBeam();});
+    document.addEventListener("keyup",e=>keys[e.code]=false);
+    renderer.domElement.addEventListener("click",()=>{ if($("missionPanel").style.display==="flex") return; renderer.domElement.requestPointerLock?.(); fireBeam(); });
+    document.addEventListener("pointerlockchange",()=>mouseLocked=document.pointerLockElement===renderer.domElement);
+    document.addEventListener("mousemove",e=>{ if(!mouseLocked) return; yaw-=e.movementX*.0022; pitch-=e.movementY*.0022; pitch=Math.max(-1.2,Math.min(1.2,pitch)); });
+    animate();
+  }
 
-/* =========================
-   GAME STATE
-   ========================= */
+  function makeWorld(){
+    const ground=new THREE.Mesh(new THREE.PlaneGeometry(180,180),new THREE.MeshLambertMaterial({color:0x80e0c8})); ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
+    const roadMat=new THREE.MeshLambertMaterial({color:0x49657a});
+    const r1=new THREE.Mesh(new THREE.BoxGeometry(13,.04,160),roadMat); r1.position.y=.02; scene.add(r1);
+    const r2=new THREE.Mesh(new THREE.BoxGeometry(160,.04,13),roadMat); r2.position.y=.03; scene.add(r2);
+    const lineMat=new THREE.MeshBasicMaterial({color:0xffffff});
+    for(let i=-70;i<=70;i+=12){ const m=new THREE.Mesh(new THREE.BoxGeometry(.45,.05,5),lineMat); m.position.set(0,.07,i); scene.add(m); const n=new THREE.Mesh(new THREE.BoxGeometry(5,.05,.45),lineMat); n.position.set(i,.08,0); scene.add(n); }
+    for(let i=0;i<34;i++){ const x=-76+Math.random()*152,z=-76+Math.random()*152; if(Math.abs(x)<13||Math.abs(z)<13) continue; tree(x,z); }
+    for(let i=-60;i<=60;i+=20){ lamp(9,i); lamp(-9,i); lamp(i,9); lamp(i,-9); }
+    WORLDS.forEach((w,i)=>{ const a=i/WORLDS.length*Math.PI*2, x=Math.cos(a)*43,z=Math.sin(a)*43; const s=sign(w.name.replace(":","\n"),w.color); s.position.set(x,2.7,z); s.lookAt(0,2.2,0); scene.add(s); });
+  }
+  function tree(x,z){ const tr=new THREE.Mesh(new THREE.BoxGeometry(.8,2.3,.8),new THREE.MeshLambertMaterial({color:0x9a5a26})); tr.position.set(x,1.15,z); scene.add(tr); const top=new THREE.Mesh(new THREE.SphereGeometry(2.1,12,8),new THREE.MeshLambertMaterial({color:0x35be68})); top.position.set(x,3.1,z); top.castShadow=true; scene.add(top); }
+  function lamp(x,z){ const pole=new THREE.Mesh(new THREE.BoxGeometry(.35,5,.35),new THREE.MeshLambertMaterial({color:0x20334d})); pole.position.set(x,2.5,z); scene.add(pole); const bulb=new THREE.Mesh(new THREE.SphereGeometry(.8,12,8),new THREE.MeshBasicMaterial({color:0xfff28a})); bulb.position.set(x,5.2,z); scene.add(bulb); const l=new THREE.PointLight(0xfff1a5,.45,18); l.position.set(x,5.2,z); scene.add(l); }
+  function sign(text,color){ const g=new THREE.Group(); const board=new THREE.Mesh(new THREE.BoxGeometry(8,2.4,.35),new THREE.MeshLambertMaterial({color})); g.add(board); const post=new THREE.Mesh(new THREE.BoxGeometry(.5,3,.5),new THREE.MeshLambertMaterial({color:0x654321})); post.position.y=-2.5; g.add(post); const c=document.createElement("canvas"); c.width=512;c.height=256; const ctx=c.getContext("2d"); ctx.fillStyle="#fff"; ctx.font="bold 42px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle"; text.split("\n").forEach((line,i)=>ctx.fillText(line,256,105+i*52)); const lab=new THREE.Mesh(new THREE.PlaneGeometry(7.7,2.1),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true})); lab.position.z=.19; g.add(lab); return g; }
 
-let allMissions = [];
-let currentMissionIndex = 0;
-let score = 0;
-let health = 3;
-let activeMission = null;
-let activeSteps = [];
-let activeStepIndex = 0;
-let activeGridState = null;
-let completedMissionIds = new Set();
-
-function buildMissionList(){
-  allMissions = [];
-  let id = 0;
-  WORLDS.forEach((world, wi)=>{
-    world.questions.forEach((q, qi)=>{
-      allMissions.push({
-        id:id++,
-        worldIndex:wi,
-        worldName:world.name,
-        focus:world.focus,
-        dividend:q.dividend,
-        divisor:q.divisor,
-        forceLeadingZero:!!q.forceLeadingZero,
-        animal: animalNames[id % animalNames.length]
-      });
+  function makePods(){
+    animals.forEach(a=>scene.remove(a.group)); animals=[];
+    missions.forEach((m,idx)=>{
+      const wi=m.worldIndex, inW=missions.slice(0,idx).filter(x=>x.worldIndex===wi).length;
+      const angle=wi/WORLDS.length*Math.PI*2+(inW-1.5)*.12, r=29+inW*3.8;
+      const pod=podGroup(m,Math.cos(angle)*r,Math.sin(angle)*r); scene.add(pod.group); animals.push(pod);
     });
-  });
-}
-
-/* =========================
-   THREE.JS SCENE
-   ========================= */
-
-let scene, camera, renderer, clock;
-let yaw = 0, pitch = 0;
-let velocity = new THREE.Vector3();
-let keys = {};
-let animals = [];
-let raycaster = new THREE.Raycaster();
-let mouseLocked = false;
-let playerHeight = 1.7;
-let worldObjects = [];
-let particles = [];
-
-const gameDiv = document.getElementById("game");
-
-function init3D(){
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xbfefff);
-  scene.fog = new THREE.Fog(0xbfefff, 35, 110);
-
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-  camera.position.set(0, playerHeight, 8);
-
-  renderer = new THREE.WebGLRenderer({antialias:true});
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  renderer.shadowMap.enabled = true;
-  gameDiv.appendChild(renderer.domElement);
-
-  clock = new THREE.Clock();
-
-  const hemi = new THREE.HemisphereLight(0xffffff, 0x5fb0d6, 1.1);
-  scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffffff, 0.95);
-  sun.position.set(12, 20, 10);
-  sun.castShadow = true;
-  scene.add(sun);
-
-  createWorld();
-  createMissionPods();
-
-  window.addEventListener("resize", onResize);
-  document.addEventListener("keydown", onKeyDown);
-  document.addEventListener("keyup", e=>keys[e.code]=false);
-
-  renderer.domElement.addEventListener("click", ()=>{
-    if(document.getElementById("missionPanel").style.display === "flex") return;
-    renderer.domElement.requestPointerLock?.();
-    fireRescueBeam();
-  });
-  document.addEventListener("pointerlockchange", ()=>{
-    mouseLocked = document.pointerLockElement === renderer.domElement;
-  });
-  document.addEventListener("mousemove", e=>{
-    if(!mouseLocked) return;
-    yaw -= e.movementX * 0.0022;
-    pitch -= e.movementY * 0.0022;
-    pitch = Math.max(-1.2, Math.min(1.2, pitch));
-  });
-
-  animate();
-}
-
-function createWorld(){
-  const groundMat = new THREE.MeshLambertMaterial({color:0x7ee7d6});
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(180,180), groundMat);
-  ground.rotation.x = -Math.PI/2;
-  ground.receiveShadow = true;
-  scene.add(ground);
-
-  // Friendly roads
-  const roadMat = new THREE.MeshLambertMaterial({color:0x405d75});
-  const road1 = new THREE.Mesh(new THREE.BoxGeometry(14, .04, 160), roadMat);
-  road1.position.set(0,.02,0);
-  scene.add(road1);
-  const road2 = new THREE.Mesh(new THREE.BoxGeometry(160, .04, 14), roadMat);
-  road2.position.set(0,.03,0);
-  scene.add(road2);
-
-  // Lane markings
-  const lineMat = new THREE.MeshBasicMaterial({color:0xffffff});
-  for(let i=-70;i<=70;i+=12){
-    const mark = new THREE.Mesh(new THREE.BoxGeometry(.5,.05,5), lineMat);
-    mark.position.set(0,.07,i);
-    scene.add(mark);
-    const mark2 = new THREE.Mesh(new THREE.BoxGeometry(5,.05,.5), lineMat);
-    mark2.position.set(i,.08,0);
-    scene.add(mark2);
   }
-
-  // Buildings
-  const colors = [0xffb3c7,0xa7f3d0,0xfde68a,0xbfdbfe,0xddd6fe,0xfecaca];
-  for(let i=0;i<18;i++){
-    const w = 5+Math.random()*6;
-    const h = 4+Math.random()*8;
-    const d = 5+Math.random()*6;
-    const mat = new THREE.MeshLambertMaterial({color:colors[i%colors.length]});
-    const b = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
-    const side = i%4;
-    let x,z;
-    if(side===0){x=-35-Math.random()*35; z=-60+Math.random()*120;}
-    if(side===1){x=35+Math.random()*35; z=-60+Math.random()*120;}
-    if(side===2){z=-35-Math.random()*35; x=-60+Math.random()*120;}
-    if(side===3){z=35+Math.random()*35; x=-60+Math.random()*120;}
-    b.position.set(x,h/2,z);
-    b.castShadow = true;
-    b.receiveShadow = true;
-    scene.add(b);
-    worldObjects.push(b);
+  function podGroup(m,x,z){
+    const g=new THREE.Group(); g.position.set(x,0,z);
+    const base=new THREE.Mesh(new THREE.CylinderGeometry(2.3,2.3,.35,24),new THREE.MeshLambertMaterial({color:WORLDS[m.worldIndex].color})); base.position.y=.18; g.add(base);
+    const cage=new THREE.Mesh(new THREE.SphereGeometry(1.65,18,12),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.24})); cage.position.y=2.35; g.add(cage);
+    const glow=new THREE.PointLight(WORLDS[m.worldIndex].color,.95,11); glow.position.y=2.5; g.add(glow);
+    const animal=new THREE.Group(); animal.position.y=1.42;
+    const mat=new THREE.MeshLambertMaterial({color:0xfff0bf}); const body=new THREE.Mesh(new THREE.SphereGeometry(.8,14,10),mat); body.scale.set(1,1.1,.9); animal.add(body);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.58,14,10),new THREE.MeshLambertMaterial({color:0xffdfa1})); head.position.y=.82; animal.add(head);
+    const earMat=new THREE.MeshLambertMaterial({color:0xffc48f}); const e1=new THREE.Mesh(new THREE.ConeGeometry(.18,.65,10),earMat); e1.position.set(-.32,1.36,0); e1.rotation.z=.18; const e2=e1.clone(); e2.position.x=.32; e2.rotation.z=-.18; animal.add(e1,e2);
+    const eyeMat=new THREE.MeshBasicMaterial({color:0x10233f}); const eye1=new THREE.Mesh(new THREE.SphereGeometry(.06,8,8),eyeMat); eye1.position.set(-.18,.9,.5); const eye2=eye1.clone(); eye2.position.x=.18; animal.add(eye1,eye2); g.add(animal);
+    const label=labelMesh(`${m.worldName}\n${m.dividend} ÷ ${m.divisor}\nSave the ${m.animal}!`); label.position.y=4.5; g.add(label);
+    return {mission:m,group:g,animal,cage,label,completed:false};
   }
+  function labelMesh(text){ const c=document.createElement("canvas"); c.width=768;c.height=256; const ctx=c.getContext("2d"); ctx.fillStyle="rgba(15,42,74,.82)"; round(ctx,16,16,736,224,28,true,false); ctx.strokeStyle="rgba(255,255,255,.65)"; ctx.lineWidth=5; round(ctx,16,16,736,224,28,false,true); ctx.fillStyle="#fff"; ctx.font="bold 34px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle"; text.split("\n").forEach((line,i)=>ctx.fillText(line,384,72+i*52)); return new THREE.Mesh(new THREE.PlaneGeometry(5.8,1.9),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true})); }
+  function round(ctx,x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();if(fill)ctx.fill();if(stroke)ctx.stroke();}
 
-  // Trees and lamps
-  for(let i=0;i<42;i++){
-    const x = -75 + Math.random()*150;
-    const z = -75 + Math.random()*150;
-    if(Math.abs(x)<12 || Math.abs(z)<12) continue;
-    makeTree(x,z);
-  }
-  for(let i=-60;i<=60;i+=20){
-    makeLamp(9,i);
-    makeLamp(-9,i);
-    makeLamp(i,9);
-    makeLamp(i,-9);
-  }
-
-  // World sign boards
-  const radius = 42;
-  WORLDS.forEach((w,i)=>{
-    const angle = (i/WORLDS.length)*Math.PI*2;
-    const x = Math.cos(angle)*radius;
-    const z = Math.sin(angle)*radius;
-    const sign = makeSign(w.name.replace(":","\n"), w.color);
-    sign.position.set(x,2.7,z);
-    sign.lookAt(0,2.2,0);
-    scene.add(sign);
-  });
-}
-
-function makeTree(x,z){
-  const trunk = new THREE.Mesh(
-    new THREE.BoxGeometry(.8,2.4,.8),
-    new THREE.MeshLambertMaterial({color:0x9a5a26})
-  );
-  trunk.position.set(x,1.2,z);
-  trunk.castShadow = true;
-  scene.add(trunk);
-  const top = new THREE.Mesh(
-    new THREE.SphereGeometry(2.1,12,8),
-    new THREE.MeshLambertMaterial({color:0x2fbc67})
-  );
-  top.position.set(x,3.1,z);
-  top.castShadow = true;
-  scene.add(top);
-}
-
-function makeLamp(x,z){
-  const pole = new THREE.Mesh(
-    new THREE.BoxGeometry(.35,5,.35),
-    new THREE.MeshLambertMaterial({color:0x20334d})
-  );
-  pole.position.set(x,2.5,z);
-  scene.add(pole);
-  const bulb = new THREE.Mesh(
-    new THREE.SphereGeometry(.8,12,8),
-    new THREE.MeshBasicMaterial({color:0xfff28a})
-  );
-  bulb.position.set(x,5.2,z);
-  scene.add(bulb);
-  const light = new THREE.PointLight(0xfff1a5, .45, 18);
-  light.position.set(x,5.2,z);
-  scene.add(light);
-}
-
-function makeSign(text, color){
-  const group = new THREE.Group();
-  const board = new THREE.Mesh(
-    new THREE.BoxGeometry(8,2.4,.35),
-    new THREE.MeshLambertMaterial({color:color})
-  );
-  group.add(board);
-  const post = new THREE.Mesh(
-    new THREE.BoxGeometry(.5,3,.5),
-    new THREE.MeshLambertMaterial({color:0x654321})
-  );
-  post.position.y = -2.5;
-  group.add(post);
-
-  const canvas = document.createElement("canvas");
-  canvas.width=512; canvas.height=256;
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 42px Comic Sans MS, Arial";
-  ctx.textAlign="center";
-  ctx.textBaseline="middle";
-  const lines = text.split("\n");
-  lines.forEach((line,idx)=>ctx.fillText(line,256,105+idx*52));
-  const tex = new THREE.CanvasTexture(canvas);
-  const label = new THREE.Mesh(
-    new THREE.PlaneGeometry(7.7,2.1),
-    new THREE.MeshBasicMaterial({map:tex, transparent:true})
-  );
-  label.position.z=.19;
-  group.add(label);
-  return group;
-}
-
-function createMissionPods(){
-  animals.forEach(a=>scene.remove(a.group));
-  animals = [];
-  const radius = 30;
-  allMissions.forEach((m, idx)=>{
-    const wi = m.worldIndex;
-    const inWorldIndex = allMissions.slice(0,idx).filter(x=>x.worldIndex===wi).length;
-    const angle = (wi/WORLDS.length)*Math.PI*2 + (inWorldIndex-1.5)*0.11;
-    const r = radius + inWorldIndex*3.5;
-    const x = Math.cos(angle)*r;
-    const z = Math.sin(angle)*r;
-    const pod = makeAnimalPod(m, x, z);
-    scene.add(pod.group);
-    animals.push(pod);
-  });
-}
-
-function makeAnimalPod(m, x, z){
-  const group = new THREE.Group();
-  group.position.set(x,0,z);
-
-  const base = new THREE.Mesh(
-    new THREE.CylinderGeometry(2.2,2.2,.35,24),
-    new THREE.MeshLambertMaterial({color:WORLDS[m.worldIndex].color})
-  );
-  base.position.y=.18;
-  base.castShadow=true;
-  group.add(base);
-
-  const cage = new THREE.Mesh(
-    new THREE.SphereGeometry(1.55,18,12),
-    new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.22})
-  );
-  cage.position.y=2.35;
-  group.add(cage);
-
-  const glow = new THREE.PointLight(WORLDS[m.worldIndex].color, .9, 10);
-  glow.position.y=2.5;
-  group.add(glow);
-
-  const animal = new THREE.Group();
-  animal.position.y=1.45;
-  const body = new THREE.Mesh(
-    new THREE.SphereGeometry(.75,14,10),
-    new THREE.MeshLambertMaterial({color:0xfff3c4})
-  );
-  body.scale.set(1,1.1,.9);
-  animal.add(body);
-  const head = new THREE.Mesh(
-    new THREE.SphereGeometry(.55,14,10),
-    new THREE.MeshLambertMaterial({color:0xffe4a6})
-  );
-  head.position.y=.8;
-  animal.add(head);
-  const earMat = new THREE.MeshLambertMaterial({color:0xffd2a1});
-  const e1 = new THREE.Mesh(new THREE.ConeGeometry(.18,.65,10), earMat);
-  e1.position.set(-.32,1.35,0); e1.rotation.z=.18;
-  const e2 = e1.clone(); e2.position.x=.32; e2.rotation.z=-.18;
-  animal.add(e1,e2);
-  const eyeMat = new THREE.MeshBasicMaterial({color:0x10233f});
-  const eye1 = new THREE.Mesh(new THREE.SphereGeometry(.06,8,8), eyeMat);
-  eye1.position.set(-.18,.88,.48);
-  const eye2 = eye1.clone(); eye2.position.x=.18;
-  animal.add(eye1,eye2);
-  group.add(animal);
-
-  const label = makeFloatingLabel(`${m.worldName}\n${m.dividend} ÷ ${m.divisor}\nSave the ${m.animal}!`);
-  label.position.y=4.4;
-  group.add(label);
-
-  return {mission:m, group, animal, cage, label, completed:false};
-}
-
-function makeFloatingLabel(text){
-  const canvas = document.createElement("canvas");
-  canvas.width = 768;
-  canvas.height = 256;
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "rgba(8,24,48,.78)";
-  roundRect(ctx, 16, 16, 736, 224, 28, true, false);
-  ctx.strokeStyle = "rgba(255,255,255,.65)";
-  ctx.lineWidth = 5;
-  roundRect(ctx, 16, 16, 736, 224, 28, false, true);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 34px Comic Sans MS, Arial";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  text.split("\n").forEach((line,i)=>ctx.fillText(line,384,72+i*52));
-  const tex = new THREE.CanvasTexture(canvas);
-  const mesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(5.8,1.9),
-    new THREE.MeshBasicMaterial({map:tex, transparent:true})
-  );
-  return mesh;
-}
-
-function roundRect(ctx, x, y, w, h, r, fill, stroke) {
-  ctx.beginPath();
-  ctx.moveTo(x+r,y);
-  ctx.arcTo(x+w,y,x+w,y+h,r);
-  ctx.arcTo(x+w,y+h,x,y+h,r);
-  ctx.arcTo(x,y+h,x,y,r);
-  ctx.arcTo(x,y,x+w,y,r);
-  ctx.closePath();
-  if(fill) ctx.fill();
-  if(stroke) ctx.stroke();
-}
-
-/* =========================
-   LONG DIVISION GENERATOR
-   ========================= */
-
-function makeLongDivisionSteps(dividend, divisor, opts={}){
-  const digits = String(dividend).split("").map(Number);
-  const n = digits.length;
-  const maxCols = 4;
-  const offset = maxCols - n;
-
-  let current = 0;
-  let quotientDigits = [];
-  let rows = [];
-  let steps = [];
-  let started = false;
-
-  for(let i=0;i<n;i++){
-    current = current * 10 + digits[i];
-    const q = Math.floor(current / divisor);
-    const product = q * divisor;
-    const remainder = current - product;
-
-    // include leading zero if explicitly needed for conceptual teaching, or if already started
-    if(q > 0 || started || opts.forceLeadingZero || i === n-1){
-      const col = offset + i;
-      if(q === 0 && !started){
-        steps.push({
-          type:"zero",
-          value:0,
-          row:"quotient",
-          col,
-          prompt:`${divisor} cannot go into ${current}. How many ${placeName(n-i)} are in the answer?`,
-          hint:`Because ${current} is smaller than ${divisor}, put 0 in this place. Then look at the next digit.`
-        });
-      } else {
-        steps.push({
-          type:"divide",
-          value:q,
-          row:"quotient",
-          col,
-          prompt:`${divisor} goes into ${current} how many times?`,
-          hint:`Think of the largest multiple of ${divisor} that is not more than ${current}.`
-        });
+  function digitsInfo(n){ const s=String(n); const keys=s.length===1?["o"]:s.length===2?["t","o"]:["h","t","o"]; const vals={h:Math.floor(n/100)%10,t:Math.floor(n/10)%10,o:n%10}; return {keys, vals}; }
+  function cls(pk){return pk==="h"?"place-h":pk==="t"?"place-t":"place-o"} function name(pk){return pk==="h"?"Hundreds":pk==="t"?"Tens":"Ones"}
+  function computeCalc(dividend,divisor,forceZero){
+    const {keys,vals}=digitsInfo(dividend); let current=0, started=false, steps=[], qDigits=[];
+    keys.forEach((pk,i)=>{
+      current=current*10+vals[pk]; const qd=Math.floor(current/divisor), prod=qd*divisor, rem=current-prod;
+      const include = qd>0 || started || forceZero || i===keys.length-1;
+      if(include){
+        const zeroStep = qd===0 && !started;
+        steps.push({kind:zeroStep?"zero":"q", pk, value:qd, prompt:zeroStep?`${divisor} cannot go into ${current}. Put 0 in the ${name(pk).toLowerCase()} place.`:`${divisor} goes into ${current} how many times?`, hint:zeroStep?`Because ${current} is smaller than ${divisor}, put 0 first. Then move to the next digit.`:`Find the largest multiple of ${divisor} that is not more than ${current}.`});
+        steps.push({kind:"prod", pk, value:prod, prompt:`Multiply: ${qd} × ${divisor} = ?`, hint:`Use the quotient digit: ${qd} × ${divisor}.`});
+        steps.push({kind:"rem", pk, value:rem, prompt:`Subtract: ${current} − ${prod} = ?`, hint:`This tells us what is left before the next digit.`});
+        if(i<keys.length-1) steps.push({kind:"bring", pk:keys[i+1], value:vals[keys[i+1]], prompt:`Bring down the next digit. Which digit comes down?`, hint:`Look at ${dividend}. Bring down ${vals[keys[i+1]]}.`});
+        qDigits.push(qd); started=true;
       }
-      quotientDigits.push(q);
-      started = true;
+      current=rem;
+    });
+    steps.push({kind:"final", pk:"R", value:dividend%divisor, prompt:`Final remainder: what is left?`, hint:dividend%divisor===0?`Nothing is left, so remainder is 0.`:`${divisor} × ${Math.floor(dividend/divisor)} = ${divisor*Math.floor(dividend/divisor)}. ${dividend} − ${divisor*Math.floor(dividend/divisor)} = ${dividend%divisor}.`});
+    return {keys, vals, quotient:Math.floor(dividend/divisor), remainder:dividend%divisor, steps};
+  }
 
-      steps.push({
-        type:"multiply",
-        value:product,
-        row:"product",
-        col,
-        prompt:`Multiply: ${q} × ${divisor} = ?`,
-        hint:`Use the quotient digit you just placed: ${q} × ${divisor}.`
-      });
+  function startMission(m){
+    active=m; calc=computeCalc(m.dividend,m.divisor,m.forceZero); stepIndex=0; inputs={};
+    $("missionTitle").textContent=`${m.animal} Rescue Mission`;
+    $("pillDividend").textContent=m.dividend; $("pillDivisor").textContent=m.divisor; $("pillAns").textContent="?";
+    $("answerLine").textContent=`Answer: ${m.dividend} ÷ ${m.divisor} = ?`;
+    $("missionPanel").style.display="flex"; document.exitPointerLock?.();
+    buildAlgorithm(); renderStep(); updateMat(); tone(660,.06);
+  }
 
-      steps.push({
-        type:"subtract",
-        value:remainder,
-        row:"remainder",
-        col,
-        prompt:`Subtract: ${current} − ${product} = ?`,
-        hint:`This is the amount left after sharing. It may be regrouped with the next digit.`
-      });
+  function buildAlgorithm(){
+    const keys=calc.keys, cols=keys.length, hasRem=active.dividend%active.divisor!==0, remW=hasRem?76:0;
+    document.documentElement.style.setProperty("--cols", cols);
+    const lab=keys.map(pk=>`<div class="lab ${cls(pk)}">${name(pk)}</div>`).join("");
+    const qrow=keys.map(pk=>`<div class="algoCell"><input class="qIn" id="q_${pk}" inputmode="numeric" maxlength="1"></div>`).join("");
+    const drow=keys.map(pk=>`<div class="algoCell digit ${cls(pk)}">${calc.vals[pk]}</div>`).join("");
+    let work="";
+    calc.steps.filter(s=>s.kind!=="final").forEach((s,idx)=>{
+      if(s.kind==="q"||s.kind==="zero") return;
+      const rowClass=s.kind==="prod"?"subRow":"";
+      const minus=s.kind==="prod"?"−":"";
+      const cells=keys.map(pk=>{
+        if(pk===s.pk) return `<div class="algoCell ${cls(pk)}"><input class="wIn" id="${s.kind}_${idx}" inputmode="numeric" maxlength="2"></div>`;
+        return `<div class="algoCell ${cls(pk)} blank"></div>`;
+      }).join("");
+      work += `<div class="algoRow ${rowClass}" style="--cols:${cols};--remW:${remW}px"><div class="algoCell" style="font-size:30px">${minus}</div>${cells}<div class="algoCell remCell blank"></div></div>`;
+    });
+    const remCell = hasRem ? `<div class="algoCell remCell"><div class="remWrap"><span class="remTag">R</span><input class="wIn" id="final_R" inputmode="numeric" maxlength="1"></div></div>` : `<div class="algoCell remCell blank"></div>`;
+    $("algoFit").innerHTML=`
+      <div class="algoGrid" style="--cols:${cols};--remW:${remW}px">
+        <div class="algoTable" style="--cols:${cols};--remW:${remW}px">
+          <div class="algoLabels" style="--cols:${cols};--remW:${remW}px"><div class="sp">.</div>${lab}<div class="lab"></div></div>
+          <div class="algoRow quot" style="--cols:${cols};--remW:${remW}px"><div class="algoCell blank"></div>${qrow}${remCell}</div>
+          <div class="algoRow divd" style="--cols:${cols};--remW:${remW}px"><div class="algoCell divisor">${active.divisor}</div>${drow}<div class="algoCell remCell blank"></div></div>
+          ${work}
+          <div class="algoRow subRow" style="--cols:${cols};--remW:${remW}px"><div class="algoCell blank"></div>${keys.map(pk=>`<div class="algoCell ${cls(pk)} blank"></div>`).join("")}<div class="algoCell remCell blank"></div></div>
+        </div>
+      </div>`;
+    renderRoof(cols, remW);
+    // map inputs to steps
+    let workCounter=0;
+    calc.steps.forEach((s,i)=>{
+      if(s.kind==="q"||s.kind==="zero") inputs[i]=$("q_"+s.pk);
+      else if(s.kind==="final") inputs[i]=$("final_R") || null;
+      else { inputs[i]=$(`${s.kind}_${workCounter}`); workCounter++; }
+    });
+    $("algoFit").querySelectorAll("input").forEach(inp=>inp.addEventListener("input",()=>{inp.value=inp.value.replace(/\D/g,"").slice(-2);}));
+  }
+  function renderRoof(cols, remW){
+    const row=document.querySelector(".algoRow.divd"); if(!row) return;
+    const total=48+cols*92+remW, rowH=58, x0=48, endX=48+cols*92;
+    const layer=document.createElement("div"); layer.className="roofLayer";
+    layer.innerHTML=`<svg viewBox="0 0 ${total} ${rowH}" preserveAspectRatio="none"><path d="M ${x0} ${rowH} Q ${x0+18} ${rowH/2} ${x0} 0 H ${endX}" fill="none" stroke="var(--navy)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    row.appendChild(layer);
+  }
 
-      if(i < n-1){
-        steps.push({
-          type:"bringdown",
-          value:digits[i+1],
-          row:"bring",
-          col:offset+i+1,
-          prompt:`Bring down the next digit. Which digit comes down?`,
-          hint:`Look at the next digit in ${dividend}. Bring down ${digits[i+1]}.`
-        });
-      }
+  function renderStep(){
+    $("algoFit").querySelectorAll("input").forEach(inp=>inp.classList.remove("active","bad"));
+    const s=calc.steps[stepIndex];
+    $("stepFill").style.width=`${Math.round(stepIndex/calc.steps.length*100)}%`;
+    $("stepTitle").textContent = s.kind==="final" ? "FINAL STEP" : `STEP ${stepIndex+1}`;
+    $("stepText").textContent=s.prompt;
+    $("feedbackBox").className="feedback info"; $("feedbackBox").textContent="Fill the red-boxed space, then press Check Step.";
+    if(inputs[stepIndex]) { inputs[stepIndex].classList.add("active"); inputs[stepIndex].focus(); }
+    updateMat();
+  }
+
+  function checkStep(){
+    const s=calc.steps[stepIndex], inp=inputs[stepIndex];
+    if(!inp && s.kind==="final" && calc.remainder===0){ finishStep(); return; }
+    const val=(inp?.value||"").trim();
+    if(val==="" || Number(val)!==Number(s.value)){
+      wrong(); health=Math.max(0,health-1); updateHUD();
+      if(inp) inp.classList.add("bad");
+      $("feedbackBox").className="feedback bad"; $("feedbackBox").textContent=s.hint;
+      if(health<=0){ health=3; updateHUD(); }
+      return;
     }
+    finishStep();
+  }
+  function finishStep(){
+    const inp=inputs[stepIndex]; if(inp){inp.classList.remove("active","bad"); inp.classList.add("done"); inp.disabled=true;}
+    correct();
+    const s=calc.steps[stepIndex];
+    $("feedbackBox").className="feedback ok"; $("feedbackBox").textContent=explain(s);
+    stepIndex++;
+    if(stepIndex>=calc.steps.length){ completeMission(); } else setTimeout(renderStep,650);
+  }
+  function explain(s){
+    if(s.kind==="zero") return "Good. A zero placeholder keeps the place value correct.";
+    if(s.kind==="q") return "Good. You found the next quotient digit.";
+    if(s.kind==="prod") return "Good. This is the multiply step.";
+    if(s.kind==="rem") return "Good. This shows what is left before moving on.";
+    if(s.kind==="bring") return "Good. Bringing down lets us continue with the next place.";
+    return "Good. You found the final remainder.";
+  }
+  function hint(){ const s=calc.steps[stepIndex]; $("feedbackBox").className="feedback info"; $("feedbackBox").textContent=s.hint; tone(420,.07); }
 
-    current = remainder;
+  function completeMission(){
+    const ans=calc.remainder?`${calc.quotient} R ${calc.remainder}`:`${calc.quotient}`;
+    $("pillAns").textContent=ans; $("answerLine").textContent=`Answer: ${active.dividend} ÷ ${active.divisor} = ${ans}`;
+    $("stepTitle").textContent="RESCUED!"; $("stepText").textContent=`${active.animal} is safe. ${active.dividend} ÷ ${active.divisor} = ${ans}.`;
+    $("stepFill").style.width="100%"; $("feedbackBox").className="feedback ok"; $("feedbackBox").textContent="Animal rescued! Well done.";
+    completed.add(active.id); score++; updateHUD(); rescueVisual(active.id); tada();
+    setTimeout(()=>{ $("missionPanel").style.display="none"; if(score>=missions.length){$("winScreen").style.display="flex"; tada();}},1500);
   }
 
-  const quotient = Math.floor(dividend/divisor);
-  const finalR = dividend % divisor;
-  steps.push({
-    type:"final",
-    value: finalR,
-    row:"final",
-    col:maxCols-1,
-    prompt: finalR===0 ? `Final check: ${dividend} ÷ ${divisor} = ${quotient}. What is the remainder?` : `Final check: ${dividend} ÷ ${divisor} = ${quotient} remainder ?`,
-    hint: finalR===0 ? `There is nothing left, so the remainder is 0.` : `${divisor} × ${quotient} = ${divisor*quotient}. ${dividend} − ${divisor*quotient} = ${finalR}.`
-  });
-
-  return {digits, offset, quotient, finalR, steps};
-}
-
-function placeName(placeFromRight){
-  if(placeFromRight===3) return "hundreds";
-  if(placeFromRight===2) return "tens";
-  if(placeFromRight===1) return "ones";
-  return "places";
-}
-
-/* =========================
-   MISSION UI
-   ========================= */
-
-const missionPanel = document.getElementById("missionPanel");
-const longGrid = document.getElementById("longGrid");
-const choiceGrid = document.getElementById("choiceGrid");
-const stepPrompt = document.getElementById("stepPrompt");
-const feedbackBox = document.getElementById("feedbackBox");
-const stepFill = document.getElementById("stepFill");
-
-function startMission(mission){
-  activeMission = mission;
-  const calc = makeLongDivisionSteps(mission.dividend, mission.divisor, {forceLeadingZero:mission.forceLeadingZero});
-  activeSteps = calc.steps;
-  activeStepIndex = 0;
-  activeGridState = {
-    dividend: mission.dividend,
-    divisor: mission.divisor,
-    digits: calc.digits,
-    offset: calc.offset,
-    quotient: Array(4).fill(""),
-    product: Array(4).fill(""),
-    remainder: Array(4).fill(""),
-    bring: Array(4).fill(""),
-    final: Array(4).fill("")
-  };
-  document.getElementById("missionTitle").textContent = `${mission.animal} Rescue: ${mission.dividend} ÷ ${mission.divisor}`;
-  missionPanel.style.display = "flex";
-  document.exitPointerLock?.();
-  renderAlgorithm();
-  renderStep();
-  playTone(660, .06, "sine");
-}
-
-function renderAlgorithm(){
-  longGrid.innerHTML = "";
-
-  // Row 0: quotient
-  addCell("", "");
-  for(let c=0;c<4;c++){
-    addBoxCell("quotient", c, c);
+  function updateMat(){
+    const host=$("matHost");
+    // Placemat display is shown only when screen space is available; hidden on small screens by CSS/order.
+    const keys=calc?.keys||["h","t","o"]; if(!calc){host.style.display="none"; return;}
+    host.style.display = innerWidth>980 ? "block" : "none";
+    const vals=calc.vals;
+    host.innerHTML=`<div class="smallMuted" style="margin-top:12px"><b>Place-value mat preview</b> (kept small so the algorithm remains clear)</div>
+    <div class="miniMat" style="--cols:${keys.length}">${keys.map(pk=>`<div class="matCol ${cls(pk)}"><div class="matHead">${name(pk)}</div><div class="discPile">${Array.from({length:Math.min(vals[pk],18)}).map(()=>`<div class="disc ${pk}">${pk==="h"?"100":pk==="t"?"10":"1"}</div>`).join("")}</div></div>`).join("")}</div>`;
   }
 
-  // Row 1: dividend line
-  const divCell = document.createElement("div");
-  divCell.className = "cell divisor";
-  divCell.textContent = activeGridState.divisor;
-  longGrid.appendChild(divCell);
-  for(let c=0;c<4;c++){
-    const cell = document.createElement("div");
-    cell.className = `cell lineTop ${c===activeGridState.offset ? "bracket" : ""} col${c}`;
-    const digitIndex = c - activeGridState.offset;
-    cell.textContent = digitIndex>=0 && digitIndex<activeGridState.digits.length ? activeGridState.digits[digitIndex] : "";
-    longGrid.appendChild(cell);
+  function updateHUD(){
+    $("scoreText").textContent=`${score}/${missions.length}`; $("healthText").textContent="♥".repeat(health)+"♡".repeat(3-health);
+    const next=missions.find(m=>!completed.has(m.id)); $("worldText").textContent=next?`${next.worldName} — ${next.focus}`:"All worlds completed!";
   }
 
-  // Product/subtraction row 1
-  addCell("−", "minus");
-  for(let c=0;c<4;c++) addBoxCell("product", c, c);
+  function move(dt){
+    const speed=keys.ShiftLeft?9:6, f=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)), r=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw)); let v=new THREE.Vector3();
+    if(keys.KeyW||keys.ArrowUp)v.add(f); if(keys.KeyS||keys.ArrowDown)v.sub(f); if(keys.KeyD||keys.ArrowRight)v.add(r); if(keys.KeyA||keys.ArrowLeft)v.sub(r); if(v.lengthSq()>0)v.normalize();
+    camera.position.addScaledVector(v,speed*dt); camera.position.y=playerHeight; camera.position.x=Math.max(-84,Math.min(84,camera.position.x)); camera.position.z=Math.max(-84,Math.min(84,camera.position.z));
+    camera.rotation.order="YXZ"; camera.rotation.y=yaw; camera.rotation.x=pitch;
+  }
+  function checkNear(){
+    if($("missionPanel").style.display==="flex") return;
+    let near=null, dist=999; animals.forEach(p=>{if(p.completed)return; const d=p.group.position.distanceTo(camera.position); if(d<dist){dist=d; near=p;}});
+    if(near&&dist<5.2) $("bottomTip").innerHTML=`Press Click/F or tap RESCUE to start: <b>${near.mission.dividend} ÷ ${near.mission.divisor}</b><span class="sub">${near.mission.focus}</span>`;
+    else $("bottomTip").innerHTML=`Walk to a glowing animal rescue pod.<span class="sub">Complete the algorithm board to save each animal.</span>`;
+  }
+  function fireBeam(){
+    if($("startScreen").style.display!=="none"||$("missionPanel").style.display==="flex") return; tone(880,.05,"square");
+    const dir=new THREE.Vector3(); camera.getWorldDirection(dir);
+    const beam=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,8,8),new THREE.MeshBasicMaterial({color:0xfff27a})); beam.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir); beam.position.copy(camera.position).add(dir.clone().multiplyScalar(4)); scene.add(beam); setTimeout(()=>scene.remove(beam),90);
+    raycaster.setFromCamera({x:0,y:0},camera); const hits=raycaster.intersectObjects(animals.filter(p=>!p.completed).map(p=>p.cage),false);
+    if(hits.length){ const pod=animals.find(p=>p.cage===hits[0].object); if(pod) startMission(pod.mission); return; }
+    const near=animals.find(p=>!p.completed && p.group.position.distanceTo(camera.position)<5.2); if(near) startMission(near.mission);
+  }
+  function rescueVisual(id){ const p=animals.find(a=>a.mission.id===id); if(!p)return; p.completed=true; p.cage.visible=false; p.group.scale.set(1.1,1.1,1.1); spark(p.group.position.clone().add(new THREE.Vector3(0,2.4,0)),WORLDS[p.mission.worldIndex].color); }
+  function spark(pos,color){ for(let i=0;i<32;i++){ const m=new THREE.Mesh(new THREE.SphereGeometry(.08,8,8),new THREE.MeshBasicMaterial({color})); m.position.copy(pos); m.userData.vel=new THREE.Vector3((Math.random()-.5)*5,Math.random()*4+1,(Math.random()-.5)*5); m.userData.life=.8+Math.random()*.5; scene.add(m); particles.push(m); } }
+  function updateSparks(dt){ for(let i=particles.length-1;i>=0;i--){ const p=particles[i]; p.userData.life-=dt; p.userData.vel.y-=4*dt; p.position.addScaledVector(p.userData.vel,dt); if(p.userData.life<=0){scene.remove(p); particles.splice(i,1);} } }
 
-  // Remainder row 1
-  addCell("", "");
-  for(let c=0;c<4;c++) addBoxCell("remainder", c, c, true);
-
-  // Bring down row
-  addCell("−", "minus");
-  for(let c=0;c<4;c++) addBoxCell("bring", c, c);
-
-  // Final row
-  addCell("", "");
-  for(let c=0;c<4;c++) addBoxCell("final", c, c, true);
-
-  function addCell(text, cls){
-    const cell = document.createElement("div");
-    cell.className = `cell ${cls||""}`;
-    cell.textContent = text;
-    longGrid.appendChild(cell);
+  function animate(){
+    requestAnimationFrame(animate); const dt=Math.min(clock.getDelta(),.05); if($("startScreen").style.display==="none"){move(dt); checkNear();}
+    animals.forEach((p,i)=>{ p.group.rotation.y+=dt*.22; p.cage.position.y=2.35+Math.sin(performance.now()/500+i)*.12; p.animal.position.y=1.42+Math.sin(performance.now()/390+i)*.09; if(p.completed)p.animal.rotation.y+=dt*2.4; p.label.lookAt(camera.position); });
+    updateSparks(dt); renderer.render(scene,camera);
   }
 
-  function addBoxCell(row, col, visualCol, lineBottom=false){
-    const cell = document.createElement("div");
-    cell.className = `cell col${visualCol} ${lineBottom ? "lineBottom" : ""}`;
-    const shouldShow = isCellRelevant(row, col);
-    if(shouldShow){
-      const slot = document.createElement("div");
-      slot.className = "inputSlot";
-      slot.dataset.row = row;
-      slot.dataset.col = col;
-      const val = activeGridState[row][col];
-      slot.textContent = val;
-      if(val !== "") slot.classList.add("filled");
-      cell.appendChild(slot);
-    }
-    longGrid.appendChild(cell);
-  }
-}
+  function ensureAudio(){ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }
+  function tone(freq=440,d=.1,type="sine"){ ensureAudio(); const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.frequency.value=freq; g.gain.setValueAtTime(.0001,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(.12,audioCtx.currentTime+.01); g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+d); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d+.02); }
+  function correct(){ tone(660,.08); setTimeout(()=>tone(880,.09),80); }
+  function wrong(){ tone(180,.14,"sawtooth"); }
+  function tada(){ tone(523,.1); setTimeout(()=>tone(659,.1),110); setTimeout(()=>tone(784,.16),220); }
 
-function isCellRelevant(row, col){
-  if(!activeMission) return false;
-  if(row === "quotient"){
-    return activeSteps.some(s=>s.row==="quotient" && s.col===col);
-  }
-  if(row === "product"){
-    return activeSteps.some(s=>s.row==="product" && s.col===col);
-  }
-  if(row === "remainder"){
-    return activeSteps.some(s=>s.row==="remainder" && s.col===col);
-  }
-  if(row === "bring"){
-    return activeSteps.some(s=>s.row==="bring" && s.col===col);
-  }
-  if(row === "final"){
-    return activeSteps.some(s=>s.row==="final" && s.col===col);
-  }
-  return false;
-}
+  $("startBtn").onclick=()=>{ensureAudio(); $("startScreen").style.display="none"; renderer.domElement.requestPointerLock?.(); updateHUD();};
+  $("btnCheck").onclick=checkStep; $("btnHint").onclick=hint; $("btnExit").onclick=()=>{$("missionPanel").style.display="none"};
+  $("restartBtn").onclick=()=>{completed.clear();score=0;health=3;$("winScreen").style.display="none";makePods();updateHUD();};
+  document.querySelectorAll(".pad button[data-key]").forEach(b=>{ const c=b.dataset.key; b.addEventListener("pointerdown",e=>{e.preventDefault();keys[c]=true}); b.addEventListener("pointerup",e=>{e.preventDefault();keys[c]=false}); b.addEventListener("pointerleave",()=>keys[c]=false); });
+  $("fireBtn").addEventListener("pointerdown",e=>{e.preventDefault();fireBeam();}); $("lookBtn").addEventListener("pointerdown",e=>{e.preventDefault();renderer.domElement.requestPointerLock?.();});
 
-function renderStep(){
-  const step = activeSteps[activeStepIndex];
-  stepPrompt.textContent = step.prompt;
-  feedbackBox.textContent = "Choose carefully. This fills the highlighted box.";
-  stepFill.style.width = `${Math.round((activeStepIndex/activeSteps.length)*100)}%`;
-
-  document.querySelectorAll(".inputSlot").forEach(el=>{
-    el.classList.remove("active");
-    if(el.dataset.row === step.row && Number(el.dataset.col) === step.col){
-      el.classList.add("active");
-    }
-  });
-
-  renderChoices(step.value);
-}
-
-function renderChoices(correct){
-  choiceGrid.innerHTML = "";
-  const choices = makeChoices(correct);
-  choices.forEach(v=>{
-    const btn = document.createElement("button");
-    btn.className = "choice";
-    btn.textContent = v;
-    btn.onclick = ()=>answerStep(v);
-    choiceGrid.appendChild(btn);
-  });
-}
-
-function makeChoices(correct){
-  let set = new Set([correct]);
-  let attempts = 0;
-  while(set.size < 3 && attempts < 50){
-    attempts++;
-    let delta = Math.floor(Math.random()*7)-3;
-    if(delta===0) delta = 4;
-    let v = correct + delta;
-    if(correct === 0) v = Math.floor(Math.random()*5);
-    if(v >= 0 && v <= 99) set.add(v);
-  }
-  return Array.from(set).sort(()=>Math.random()-.5);
-}
-
-function answerStep(value){
-  const step = activeSteps[activeStepIndex];
-  if(Number(value) === Number(step.value)){
-    activeGridState[step.row][step.col] = String(step.value);
-    renderAlgorithm();
-    playCorrect();
-    feedbackBox.innerHTML = `<b>Good rescue step!</b><br>${explainStep(step)}`;
-    activeStepIndex++;
-
-    if(activeStepIndex >= activeSteps.length){
-      finishMission();
-    }else{
-      setTimeout(renderStep, 650);
-    }
-  }else{
-    playWrong();
-    health = Math.max(0, health-1);
-    updateHUD();
-    feedbackBox.innerHTML = `<b>Try again.</b><br>${step.hint}`;
-    if(health <= 0){
-      health = 3;
-      feedbackBox.innerHTML = `<b>Energy restored.</b><br>Let's continue slowly. ${step.hint}`;
-      updateHUD();
-    }
-  }
-}
-
-function explainStep(step){
-  if(step.type==="zero") return "When the number is smaller than the divisor, put 0 for that place value and move on.";
-  if(step.type==="divide") return "You found the next quotient digit.";
-  if(step.type==="multiply") return "This shows how much has been shared.";
-  if(step.type==="subtract") return "This shows what is left before bringing down the next digit.";
-  if(step.type==="bringdown") return "Bringing down helps us continue with the next place value.";
-  if(step.type==="final") return step.value===0 ? "No remainder. The division is exact." : "This is the final remainder after all digits are used.";
-  return "Well done.";
-}
-
-function finishMission(){
-  const q = Math.floor(activeMission.dividend / activeMission.divisor);
-  const r = activeMission.dividend % activeMission.divisor;
-  stepFill.style.width = "100%";
-  const answerText = r===0 ? `${activeMission.dividend} ÷ ${activeMission.divisor} = ${q}` : `${activeMission.dividend} ÷ ${activeMission.divisor} = ${q} r ${r}`;
-  feedbackBox.innerHTML = `<b>Animal rescued!</b><br>${answerText}`;
-  completedMissionIds.add(activeMission.id);
-  score++;
-  updateHUD();
-  rescueAnimalVisual(activeMission.id);
-  playTada();
-
-  setTimeout(()=>{
-    missionPanel.style.display = "none";
-    if(score >= allMissions.length){
-      document.getElementById("winScreen").style.display = "flex";
-      playTada();
-    }
-  }, 1400);
-}
-
-function rescueAnimalVisual(missionId){
-  const pod = animals.find(a=>a.mission.id === missionId);
-  if(!pod) return;
-  pod.completed = true;
-  pod.cage.visible = false;
-  pod.group.scale.set(1.08,1.08,1.08);
-  makeSparkles(pod.group.position.clone().add(new THREE.Vector3(0,2.2,0)), WORLDS[pod.mission.worldIndex].color);
-}
-
-/* =========================
-   INPUT / MOVEMENT
-   ========================= */
-
-function onKeyDown(e){
-  keys[e.code] = true;
-  if(e.code === "KeyF") fireRescueBeam();
-  if(e.code === "Escape") document.exitPointerLock?.();
-}
-
-function updateCamera(dt){
-  const speed = keys.ShiftLeft ? 9 : 6;
-  const forward = new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)*-1);
-  // Correction for our yaw convention
-  forward.set(-Math.sin(yaw),0,-Math.cos(yaw));
-  const right = new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
-
-  let move = new THREE.Vector3();
-  if(keys.KeyW || keys.ArrowUp) move.add(forward);
-  if(keys.KeyS || keys.ArrowDown) move.sub(forward);
-  if(keys.KeyD || keys.ArrowRight) move.add(right);
-  if(keys.KeyA || keys.ArrowLeft) move.sub(right);
-  if(move.lengthSq()>0) move.normalize();
-
-  camera.position.addScaledVector(move, speed*dt);
-  camera.position.y = playerHeight;
-  camera.position.x = Math.max(-84, Math.min(84, camera.position.x));
-  camera.position.z = Math.max(-84, Math.min(84, camera.position.z));
-
-  camera.rotation.order = "YXZ";
-  camera.rotation.y = yaw;
-  camera.rotation.x = pitch;
-}
-
-function checkNearPods(){
-  if(missionPanel.style.display === "flex") return;
-  let nearest = null, dist = Infinity;
-  animals.forEach(p=>{
-    if(p.completed) return;
-    const d = p.group.position.distanceTo(camera.position);
-    if(d < dist){dist=d; nearest=p;}
-  });
-  if(nearest && dist < 5.0){
-    document.getElementById("bottomTip").innerHTML = `Press Click/F or tap RESCUE to start: <b>${nearest.mission.dividend} ÷ ${nearest.mission.divisor}</b><span class="sub">${nearest.mission.focus}</span>`;
-    if(keys.KeyE) startMission(nearest.mission);
-  }else{
-    document.getElementById("bottomTip").innerHTML = `Walk to a glowing animal rescue pod.<span class="sub">Complete the algorithm board to save each animal.</span>`;
-  }
-}
-
-function fireRescueBeam(){
-  if(document.getElementById("startScreen").style.display !== "none") return;
-  if(missionPanel.style.display === "flex") return;
-  playTone(880,.05,"square");
-
-  // draw beam
-  const beamGeom = new THREE.CylinderGeometry(.04,.04,8,8);
-  const beamMat = new THREE.MeshBasicMaterial({color:0xfff27a});
-  const beam = new THREE.Mesh(beamGeom, beamMat);
-  beam.rotation.x = Math.PI/2;
-  const dir = new THREE.Vector3();
-  camera.getWorldDirection(dir);
-  beam.position.copy(camera.position).add(dir.clone().multiplyScalar(4));
-  beam.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir);
-  scene.add(beam);
-  setTimeout(()=>scene.remove(beam), 90);
-
-  raycaster.setFromCamera({x:0,y:0}, camera);
-  const podMeshes = animals.filter(p=>!p.completed).map(p=>p.cage);
-  const hits = raycaster.intersectObjects(podMeshes, false);
-  if(hits.length){
-    const cage = hits[0].object;
-    const pod = animals.find(p=>p.cage === cage);
-    if(pod) startMission(pod.mission);
-    return;
-  }
-
-  // if near pod, start it too
-  const near = animals.find(p=>!p.completed && p.group.position.distanceTo(camera.position)<5.2);
-  if(near) startMission(near.mission);
-}
-
-/* =========================
-   ANIMATION
-   ========================= */
-
-function animate(){
-  requestAnimationFrame(animate);
-  const dt = Math.min(clock.getDelta(), .05);
-  if(document.getElementById("startScreen").style.display === "none"){
-    updateCamera(dt);
-    checkNearPods();
-  }
-
-  animals.forEach((p,i)=>{
-    p.group.rotation.y += dt * .25;
-    if(!p.completed){
-      p.cage.position.y = 2.35 + Math.sin(performance.now()/500 + i)*.12;
-      p.animal.position.y = 1.45 + Math.sin(performance.now()/420 + i)*.08;
-    }else{
-      p.animal.rotation.y += dt*2.4;
-      p.animal.position.y = 1.45 + Math.sin(performance.now()/210 + i)*.2;
-    }
-    if(p.label) p.label.lookAt(camera.position.x, camera.position.y, camera.position.z);
-  });
-
-  updateSparkles(dt);
-  renderer.render(scene, camera);
-}
-
-function makeSparkles(pos, color){
-  for(let i=0;i<32;i++){
-    const mesh = new THREE.Mesh(
-      new THREE.SphereGeometry(.08,8,8),
-      new THREE.MeshBasicMaterial({color})
-    );
-    mesh.position.copy(pos);
-    mesh.userData.vel = new THREE.Vector3(
-      (Math.random()-.5)*5,
-      Math.random()*4+1,
-      (Math.random()-.5)*5
-    );
-    mesh.userData.life = .8 + Math.random()*.5;
-    scene.add(mesh);
-    particles.push(mesh);
-  }
-}
-
-function updateSparkles(dt){
-  for(let i=particles.length-1;i>=0;i--){
-    const p = particles[i];
-    p.userData.life -= dt;
-    p.userData.vel.y -= 4*dt;
-    p.position.addScaledVector(p.userData.vel, dt);
-    p.material.opacity = Math.max(0, p.userData.life);
-    if(p.userData.life <= 0){
-      scene.remove(p);
-      particles.splice(i,1);
-    }
-  }
-}
-
-function onResize(){
-  camera.aspect = window.innerWidth/window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-/* =========================
-   AUDIO
-   ========================= */
-
-let audioCtx = null;
-function ensureAudio(){
-  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-}
-function playTone(freq=440, duration=.1, type="sine"){
-  ensureAudio();
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.type = type;
-  o.frequency.value = freq;
-  g.gain.setValueAtTime(.0001, audioCtx.currentTime);
-  g.gain.exponentialRampToValueAtTime(.12, audioCtx.currentTime+.01);
-  g.gain.exponentialRampToValueAtTime(.0001, audioCtx.currentTime+duration);
-  o.connect(g); g.connect(audioCtx.destination);
-  o.start(); o.stop(audioCtx.currentTime+duration+.02);
-}
-function playCorrect(){
-  playTone(660,.08,"sine");
-  setTimeout(()=>playTone(880,.09,"sine"),80);
-}
-function playWrong(){
-  playTone(180,.14,"sawtooth");
-}
-function playTada(){
-  playTone(523,.1,"sine");
-  setTimeout(()=>playTone(659,.1,"sine"),110);
-  setTimeout(()=>playTone(784,.16,"sine"),220);
-}
-
-/* =========================
-   HUD + UI BUTTONS
-   ========================= */
-
-function updateHUD(){
-  document.getElementById("scoreText").textContent = `${score}/${allMissions.length}`;
-  document.getElementById("healthText").textContent = "♥".repeat(health) + "♡".repeat(3-health);
-
-  const next = allMissions.find(m=>!completedMissionIds.has(m.id));
-  if(next){
-    document.getElementById("worldText").textContent = `${next.worldName} — ${next.focus}`;
-  }else{
-    document.getElementById("worldText").textContent = "All worlds completed!";
-  }
-}
-
-document.getElementById("startBtn").onclick = ()=>{
-  ensureAudio();
-  document.getElementById("startScreen").style.display = "none";
-  renderer.domElement.requestPointerLock?.();
-  updateHUD();
-};
-
-document.getElementById("howBtn").onclick = ()=>{
-  document.getElementById("howScreen").style.display = "flex";
-};
-document.getElementById("backStartBtn").onclick = ()=>{
-  document.getElementById("howScreen").style.display = "none";
-};
-document.getElementById("closeMissionBtn").onclick = ()=>{
-  missionPanel.style.display = "none";
-};
-document.getElementById("hintBtn").onclick = ()=>{
-  const step = activeSteps[activeStepIndex];
-  feedbackBox.innerHTML = `<b>Hint:</b><br>${step.hint}`;
-  playTone(420,.07,"sine");
-};
-document.getElementById("restartBtn").onclick = ()=>{
-  completedMissionIds.clear();
-  score=0;
-  health=3;
-  document.getElementById("winScreen").style.display = "none";
-  createMissionPods();
-  updateHUD();
-};
-
-document.querySelectorAll(".pad button[data-key]").forEach(btn=>{
-  const code = btn.dataset.key;
-  btn.addEventListener("pointerdown", e=>{e.preventDefault(); keys[code]=true;});
-  btn.addEventListener("pointerup", e=>{e.preventDefault(); keys[code]=false;});
-  btn.addEventListener("pointerleave", e=>{keys[code]=false;});
-});
-document.getElementById("fireBtn").addEventListener("pointerdown", e=>{
-  e.preventDefault();
-  fireRescueBeam();
-});
-document.getElementById("lookBtn").addEventListener("pointerdown", e=>{
-  e.preventDefault();
-  renderer.domElement.requestPointerLock?.();
-});
-
-/* =========================
-   BOOT
-   ========================= */
-
-buildMissionList();
-init3D();
-updateHUD();
-
+  buildMissions(); init3D(); updateHUD();
+})();
 </script>
 </body>
 </html>
