@@ -61,6 +61,12 @@
   .pad .empty{opacity:0; pointer-events:none}
   .fireBtn{position:absolute; right:18px; bottom:106px; width:92px; height:92px; border-radius:50%; pointer-events:auto; background:rgba(255,90,110,.82); font-size:18px}
   .lookBtn{position:absolute; right:120px; bottom:118px; width:74px; height:74px; border-radius:50%; pointer-events:auto; background:rgba(44,123,229,.82); font-size:14px}
+  .tiltStack{position:absolute; right:205px; bottom:100px; display:grid; gap:8px; pointer-events:auto}
+  .tiltStack button{width:54px; height:54px; border:0; border-radius:16px; background:rgba(44,123,229,.78); color:white; font-weight:bold; font-size:20px; box-shadow:0 4px 0 rgba(0,0,0,.25)}
+  .lookZone{
+    position:absolute; right:0; top:0; bottom:0; width:45vw; pointer-events:auto;
+    background:linear-gradient(90deg, transparent, rgba(44,123,229,.035));
+  }
   .credit{position:fixed; right:8px; bottom:4px; z-index:7; font-size:11px; color:rgba(255,255,255,.86); text-shadow:0 1px 3px rgba(0,0,0,.7); pointer-events:none}
 
   /* Mission overlay */
@@ -84,13 +90,15 @@
   }
 
   @media(max-width:720px){
-    .hud{min-width:210px; padding:9px 10px}
-    .hud h1{font-size:15px}
+    .hud{min-width:210px; padding:8px 10px; width:calc(100vw - 24px); max-height:118px; overflow:hidden}
+    .hud h1{font-size:14px}
     .hud .row{font-size:14px}
+    .hud .small{display:none}
+    .hud .world{font-size:12px}
     .topRight{display:none}
     .bottomTip{bottom:10px; font-size:13px; padding:9px 12px}
-    .pad{transform:scale(.86); transform-origin:bottom left}
-    .fireBtn{transform:scale(.86); transform-origin:bottom right}
+    .pad{transform:scale(.82); transform-origin:bottom left}
+    .fireBtn,.lookBtn,.tiltStack{transform:scale(.82); transform-origin:bottom right}
   }
 </style>
 </head>
@@ -112,7 +120,7 @@
 
 <div class="bottomTip" id="bottomTip">
   Walk to a glowing animal rescue pod.
-  <span class="sub">This version uses your exact long-division algorithm panel.</span>
+  <span class="sub">Drag on the right side to look up/down/left/right, or use ▲ ▼ tilt buttons.</span>
 </div>
 
 <div id="mobileControls">
@@ -120,6 +128,11 @@
     <button class="empty"></button><button data-key="KeyW">▲</button><button class="empty"></button>
     <button data-key="KeyA">◀</button><button data-key="KeyS">▼</button><button data-key="KeyD">▶</button>
     <button class="empty"></button><button data-key="ArrowDown">Back</button><button class="empty"></button>
+  </div>
+  <div class="lookZone" id="lookZone" aria-label="Drag here to look around"></div>
+  <div class="tiltStack">
+    <button id="tiltUpBtn" aria-label="Look up">▲</button>
+    <button id="tiltDownBtn" aria-label="Look down">▼</button>
   </div>
   <button class="lookBtn" id="lookBtn">LOOK</button>
   <button class="fireBtn" id="fireBtn">RESCUE</button>
@@ -824,7 +837,8 @@ const WORLDS = [
 const animalNames = ["Bunny","Panda","Otter","Koala","Deer","Fox","Penguin","Kitten","Puppy","Turtle","Chick","Hamster"];
 
 let allMissions = [], score = 0, health = 3, activeMission = null, completedMissionIds = new Set();
-let scene, camera, renderer, clock, yaw = 0, pitch = 0, keys = {}, animals = [], raycaster = new THREE.Raycaster(), particles = [], mouseLocked = false, playerHeight = 1.7;
+let scene, camera, renderer, clock, yaw = 0, pitch = -0.08, keys = {}, animals = [], raycaster = new THREE.Raycaster(), particles = [], mouseLocked = false, playerHeight = 1.7;
+let lookDrag = {active:false, x:0, y:0};
 let audioCtx = null;
 
 function buildMissionList(){
@@ -840,10 +854,10 @@ function buildMissionList(){
 function init3D(){
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xbfefff);
-  scene.fog = new THREE.Fog(0xbfefff, 35, 110);
+  scene.fog = new THREE.Fog(0xbfefff, 55, 150);
 
   camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-  camera.position.set(0, playerHeight, 8);
+  camera.position.set(0, playerHeight, 18);
 
   renderer = new THREE.WebGLRenderer({antialias:true});
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -878,8 +892,8 @@ function init3D(){
   document.addEventListener("mousemove", e=>{
     if(!mouseLocked) return;
     yaw -= e.movementX * 0.0022;
-    pitch -= e.movementY * 0.0022;
-    pitch = Math.max(-1.2, Math.min(1.2, pitch));
+    pitch -= e.movementY * 0.0030;
+    pitch = Math.max(-1.45, Math.min(1.35, pitch));
   });
 
   animate();
@@ -899,6 +913,15 @@ function createWorld(){
   const road2 = new THREE.Mesh(new THREE.BoxGeometry(160, .04, 14), roadMat);
   road2.position.set(0,.03,0);
   scene.add(road2);
+
+  // Bright central rescue plaza so the first view is less empty.
+  const plaza = new THREE.Mesh(
+    new THREE.CylinderGeometry(12,12,.06,48),
+    new THREE.MeshLambertMaterial({color:0xe8fff4})
+  );
+  plaza.position.set(0,.09,0);
+  plaza.receiveShadow = true;
+  scene.add(plaza);
 
   const lineMat = new THREE.MeshBasicMaterial({color:0xffffff});
   for(let i=-70;i<=70;i+=12){
@@ -995,12 +1018,12 @@ function makeSign(text, color){
 function createMissionPods(){
   animals.forEach(a=>scene.remove(a.group));
   animals = [];
-  const radius = 30;
+  const radius = 20;
   allMissions.forEach((m, idx)=>{
     const wi = m.worldIndex;
     const inWorldIndex = allMissions.slice(0,idx).filter(x=>x.worldIndex===wi).length;
     const angle = (wi/WORLDS.length)*Math.PI*2 + (inWorldIndex-1.5)*0.11;
-    const r = radius + inWorldIndex*3.5;
+    const r = radius + inWorldIndex*2.7;
     const x = Math.cos(angle)*r;
     const z = Math.sin(angle)*r;
     const pod = makeAnimalPod(m, x, z);
@@ -1040,6 +1063,7 @@ function roundRect(ctx, x, y, w, h, r, fill, stroke) {
 function makeAnimalPod(m, x, z){
   const group = new THREE.Group();
   group.position.set(x,0,z);
+  group.scale.set(1.35,1.35,1.35);
   const base = new THREE.Mesh(new THREE.CylinderGeometry(2.2,2.2,.35,24), new THREE.MeshLambertMaterial({color:WORLDS[m.worldIndex].color}));
   base.position.y=.18;
   group.add(base);
@@ -1278,6 +1302,34 @@ document.querySelectorAll(".pad button[data-key]").forEach(btn=>{
 });
 document.getElementById("fireBtn").addEventListener("pointerdown", e=>{ e.preventDefault(); fireRescueBeam(); });
 document.getElementById("lookBtn").addEventListener("pointerdown", e=>{ e.preventDefault(); renderer.domElement.requestPointerLock?.(); });
+
+document.getElementById("tiltUpBtn").addEventListener("pointerdown", e=>{ e.preventDefault(); pitch = Math.max(-1.45, pitch - 0.22); });
+document.getElementById("tiltDownBtn").addEventListener("pointerdown", e=>{ e.preventDefault(); pitch = Math.min(1.35, pitch + 0.22); });
+
+// Mobile/tablet drag-look: drag on the right side of the screen to look left/right/up/down.
+// This fixes the problem where pointer lock does not tilt well inside mobile browsers.
+const lookZone = document.getElementById("lookZone");
+lookZone.addEventListener("pointerdown", e=>{
+  e.preventDefault();
+  lookDrag.active = true;
+  lookDrag.x = e.clientX;
+  lookDrag.y = e.clientY;
+  lookZone.setPointerCapture?.(e.pointerId);
+});
+lookZone.addEventListener("pointermove", e=>{
+  if(!lookDrag.active) return;
+  e.preventDefault();
+  const dx = e.clientX - lookDrag.x;
+  const dy = e.clientY - lookDrag.y;
+  lookDrag.x = e.clientX;
+  lookDrag.y = e.clientY;
+  yaw -= dx * 0.006;
+  pitch -= dy * 0.006;
+  pitch = Math.max(-1.45, Math.min(1.35, pitch));
+});
+["pointerup","pointercancel","pointerleave"].forEach(type=>{
+  lookZone.addEventListener(type, ()=>{ lookDrag.active = false; });
+});
 
 buildMissionList();
 init3D();
