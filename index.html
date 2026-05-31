@@ -656,7 +656,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531m";
+const ASSET_VERSION = "20260531n";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -1029,6 +1029,87 @@ const algorithmTemplate = `
     .stepText{font-size:15px;}
     .algoSoundToggle{top:8px; left:8px; font-size:12px; padding:7px 9px;}
   }
+
+  /* ===== Mobile space saver for algorithm work ===== */
+  .matToggleRow{
+    margin:10px 0 0;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .btn.matToggle{
+    background:#fff7ed;
+    border-color:#fed7aa;
+    color:#9a3412;
+  }
+  body.matHidden .stageCard{
+    display:none !important;
+  }
+  body.matHidden .leftCol{
+    display:none !important;
+  }
+  body.matHidden .mainGrid{
+    grid-template-columns:1fr !important;
+  }
+  body.matHidden .rightRail{
+    grid-column:1 / -1;
+  }
+  body.matHidden .algoWrap{
+    max-height:none;
+  }
+  body.matHidden .algoActionPanel{
+    position:sticky;
+    bottom:0;
+    z-index:40;
+    box-shadow:0 -8px 22px rgba(15,42,74,.10);
+  }
+
+  @media(max-width:760px){
+    .matToggleRow{
+      position:sticky;
+      top:48px;
+      z-index:45;
+      background:rgba(255,255,255,.95);
+      padding:6px 0;
+      border-bottom:1px solid #e5eef8;
+    }
+    .btn.matToggle{
+      width:100%;
+      font-size:15px;
+      padding:10px 12px;
+    }
+    .algoActionPanel{
+      position:sticky;
+      bottom:0;
+      z-index:40;
+      box-shadow:0 -8px 22px rgba(15,42,74,.10);
+    }
+    body.matHidden .rightRail{
+      gap:10px;
+    }
+    body.matHidden .algoWrap{
+      padding:8px;
+    }
+    body.matHidden .algoActionNote{
+      font-size:12px;
+      padding:8px;
+    }
+    body.matHidden .algoActionBtns{
+      margin:8px 0 0;
+    }
+    body.matHidden .btn.prominent{
+      width:100%;
+      font-size:20px;
+      padding:14px 18px;
+    }
+    body.matHidden .railCard:nth-child(2){
+      padding:10px;
+    }
+    body.matHidden .stepBox{
+      padding:10px 12px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -1040,6 +1121,7 @@ const algorithmTemplate = `
       <div class="sub">Place Value Discs — single mat, exact algorithm style</div>
     </div>
     <div class="topActions">
+      <button class="btn matToggle" id="btnMatToggle" type="button">👁️ Hide Place Value Mat</button>
       <div class="exprPill">
         <div class="big"><span id="pillDividend">246</span> ÷ <span id="pillDivisor">2</span> =</div>
         <div class="exprAns" id="pillAns">?</div>
@@ -1065,6 +1147,9 @@ const algorithmTemplate = `
     <aside class="rightRail">
       <div class="card railCard" id="algoCard">
         <h3>Algorithm</h3>
+        <div class="matToggleRow">
+          <button class="btn matToggle" id="btnMatToggle2" type="button">👁️ Hide Place Value Mat</button>
+        </div>
         <div class="smallMuted" style="margin:-2px 0 10px">
           Fill in <b>all digits</b> in the algorithm (quotient + working). Fill the <b>red-boxed spaces</b> first, then press <b>Check Step</b>.
         </div>
@@ -1569,6 +1654,38 @@ const algorithmTemplate = `
       try{ parent.postMessage({type:"toggleSound"}, "*"); }catch(e){ localSoundOn = !localSoundOn; syncAlgoSoundButton(); }
     });
   }
+
+
+  function isSmallScreen(){
+    return window.matchMedia && window.matchMedia("(max-width: 760px)").matches;
+  }
+
+  function setMatHidden(hidden){
+    document.body.classList.toggle("matHidden", !!hidden);
+    try{ sessionStorage.setItem("divisionMissionHideMat", hidden ? "1" : "0"); }catch(e){}
+    const text = hidden ? "👁️ Show Place Value Mat" : "👁️ Hide Place Value Mat";
+    const b1 = document.getElementById("btnMatToggle");
+    const b2 = document.getElementById("btnMatToggle2");
+    if(b1) b1.textContent = text;
+    if(b2) b2.textContent = text;
+    setTimeout(()=>requestAnimationFrame(fitAll), 40);
+  }
+
+  function toggleMat(){
+    setMatHidden(!document.body.classList.contains("matHidden"));
+  }
+
+  const matBtn1 = document.getElementById("btnMatToggle");
+  const matBtn2 = document.getElementById("btnMatToggle2");
+  if(matBtn1) matBtn1.addEventListener("click", toggleMat);
+  if(matBtn2) matBtn2.addEventListener("click", toggleMat);
+
+  // On phones, default to hidden so the algorithm and Check Step button are visible.
+  let savedHideMat = null;
+  try{ savedHideMat = sessionStorage.getItem("divisionMissionHideMat"); }catch(e){}
+  if(savedHideMat === "1") setMatHidden(true);
+  else if(savedHideMat === "0") setMatHidden(false);
+  else if(isSmallScreen()) setMatHidden(true);
 
   ui.btnCheck.addEventListener('click', doStep);
   ui.btnHint.addEventListener('click', ()=>{
