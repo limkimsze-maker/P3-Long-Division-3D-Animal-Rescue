@@ -116,6 +116,143 @@
     width:100%; height:100%; border:0; background:white;
   }
 
+  .rangerOverlay{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(8,24,48,.46);
+    backdrop-filter:blur(3px);
+    padding:18px;
+  }
+  .rangerOverlay.show{display:flex !important;}
+  .rangerCard{
+    width:min(760px,96vw);
+    background:#fff;
+    color:#0f2a4a;
+    border-radius:28px;
+    box-shadow:0 24px 70px rgba(0,0,0,.28);
+    border:3px solid #bdefff;
+    padding:22px;
+    text-align:center;
+  }
+  .rangerRow{
+    display:grid;
+    grid-template-columns:190px 1fr;
+    gap:18px;
+    align-items:center;
+  }
+  .rangerArt{
+    width:180px;
+    height:180px;
+    margin:auto;
+    border-radius:28px;
+    background:linear-gradient(180deg,#eafff5,#dff7ff);
+    border:3px solid #ccefff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+  .rangerFace{position:relative; width:140px; height:150px;}
+  .rangerHat{
+    position:absolute; left:25px; top:4px; width:90px; height:35px;
+    background:#2f8f4e; border-radius:16px 16px 8px 8px;
+    box-shadow:0 10px 0 #1f6f3b;
+  }
+  .rangerHat:before{
+    content:""; position:absolute; left:-18px; top:26px; width:126px; height:14px;
+    background:#1f6f3b; border-radius:999px;
+  }
+  .rangerHead{
+    position:absolute; left:32px; top:43px; width:76px; height:76px;
+    background:#ffd7ad; border-radius:42% 42% 48% 48%;
+    border:3px solid #b97a56;
+  }
+  .rangerEye{position:absolute; top:72px; width:9px; height:9px; background:#0f2a4a; border-radius:50%;}
+  .rangerEye.left{left:54px}.rangerEye.right{left:84px}
+  .rangerSmile{
+    position:absolute; left:63px; top:90px; width:25px; height:12px;
+    border-bottom:4px solid #8a3f2a; border-radius:0 0 20px 20px;
+  }
+  .rangerBody{
+    position:absolute; left:34px; top:114px; width:74px; height:36px;
+    background:#41b66f; border-radius:18px 18px 8px 8px;
+    border:3px solid #1f6f3b;
+  }
+  .rangerBadge{
+    position:absolute; left:66px; top:121px; width:16px; height:16px;
+    background:#ffd166; clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 56%,79% 91%,50% 70%,21% 91%,32% 56%,2% 35%,39% 35%);
+  }
+  .rangerTitle{
+    font-size:34px;
+    line-height:1.05;
+    font-weight:1000;
+    margin:0 0 8px;
+    color:#0f2a4a;
+  }
+  .rangerMsg{
+    font-size:21px;
+    line-height:1.28;
+    margin:0 0 14px;
+    color:#40556f;
+    font-weight:800;
+  }
+  .rangerAnimals{
+    display:flex;
+    justify-content:center;
+    gap:7px;
+    flex-wrap:wrap;
+    margin:12px 0;
+  }
+  .rangerAnimals img{
+    width:42px;
+    height:42px;
+    object-fit:contain;
+    background:#f6fbff;
+    border:1px solid #dbefff;
+    border-radius:12px;
+    padding:3px;
+  }
+  .rangerBtn{
+    border:0;
+    border-radius:18px;
+    padding:14px 22px;
+    background:#22c55e;
+    color:#fff;
+    font-size:20px;
+    font-weight:1000;
+    box-shadow:0 8px 0 #15803d;
+    cursor:pointer;
+  }
+  .rangerBtn:active{transform:translateY(2px); box-shadow:0 6px 0 #15803d}
+  .finalRanger .rangerCard{border-color:#ffd166; background:linear-gradient(180deg,#fffdf5,#ffffff)}
+  .finalRanger .rangerTitle{font-size:44px; color:#b45309}
+  .finalTrophy{font-size:70px; line-height:1; margin-bottom:8px;}
+
+  .confettiPiece{
+    position:fixed;
+    width:10px;
+    height:14px;
+    border-radius:3px;
+    top:-20px;
+    z-index:10000;
+    pointer-events:none;
+  }
+
+  @media(max-width:720px){
+    .rangerCard{padding:16px; border-radius:22px}
+    .rangerRow{grid-template-columns:1fr; gap:10px}
+    .rangerArt{width:130px; height:130px}
+    .rangerFace{transform:scale(.75)}
+    .rangerTitle{font-size:27px}
+    .rangerMsg{font-size:17px}
+    .rangerAnimals img{width:32px; height:32px}
+    .finalRanger .rangerTitle{font-size:32px}
+  }
+
   @media(max-width:720px){
     .hud{min-width:210px; padding:8px 10px; width:calc(100vw - 24px); max-height:118px; overflow:hidden}
     .hud h1{font-size:14px}
@@ -148,7 +285,7 @@
 </div>
 
 <div class="bottomTip" id="bottomTip">
-  Walk to the glowing PNG animal rescue pod.
+  Walk near a glowing animal pod or cast a web to start a rescue.
   <span class="sub">Drag on the right side to look around, or use ▲ ▼ tilt buttons.</span>
 </div>
 
@@ -172,7 +309,7 @@
   <div class="card">
     <h1 class="title">3D Animal Rescue Division Mission</h1>
     <p class="lead">
-      The game now uses your uploaded <b>30 PNG animals</b> in sequence. Pupils complete 30 animal rescue missions across 7 worlds, one animal at a time.
+      The game now uses your uploaded <b>30 PNG animals</b> in sequence. Each world is bigger and shows all animals for that stage. Pupils cast a rescue web, then solve the guided long-division mission.
     </p>
     <div class="worldGrid">
       <div class="worldCard"><b>World 1:</b> Division Facts<br>8 ÷ 2 = 4</div>
@@ -197,11 +334,46 @@
 </div>
 
 <div class="screen" id="winScreen" style="display:none;">
-  <div class="card" style="text-align:center;">
-    <div style="font-size:92px;">🏆</div>
-    <h1 class="title">I AM A DIVISION RESCUE HERO!</h1>
-    <p class="lead">All animals have been rescued. You have practised the full long-division progression using your preferred algorithm.</p>
+  <div class="card finalRanger" style="text-align:center;">
+    <div class="finalTrophy">🏆</div>
+    <div class="rangerArt" style="margin-bottom:14px;">
+      <div class="rangerFace">
+        <div class="rangerHat"></div>
+        <div class="rangerHead"></div>
+        <div class="rangerEye left"></div>
+        <div class="rangerEye right"></div>
+        <div class="rangerSmile"></div>
+        <div class="rangerBody"></div>
+        <div class="rangerBadge"></div>
+      </div>
+    </div>
+    <h1 class="title" style="font-size:44px;">I AM A GREAT DIVISION RANGER!</h1>
+    <p class="lead">All 30 animals have been rescued. You completed every long-division world with courage, patience and strong step-by-step thinking.</p>
     <button class="btn" id="restartBtn">Play Again</button>
+  </div>
+</div>
+
+<div class="rangerOverlay" id="rangerOverlay">
+  <div class="rangerCard">
+    <div class="rangerRow">
+      <div class="rangerArt">
+        <div class="rangerFace">
+          <div class="rangerHat"></div>
+          <div class="rangerHead"></div>
+          <div class="rangerEye left"></div>
+          <div class="rangerEye right"></div>
+          <div class="rangerSmile"></div>
+          <div class="rangerBody"></div>
+          <div class="rangerBadge"></div>
+        </div>
+      </div>
+      <div>
+        <h2 class="rangerTitle" id="rangerTitle">World Complete!</h2>
+        <p class="rangerMsg" id="rangerMsg">Great effort, Division Ranger!</p>
+        <div class="rangerAnimals" id="rangerAnimals"></div>
+        <button class="rangerBtn" id="rangerContinueBtn">Continue</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -252,7 +424,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531a";
+const ASSET_VERSION = "20260531b";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -522,6 +694,34 @@ const modelCache = {};
   function playCorrect(){beep(660,.08,'sine',.1); setTimeout(()=>beep(880,.09,'sine',.1),80)}
   function playSwish(){beep(420,.06,'triangle',.07)}
   function playTada(){beep(523,.1,'sine',.1); setTimeout(()=>beep(659,.1,'sine',.1),110); setTimeout(()=>beep(784,.16,'sine',.1),220)}
+
+  const soundFiles = {
+    correct: "./correct.mp3",
+    wrong: "./wrong.mp3",
+    tada: "./tada.mp3"
+  };
+  const soundCache = {};
+  function playSound(name, fallbackFn){
+    try{
+      if(!soundCache[name]){
+        soundCache[name] = new Audio(soundFiles[name]);
+        soundCache[name].preload = "auto";
+      }
+      const a = soundCache[name];
+      a.pause();
+      a.currentTime = 0;
+      const p = a.play();
+      if(p && p.catch) p.catch(()=>{ if(fallbackFn) fallbackFn(); });
+    }catch(e){
+      if(fallbackFn) fallbackFn();
+    }
+  }
+  const beepWrong = playWrong;
+  const beepCorrect = playCorrect;
+  const beepTada = playTada;
+  playWrong = function(){ playSound("wrong", beepWrong); };
+  playCorrect = function(){ playSound("correct", beepCorrect); };
+  playTada = function(){ playSound("tada", beepTada); };
 
   const clampInt = (v,min,max)=>{ let n=parseInt(String(v??'').trim(),10); if(!Number.isFinite(n)) n=min; n=Math.floor(n); return Math.max(min,Math.min(max,n)); };
   const wait = ms => new Promise(res=>setTimeout(res,ms));
@@ -1165,53 +1365,67 @@ function init3D(){
 }
 
 function createWorld(){
-  // One-animal mission arena using 2D PNG animals in a 3D rescue enclosure.
+  // Bigger stage arena. Each world shows all animals for that world.
   const groundMat = new THREE.MeshLambertMaterial({color:0xeafff4});
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(42,34), groundMat);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(90,70), groundMat);
   ground.rotation.x = -Math.PI/2;
-  ground.position.z = -6;
+  ground.position.z = -18;
   ground.receiveShadow = true;
   scene.add(ground);
 
-  const walkway = new THREE.Mesh(
-    new THREE.BoxGeometry(18,.05,2.2),
-    new THREE.MeshLambertMaterial({color:0xb7f3ff})
-  );
-  walkway.position.set(0,.07,-1.2);
-  walkway.receiveShadow = true;
-  scene.add(walkway);
+  // Wide paths for exploration.
+  const pathMat = new THREE.MeshLambertMaterial({color:0xb7f3ff});
+  const mainPath = new THREE.Mesh(new THREE.BoxGeometry(70,.05,2.6), pathMat);
+  mainPath.position.set(0,.07,-4);
+  mainPath.receiveShadow = true;
+  scene.add(mainPath);
 
-  const pad = new THREE.Mesh(
-    new THREE.CylinderGeometry(4.0,4.0,.08,48),
-    new THREE.MeshLambertMaterial({color:0xfff6d6})
-  );
-  pad.position.set(0,.05,-8);
-  pad.receiveShadow = true;
-  scene.add(pad);
+  const crossPath = new THREE.Mesh(new THREE.BoxGeometry(2.6,.05,42), pathMat);
+  crossPath.position.set(0,.08,-20);
+  crossPath.receiveShadow = true;
+  scene.add(crossPath);
 
+  // Soft central world plaza.
+  const plaza = new THREE.Mesh(
+    new THREE.CylinderGeometry(9.5,9.5,.08,48),
+    new THREE.MeshLambertMaterial({color:0xf7fff7})
+  );
+  plaza.position.set(0,.06,-15);
+  plaza.receiveShadow = true;
+  scene.add(plaza);
+
+  // Outer decorative fence.
   const fenceMat = new THREE.MeshLambertMaterial({color:0xb98750});
-  for(let x=-16; x<=16; x+=2){
-    const post = new THREE.Mesh(new THREE.BoxGeometry(.25,1.0,.25), fenceMat);
-    post.position.set(x,.5,-14);
-    scene.add(post);
+  for(let x=-38; x<=38; x+=3){
+    const back = new THREE.Mesh(new THREE.BoxGeometry(.28,1.0,.28), fenceMat);
+    back.position.set(x,.5,-50);
+    scene.add(back);
+    const front = new THREE.Mesh(new THREE.BoxGeometry(.28,1.0,.28), fenceMat);
+    front.position.set(x,.5,12);
+    scene.add(front);
   }
-  for(let z=-13; z<=2; z+=2){
-    [-17,17].forEach(x=>{
-      const post = new THREE.Mesh(new THREE.BoxGeometry(.25,1.0,.25), fenceMat);
+  for(let z=-48; z<=10; z+=3){
+    [-40,40].forEach(x=>{
+      const post = new THREE.Mesh(new THREE.BoxGeometry(.28,1.0,.28), fenceMat);
       post.position.set(x,.5,z);
       scene.add(post);
     });
   }
 
-  makeTree(-16,-16);
-  makeTree(16,-16);
-  makeTree(-18,1);
-  makeTree(18,1);
+  // Trees around the edges, not blocking mission animals.
+  const treePositions = [
+    [-35,-44],[-25,-48],[-12,-46],[12,-46],[25,-48],[35,-44],
+    [-36,-30],[36,-30],[-38,-12],[38,-12],[-34,5],[34,5],
+    [-22,8],[22,8]
+  ];
+  treePositions.forEach(([x,z])=>makeTree(x,z));
 
+  // Flowers near the front and side.
   const flowerColors = [0xff6fae,0xffd166,0x8d5cf6,0x60a5fa,0xffffff];
-  for(let i=0;i<18;i++){
-    const x = -12 + Math.random()*24;
-    const z = 0.2 + Math.random()*3;
+  for(let i=0;i<42;i++){
+    const side = i % 2 === 0 ? -1 : 1;
+    const x = side * (8 + Math.random()*24);
+    const z = -2 - Math.random()*28;
     const stem = new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.28,6), new THREE.MeshLambertMaterial({color:0x238a4b}));
     stem.position.set(x,.14,z);
     scene.add(stem);
@@ -1220,7 +1434,8 @@ function createWorld(){
     scene.add(bloom);
   }
 
-  makeLamp(0,-12.5);
+  // Lamps for atmosphere.
+  [[-18,-8],[18,-8],[-18,-30],[18,-30],[0,-42]].forEach(([x,z])=>makeLamp(x,z));
 }
 
 function makeTree(x,z){
@@ -1270,19 +1485,36 @@ function createMissionPods(){
   animals.forEach(a=>scene.remove(a.group));
   animals = [];
 
-  const mission = getActiveMissionForWorld();
-  if (!mission) return;
+  const visibleMissions = getCurrentWorldMissions().filter(m => !completedMissionIds.has(m.id));
+  if (!visibleMissions.length) return;
 
-  const pod = makeAnimalPod(mission, 0, -8, 0);
-  scene.add(pod.group);
-  animals.push(pod);
+  const count = visibleMissions.length;
 
-  camera.position.set(0, playerHeight, 5.6);
+  // Layout depends on number of animals in the current world.
+  // All animals in this world appear together.
+  let positions = [];
+  if(count <= 3){
+    positions = [[-10,-14],[0,-17],[10,-14]];
+  }else if(count === 4){
+    positions = [[-11,-12],[11,-12],[-11,-26],[11,-26]];
+  }else if(count === 5){
+    positions = [[-14,-10],[0,-13],[14,-10],[-8,-28],[8,-28]];
+  }else{
+    positions = [[-16,-10],[0,-12],[16,-10],[-16,-26],[0,-30],[16,-26]];
+  }
+
+  visibleMissions.forEach((m, idx)=>{
+    const [x,z] = positions[idx] || [0, -16 - idx*5];
+    const pod = makeAnimalPod(m, x, z, idx);
+    scene.add(pod.group);
+    animals.push(pod);
+  });
+
+  // Start far enough to see the whole current world.
+  camera.position.set(0, playerHeight, 5.8);
   yaw = 0;
-  pitch = -0.06;
+  pitch = -0.07;
 }
-
-
 
 function roundRectSafe(ctx, x, y, w, h, r, fill, stroke) {
   ctx.beginPath();
@@ -1536,46 +1768,135 @@ function closeMission(){
   document.getElementById("algoFrame").srcdoc = "";
 }
 
+
+function burstConfetti(count=90){
+  const colors = ["#ff4d6d","#ffd166","#06d6a0","#4dabf7","#845ef7","#ff922b"];
+  for(let i=0;i<count;i++){
+    const d = document.createElement("div");
+    d.className = "confettiPiece";
+    d.style.left = Math.random()*100 + "vw";
+    d.style.background = colors[i % colors.length];
+    d.style.transform = "rotate(" + (Math.random()*360) + "deg)";
+    document.body.appendChild(d);
+    const endY = window.innerHeight + 80;
+    const drift = (Math.random()*2-1) * 140;
+    const duration = 1100 + Math.random()*900;
+    d.animate([
+      { transform:`translate(0,0) rotate(0deg)`, opacity:1 },
+      { transform:`translate(${drift}px,${endY}px) rotate(${540+Math.random()*540}deg)`, opacity:.9 }
+    ], {duration, easing:"cubic-bezier(.18,.8,.28,1)", fill:"forwards"});
+    setTimeout(()=>d.remove(), duration+120);
+  }
+}
+
+
+function getWorldCompletedMissions(worldIndex){
+  return allMissions.filter(m => m.worldIndex === worldIndex && completedMissionIds.has(m.id));
+}
+
+function showRangerStageComplete(worldIndex, onContinue){
+  const overlay = document.getElementById("rangerOverlay");
+  const title = document.getElementById("rangerTitle");
+  const msg = document.getElementById("rangerMsg");
+  const animalsBox = document.getElementById("rangerAnimals");
+  const btn = document.getElementById("rangerContinueBtn");
+
+  if(!overlay || !title || !msg || !animalsBox || !btn){
+    alert((WORLDS[worldIndex]?.name || "World") + " Complete! Great job, Division Ranger!");
+    if(onContinue) onContinue();
+    return;
+  }
+
+  const world = WORLDS[worldIndex];
+  const completed = getWorldCompletedMissions(worldIndex);
+  title.textContent = `${world.name} Complete!`;
+
+  const speeches = [
+    "Fantastic start, Division Ranger! You rescued the animals by using careful division facts.",
+    "Excellent work! You kept your steps neat and showed strong long-division focus.",
+    "Brilliant thinking! When the first digit was too small, you stayed calm and found the right move.",
+    "Great stamina! Regrouping is tough, but you pushed through step by step.",
+    "Amazing effort! You handled zeroes like a careful Division Ranger.",
+    "Well done! Remainders did not stop you from completing the rescue.",
+    "Outstanding mastery! You are ready for any long-division mission."
+  ];
+  msg.textContent = speeches[worldIndex] || "Great effort, Division Ranger! Keep going.";
+
+  animalsBox.innerHTML = "";
+  completed.forEach(m=>{
+    const file = getAnimalFileForMission(m);
+    const img = document.createElement("img");
+    img.src = "./" + file + "?v=" + (typeof ASSET_VERSION !== "undefined" ? ASSET_VERSION : "20260531a");
+    img.alt = niceAnimalName(file);
+    img.title = img.alt;
+    animalsBox.appendChild(img);
+  });
+
+  overlay.style.display = "flex";
+  overlay.classList.add("show");
+
+  btn.onclick = () => {
+    overlay.classList.remove("show");
+    overlay.style.display = "none";
+    if(onContinue) onContinue();
+  };
+
+  playTada();
+  burstConfetti(120);
+}
+
 function onAlgorithmComplete(){
   if (!activeMission) return;
+
+  const justCompletedMission = activeMission;
   completedMissionIds.add(activeMission.id);
   score++;
   updateHUD();
-  rescueAnimalVisual(activeMission.id);
-  playTada();
+  rescueAnimalVisual(justCompletedMission.id);
+  playCorrect();
+  burstConfetti(45);
 
   setTimeout(()=>{
     closeMission();
 
-    if (isCurrentWorldComplete()) {
-      if (currentWorldIndex < WORLDS.length - 1) {
-        currentWorldIndex++;
-        createMissionPods();
-        updateHUD();
-        const next = getActiveMissionForWorld();
-        document.getElementById("bottomTip").innerHTML =
-          "<b>" + WORLDS[currentWorldIndex].name + " unlocked!</b><span class='sub'>Next mission: " +
-          (next ? ("Save the " + niceAnimalName(getAnimalFileForMission(next)) + ": " + next.dividend + " ÷ " + next.divisor) : "") + "</span>";
-        playTada();
-      } else {
-        document.getElementById("winScreen").style.display = "flex";
-        playTada();
-      }
-    } else {
-      // Same world, next mission/animal appears.
-      createMissionPods();
-      updateHUD();
-      const next = getActiveMissionForWorld();
-      document.getElementById("bottomTip").innerHTML =
-        "<b>Next rescue mission!</b><span class='sub'>" +
-        (next ? ("Save the " + niceAnimalName(getAnimalFileForMission(next)) + ": " + next.dividend + " ÷ " + next.divisor) : "Continue") +
-        "</span>";
+    const completedWorldIndex = currentWorldIndex;
+    const worldJustCompleted = isCurrentWorldComplete();
+
+    if (worldJustCompleted) {
+      showRangerStageComplete(completedWorldIndex, () => {
+        if (currentWorldIndex < WORLDS.length - 1) {
+          currentWorldIndex++;
+          createMissionPods();
+          updateHUD();
+          const next = getActiveMissionForWorld();
+          document.getElementById("bottomTip").innerHTML =
+            "<b>" + WORLDS[currentWorldIndex].name + " unlocked!</b><span class='sub'>Next rescue: " +
+            (next ? ("Save the " + niceAnimalName(getAnimalFileForMission(next)) + ": " + next.dividend + " ÷ " + next.divisor) : "") + "</span>";
+        } else {
+          document.getElementById("winScreen").style.display = "flex";
+          playTada();
+          burstConfetti(180);
+        }
+      });
+      return;
     }
+
+    createMissionPods();
+    updateHUD();
+    const next = getActiveMissionForWorld();
+    document.getElementById("bottomTip").innerHTML =
+      "<b>Animal rescued!</b><span class='sub'>" +
+      (next ? ("Save the " + niceAnimalName(getAnimalFileForMission(next)) + ": " + next.dividend + " ÷ " + next.divisor) : "Continue") +
+      "</span>";
   }, 900);
 }
 
 window.addEventListener("message", (e)=>{
-  if (e.data && e.data.type === "algorithmComplete") onAlgorithmComplete();
+  if (!e.data) return;
+  if (e.data.type === "algorithmComplete") onAlgorithmComplete();
+  if (e.data.type === "playCorrect") playCorrect();
+  if (e.data.type === "playWrong") playWrong();
+  if (e.data.type === "playTada") playTada();
 });
 
 function rescueAnimalVisual(missionId){
@@ -1621,35 +1942,98 @@ function checkNearPods(){
   if(nearest && dist < 5.0){
     document.getElementById("bottomTip").innerHTML = 'Press Click/F or tap RESCUE to start: <b>' + nearest.mission.dividend + ' ÷ ' + nearest.mission.divisor + '</b><span class="sub">' + nearest.mission.focus + '</span>';
   }else{
-    document.getElementById("bottomTip").innerHTML = 'One PNG animal appears at a time. Complete the rescue, then the next animal appears.<span class="sub">Drag on the right side to look around. Tap RESCUE near an enclosure.</span>';
+    document.getElementById("bottomTip").innerHTML = 'All animals for this world are shown. Cast a web at the animal you want to rescue.<span class="sub">Drag on the right side to look around. Tap RESCUE near an enclosure.</span>';
   }
 }
+
+function castWebEffect(targetPos){
+  // Child-friendly rescue web: white strands fly from the camera to the target.
+  const start = camera.position.clone();
+  const end = targetPos.clone().add(new THREE.Vector3(0,2.0,0));
+  const group = new THREE.Group();
+  scene.add(group);
+
+  const mat = new THREE.LineBasicMaterial({color:0xffffff, transparent:true, opacity:.95});
+  const mainGeom = new THREE.BufferGeometry().setFromPoints([start, end]);
+  const mainLine = new THREE.Line(mainGeom, mat);
+  group.add(mainLine);
+
+  // Web spokes near target.
+  const spokeMat = new THREE.LineBasicMaterial({color:0xe0f7ff, transparent:true, opacity:.92});
+  for(let i=0;i<10;i++){
+    const angle = (i/10)*Math.PI*2;
+    const r = 0.35 + (i%3)*0.18;
+    const p1 = end.clone();
+    const p2 = end.clone().add(new THREE.Vector3(Math.cos(angle)*r, Math.sin(angle)*r, 0));
+    const geom = new THREE.BufferGeometry().setFromPoints([p1,p2]);
+    group.add(new THREE.Line(geom, spokeMat));
+  }
+
+  // Small web ring.
+  const ringPts = [];
+  for(let i=0;i<=32;i++){
+    const a = (i/32)*Math.PI*2;
+    ringPts.push(end.clone().add(new THREE.Vector3(Math.cos(a)*.65, Math.sin(a)*.65, 0)));
+  }
+  group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ringPts), spokeMat));
+
+  group.children.forEach((obj,idx)=>{
+    obj.scale.set(.05,.05,.05);
+    obj.position.copy(start.clone().multiplyScalar(.95).add(end.clone().multiplyScalar(.05)).sub(end));
+    obj.animateStart = performance.now() + idx*8;
+  });
+
+  const t0 = performance.now();
+  function animateWeb(){
+    const t = (performance.now()-t0)/260;
+    const s = Math.min(1,t);
+    group.children.forEach(obj=>{
+      obj.scale.setScalar(s);
+      obj.position.lerp(new THREE.Vector3(0,0,0), .35);
+      if(obj.material) obj.material.opacity = Math.max(0, 1 - Math.max(0,t-1)*2);
+    });
+    if(t < 1.5) requestAnimationFrame(animateWeb);
+    else scene.remove(group);
+  }
+  animateWeb();
+}
+
 function fireRescueBeam(){
   if(document.getElementById("startScreen").style.display !== "none") return;
   if(document.getElementById("missionPanel").style.display === "flex") return;
-  playTone(880,.05,"square");
-  const beamGeom = new THREE.CylinderGeometry(.04,.04,8,8);
-  const beamMat = new THREE.MeshBasicMaterial({color:0xfff27a});
-  const beam = new THREE.Mesh(beamGeom, beamMat);
-  beam.rotation.x = Math.PI/2;
-  const dir = new THREE.Vector3();
-  camera.getWorldDirection(dir);
-  beam.position.copy(camera.position).add(dir.clone().multiplyScalar(4));
-  beam.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir);
-  scene.add(beam);
-  setTimeout(()=>scene.remove(beam), 90);
+
+  playSwish();
 
   raycaster.setFromCamera({x:0,y:0}, camera);
   const podMeshes = animals.filter(p=>!p.completed).map(p=>p.cage);
   const hits = raycaster.intersectObjects(podMeshes, false);
+
   if(hits.length){
     const cage = hits[0].object;
     const pod = animals.find(p=>p.cage === cage);
-    if(pod) openMission(pod.mission);
+    if(pod){
+      castWebEffect(pod.group.position);
+      setTimeout(()=>openMission(pod.mission), 220);
+    }
     return;
   }
-  const near = animals.find(p=>!p.completed && p.group.position.distanceTo(camera.position)<5.2);
-  if(near) openMission(near.mission);
+
+  // If pupil is near a pod, cast the web to the nearest animal.
+  const near = animals
+    .filter(p=>!p.completed)
+    .sort((a,b)=>a.group.position.distanceTo(camera.position)-b.group.position.distanceTo(camera.position))[0];
+
+  if(near && near.group.position.distanceTo(camera.position)<6.5){
+    castWebEffect(near.group.position);
+    setTimeout(()=>openMission(near.mission), 220);
+    return;
+  }
+
+  // Missed web: cast forward briefly so the action is visible.
+  const dir = new THREE.Vector3();
+  camera.getWorldDirection(dir);
+  castWebEffect(camera.position.clone().add(dir.multiplyScalar(8)));
+  playWrong();
 }
 
 function animate(){
