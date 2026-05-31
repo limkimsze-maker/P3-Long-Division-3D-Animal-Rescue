@@ -144,7 +144,7 @@
   <div class="card">
     <h1 class="title">3D Animal Rescue Division Mission</h1>
     <p class="lead">
-      The game now shows <b>one animal rescue mission at a time</b>. Pupils complete 29 missions across 7 worlds, with one clear animal and one division question on screen.
+      The game now uses your uploaded <b>30 PNG animals</b>. Pupils complete one animal rescue mission at a time across 7 worlds.
     </p>
     <div class="worldGrid">
       <div class="worldCard"><b>World 1:</b> Division Facts<br>8 ÷ 2 = 4</div>
@@ -424,15 +424,43 @@ const algorithmTemplate = `
 // Uploaded animal model files in your GitHub repository root.
 // IMPORTANT: GitHub filenames are case-sensitive. These must match exactly.
 // World 1 now uses Cow, Elephant and Horse.
-const animalModelsByWorld = [
-  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 1: exact current files: Cow, Elephant, horse
-  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 2: temporary until more animals are added
-  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 3: temporary until more animals are added
-  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 4: temporary until more animals are added
-  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 5: temporary until more animals are added
-  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 6: temporary until more animals are added
-  ["Cow.glb", "Elephant.glb", "Horse.glb"]  // World 7: temporary until more animals are added
+const animalPngFiles = [
+  "cow.png",
+  "elephant.png",
+  "horse.png",
+  "monkey.png",
+  "moose.png",
+  "narwhal.png",
+  "owl.png",
+  "panda.png",
+  "parrot.png",
+  "penguin.png",
+  "pig.png",
+  "rabbit.png",
+  "rhino.png",
+  "sloth.png",
+  "snake.png",
+  "walrus.png",
+  "whale.png",
+  "zebra.png",
+  "bear.png",
+  "buffalo.png",
+  "chick.png",
+  "chicken.png",
+  "crocodile.png",
+  "dog.png",
+  "duck.png",
+  "frog.png",
+  "giraffe.png",
+  "goat.png",
+  "gorilla.png",
+  "hippo.png"
 ];
+
+// These are 2D PNG animals, placed as billboards in the 3D enclosure.
+// GitHub filenames are case-sensitive; keep the names lowercase as uploaded.
+const textureLoader = new THREE.TextureLoader();
+const textureCache = {};
 let gltfLoader = null;
 const modelCache = {};
   function ensureAudio(){ const Ctx = window.AudioContext || window.webkitAudioContext; if (!Ctx) return null; if (!audioCtx) audioCtx = new Ctx(); if (audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{}); return audioCtx; }
@@ -886,7 +914,7 @@ function cloneGLTFScene(source){
 }
 
 function fitModelToPod(model, targetHeight=1.8){
-  // Centre and scale the uploaded model so different GLB sizes appear consistently.
+  // Centre and scale the uploaded model so different PNG sizes appear consistently.
   model.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(model);
   const size = new THREE.Vector3();
@@ -926,11 +954,11 @@ function loadAnimalModel(fileName, group, localIndex=0){
   function normaliseAndAdd(source, usedFileName){
     const raw = cloneGLTFScene(source);
 
-    // Put the loaded GLB inside a wrapper.
-    // This fixes many GLB origin/centre problems because we move the raw model
+    // Put the loaded PNG inside a wrapper.
+    // This fixes many PNG origin/centre problems because we move the raw model
     // relative to the wrapper instead of trusting its original origin.
     const wrapper = new THREE.Group();
-    wrapper.name = "GLB_WRAPPER_" + usedFileName;
+    wrapper.name = "PNG_WRAPPER_" + usedFileName;
 
     raw.updateMatrixWorld(true);
     let box = new THREE.Box3().setFromObject(raw);
@@ -963,7 +991,7 @@ function loadAnimalModel(fileName, group, localIndex=0){
         obj.receiveShadow = true;
         obj.frustumCulled = false;
 
-        // Some GLBs have very dark materials under simple lighting.
+        // Some PNGs have very dark materials under simple lighting.
         // Keep original material, but make sure it is visible enough.
         if (obj.material) {
           obj.material.side = THREE.DoubleSide;
@@ -977,7 +1005,7 @@ function loadAnimalModel(fileName, group, localIndex=0){
     wrapper.rotation.y = Math.PI; // face player
     group.add(wrapper);
 
-    console.log("Loaded GLB:", usedFileName, "size:", size, "scale:", scale);
+    console.log("Loaded PNG:", usedFileName, "size:", size, "scale:", scale);
   }
 
   function tryLoad(index){
@@ -1003,7 +1031,7 @@ function loadAnimalModel(fileName, group, localIndex=0){
       },
       undefined,
       (err) => {
-        console.warn("Failed GLB candidate:", candidate, err);
+        console.warn("Failed PNG candidate:", candidate, err);
         tryLoad(index + 1);
       }
     );
@@ -1092,8 +1120,7 @@ function init3D(){
 }
 
 function createWorld(){
-  // One-animal mission arena.
-  // Pupils focus on only one animal and one division question at a time.
+  // One-animal mission arena using 2D PNG animals in a 3D rescue enclosure.
   const groundMat = new THREE.MeshLambertMaterial({color:0xeafff4});
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(42,34), groundMat);
   ground.rotation.x = -Math.PI/2;
@@ -1101,7 +1128,6 @@ function createWorld(){
   ground.receiveShadow = true;
   scene.add(ground);
 
-  // Main rescue path.
   const walkway = new THREE.Mesh(
     new THREE.BoxGeometry(18,.05,2.2),
     new THREE.MeshLambertMaterial({color:0xb7f3ff})
@@ -1110,7 +1136,6 @@ function createWorld(){
   walkway.receiveShadow = true;
   scene.add(walkway);
 
-  // One central enclosure pad.
   const pad = new THREE.Mesh(
     new THREE.CylinderGeometry(4.0,4.0,.08,48),
     new THREE.MeshLambertMaterial({color:0xfff6d6})
@@ -1119,7 +1144,6 @@ function createWorld(){
   pad.receiveShadow = true;
   scene.add(pad);
 
-  // Outer decorative fence, far enough not to block the animal.
   const fenceMat = new THREE.MeshLambertMaterial({color:0xb98750});
   for(let x=-16; x<=16; x+=2){
     const post = new THREE.Mesh(new THREE.BoxGeometry(.25,1.0,.25), fenceMat);
@@ -1134,13 +1158,11 @@ function createWorld(){
     });
   }
 
-  // Background trees only.
   makeTree(-16,-16);
   makeTree(16,-16);
   makeTree(-18,1);
   makeTree(18,1);
 
-  // Flowers in front, not near animal.
   const flowerColors = [0xff6fae,0xffd166,0x8d5cf6,0x60a5fa,0xffffff];
   for(let i=0;i<18;i++){
     const x = -12 + Math.random()*24;
@@ -1153,7 +1175,6 @@ function createWorld(){
     scene.add(bloom);
   }
 
-  // Light post behind the single animal.
   makeLamp(0,-12.5);
 }
 
@@ -1211,11 +1232,11 @@ function createMissionPods(){
   scene.add(pod.group);
   animals.push(pod);
 
-  // Start directly facing the one animal.
-  camera.position.set(0, playerHeight, 5.8);
+  camera.position.set(0, playerHeight, 5.6);
   yaw = 0;
-  pitch = -0.08;
+  pitch = -0.06;
 }
+
 
 
 function roundRectSafe(ctx, x, y, w, h, r, fill, stroke) {
@@ -1230,28 +1251,24 @@ function roundRectSafe(ctx, x, y, w, h, r, fill, stroke) {
   if(stroke) ctx.stroke();
 }
 
+
 function makeFloatingLabel(text){
   text = String(text || "").replace(/\\n/g, "\n");
   const canvas = document.createElement("canvas");
   canvas.width = 760;
   canvas.height = 220;
   const ctx = canvas.getContext("2d");
-
   ctx.fillStyle = "rgba(8,24,48,.88)";
   roundRectSafe(ctx, 16, 16, 728, 188, 24, true, false);
-
   ctx.strokeStyle = "rgba(255,255,255,.75)";
   ctx.lineWidth = 5;
   roundRectSafe(ctx, 16, 16, 728, 188, 24, false, true);
-
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 32px Comic Sans MS, Arial";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-
   const lines = text.split("\n").slice(0, 2);
   lines.forEach((line, i) => ctx.fillText(line, 380, 64 + i * 48));
-
   const tex = new THREE.CanvasTexture(canvas);
   return new THREE.Mesh(
     new THREE.PlaneGeometry(4.2, 1.2),
@@ -1259,18 +1276,102 @@ function makeFloatingLabel(text){
   );
 }
 
+function niceAnimalName(fileName){
+  return String(fileName || "")
+    .replace(".png","")
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function makeMissingAnimalCard(fileName){
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff7ed";
+  roundRectSafe(ctx, 28, 28, 456, 456, 44, true, false);
+  ctx.strokeStyle = "#ef4444";
+  ctx.lineWidth = 14;
+  roundRectSafe(ctx, 28, 28, 456, 456, 44, false, true);
+  ctx.fillStyle = "#7f1d1d";
+  ctx.font = "bold 48px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("Missing PNG", 256, 220);
+  ctx.font = "bold 34px Arial";
+  ctx.fillText(fileName, 256, 285);
+  const tex = new THREE.CanvasTexture(canvas);
+  return new THREE.Mesh(
+    new THREE.PlaneGeometry(3.0, 3.0),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide })
+  );
+}
+
+function loadAnimalPng(fileName, group){
+  const holder = new THREE.Group();
+  holder.name = "PNG_ANIMAL_" + fileName;
+  holder.position.set(0, 2.0, 0);
+  group.add(holder);
+
+  function addTexture(tex){
+    if ("encoding" in tex && THREE.sRGBEncoding) tex.encoding = THREE.sRGBEncoding;
+    tex.needsUpdate = true;
+
+    const image = tex.image || {};
+    const w = image.width || 1;
+    const h = image.height || 1;
+    const aspect = w / h;
+
+    const height = 3.1;
+    const width = Math.max(1.8, Math.min(3.4, height * aspect));
+
+    const backing = new THREE.Mesh(
+      new THREE.PlaneGeometry(width + .25, height + .25),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .18, side: THREE.DoubleSide })
+    );
+    backing.position.z = -0.02;
+    holder.add(backing);
+
+    const mat = new THREE.MeshBasicMaterial({
+      map: tex,
+      transparent: true,
+      side: THREE.DoubleSide,
+      alphaTest: 0.02
+    });
+
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(width, height), mat);
+    plane.position.set(0, 0, 0);
+    holder.add(plane);
+  }
+
+  if (textureCache[fileName]) {
+    addTexture(textureCache[fileName]);
+    return holder;
+  }
+
+  textureLoader.load(
+    "./" + fileName,
+    (tex) => {
+      textureCache[fileName] = tex;
+      addTexture(tex);
+    },
+    undefined,
+    () => {
+      const missing = makeMissingAnimalCard(fileName);
+      holder.add(missing);
+    }
+  );
+
+  return holder;
+}
+
 function makeAnimalPod(m, x, z, localIndex=0){
   const group = new THREE.Group();
   group.position.set(x,0,z);
-  group.scale.set(1.0,1.0,1.0);
 
-  const currentWorldMissions = getCurrentWorldMissions();
-  const localMissionIndex = currentWorldMissions.findIndex(mm => mm.id === m.id);
-  const worldModels = animalModelsByWorld[m.worldIndex] || ["Cow.glb", "Elephant.glb", "Horse.glb"];
-  const modelFile = worldModels[Math.max(0, localMissionIndex) % worldModels.length];
-  const shownName = modelFile ? modelFile.replace(".glb","") : m.animal;
+  const fileName = animalPngFiles[m.id % animalPngFiles.length];
+  const shownName = niceAnimalName(fileName);
 
-  // Clear central enclosure.
   const base = new THREE.Mesh(
     new THREE.CylinderGeometry(3.9,3.9,.10,48),
     new THREE.MeshLambertMaterial({color:0xf6fff6})
@@ -1278,7 +1379,6 @@ function makeAnimalPod(m, x, z, localIndex=0){
   base.position.y = .05;
   group.add(base);
 
-  // Low circular fence.
   const fenceMat = new THREE.MeshLambertMaterial({color:0xb98750});
   for(let i=0;i<18;i++){
     const a = (i/18)*Math.PI*2;
@@ -1287,10 +1387,9 @@ function makeAnimalPod(m, x, z, localIndex=0){
     group.add(post);
   }
 
-  // Rescue target bubble.
   const cage = new THREE.Mesh(
     new THREE.SphereGeometry(2.55,24,14),
-    new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.11})
+    new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.10})
   );
   cage.position.y=2.0;
   group.add(cage);
@@ -1299,7 +1398,6 @@ function makeAnimalPod(m, x, z, localIndex=0){
   glow.position.y=2.4;
   group.add(glow);
 
-  // Mission name and question plate.
   const missionNo = getMissionNumberInWorld(m);
   const totalInWorld = getCurrentWorldMissions().length;
   const label = makeFloatingLabel(`${shownName}\nMission ${missionNo}/${totalInWorld}: ${m.dividend} ÷ ${m.divisor}`);
@@ -1307,10 +1405,9 @@ function makeAnimalPod(m, x, z, localIndex=0){
   label.rotation.x = -0.08;
   group.add(label);
 
-  // GLB ONLY. No built-in animal cards.
-  loadAnimalModel(modelFile, group, localMissionIndex);
+  const animal = loadAnimalPng(fileName, group);
 
-  return {mission:m, group, animal:null, cage, label, completed:false};
+  return {mission:m, group, animal, cage, label, fileName};
 }
 
 function updateHUD(){
@@ -1324,9 +1421,11 @@ function updateHUD(){
   const active = getActiveMissionForWorld();
 
   if(currentWorld && active){
+    const animalFile = animalPngFiles[active.id % animalPngFiles.length];
+    const animalName = niceAnimalName(animalFile);
     const missionNo = getMissionNumberInWorld(active);
     document.getElementById("worldText").textContent =
-      `${currentWorld.name} (${worldDone}/${worldTotal}) — Mission ${missionNo}: ${active.dividend} ÷ ${active.divisor}`;
+      `${currentWorld.name} (${worldDone}/${worldTotal}) — Mission ${missionNo}: Save the ${animalName} — ${active.dividend} ÷ ${active.divisor}`;
   }else if(currentWorld){
     document.getElementById("worldText").textContent =
       `${currentWorld.name} complete — ${currentWorld.focus}`;
@@ -1369,7 +1468,7 @@ function onAlgorithmComplete(){
         const next = getActiveMissionForWorld();
         document.getElementById("bottomTip").innerHTML =
           "<b>" + WORLDS[currentWorldIndex].name + " unlocked!</b><span class='sub'>Next mission: " +
-          (next ? (next.dividend + " ÷ " + next.divisor) : "") + "</span>";
+          (next ? ("Save the " + niceAnimalName(animalPngFiles[next.id % animalPngFiles.length]) + ": " + next.dividend + " ÷ " + next.divisor) : "") + "</span>";
         playTada();
       } else {
         document.getElementById("winScreen").style.display = "flex";
@@ -1382,7 +1481,7 @@ function onAlgorithmComplete(){
       const next = getActiveMissionForWorld();
       document.getElementById("bottomTip").innerHTML =
         "<b>Next rescue mission!</b><span class='sub'>" +
-        (next ? (next.dividend + " ÷ " + next.divisor) : "Continue") +
+        (next ? ("Save the " + niceAnimalName(animalPngFiles[next.id % animalPngFiles.length]) + ": " + next.dividend + " ÷ " + next.divisor) : "Continue") +
         "</span>";
     }
   }, 900);
@@ -1435,7 +1534,7 @@ function checkNearPods(){
   if(nearest && dist < 5.0){
     document.getElementById("bottomTip").innerHTML = 'Press Click/F or tap RESCUE to start: <b>' + nearest.mission.dividend + ' ÷ ' + nearest.mission.divisor + '</b><span class="sub">' + nearest.mission.focus + '</span>';
   }else{
-    document.getElementById("bottomTip").innerHTML = 'One animal appears at a time. Complete the rescue, then the next animal appears.<span class="sub">Drag on the right side to look around. Tap RESCUE near an enclosure.</span>';
+    document.getElementById("bottomTip").innerHTML = 'One PNG animal appears at a time. Complete the rescue, then the next animal appears.<span class="sub">Drag on the right side to look around. Tap RESCUE near an enclosure.</span>';
   }
 }
 function fireRescueBeam(){
@@ -1476,7 +1575,11 @@ function animate(){
   animals.forEach((p,i)=>{
     p.group.rotation.y += dt * .25;
     if(!p.completed){
-      p.cage.position.y = 1.78 + Math.sin(performance.now()/500 + i)*.08;
+      p.cage.position.y = 2.0 + Math.sin(performance.now()/500 + i)*.08;
+      if(p.animal){
+        p.animal.lookAt(camera.position.x, p.animal.position.y + p.group.position.y, camera.position.z);
+        p.animal.position.y = 2.0 + Math.sin(performance.now()/420 + i)*.08;
+      }
     }else{
       p.group.rotation.y += dt*1.2;
     }
