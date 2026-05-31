@@ -232,7 +232,47 @@
   .finalRanger .rangerTitle{font-size:44px; color:#b45309}
   .finalTrophy{font-size:70px; line-height:1; margin-bottom:8px;}
 
-  .confettiPiece{
+  
+  .screenWeb{
+    position:fixed;
+    left:50%;
+    top:50%;
+    width:36px;
+    height:36px;
+    transform:translate(-50%,-50%) scale(.2);
+    z-index:70;
+    pointer-events:none;
+    opacity:0;
+    filter:drop-shadow(0 0 8px rgba(255,255,255,.9));
+  }
+  .screenWeb.show{
+    animation:webBurst .42s ease-out forwards;
+  }
+  .screenWeb svg{
+    width:100%;
+    height:100%;
+    overflow:visible;
+  }
+  .screenWeb line,
+  .screenWeb circle{
+    stroke:white;
+    stroke-width:5;
+    fill:none;
+    stroke-linecap:round;
+  }
+  .screenWeb .webSoft{
+    stroke:#dff8ff;
+    stroke-width:3;
+    opacity:.9;
+  }
+  @keyframes webBurst{
+    0%{opacity:0; transform:translate(-50%,-50%) scale(.15) rotate(0deg);}
+    15%{opacity:1;}
+    70%{opacity:1; transform:translate(-50%,-50%) scale(2.2) rotate(8deg);}
+    100%{opacity:0; transform:translate(-50%,-50%) scale(2.55) rotate(12deg);}
+  }
+
+.confettiPiece{
     position:fixed;
     width:10px;
     height:14px;
@@ -270,6 +310,20 @@
 <div id="game"></div>
 <div id="runtimeErrorBox" style="display:none;position:fixed;left:10px;right:10px;bottom:80px;z-index:99;background:#fff1f2;color:#7f1d1d;border:2px solid #ef4444;border-radius:14px;padding:10px;font-weight:bold;font-family:Arial,sans-serif;"></div>
 <div id="centerDot"></div>
+
+<div class="screenWeb" id="screenWeb" aria-hidden="true">
+  <svg viewBox="-60 -60 120 120">
+    <circle r="24"></circle>
+    <circle class="webSoft" r="42"></circle>
+    <line x1="0" y1="-52" x2="0" y2="52"></line>
+    <line x1="-52" y1="0" x2="52" y2="0"></line>
+    <line x1="-38" y1="-38" x2="38" y2="38"></line>
+    <line x1="-38" y1="38" x2="38" y2="-38"></line>
+    <line class="webSoft" x1="-18" y1="-50" x2="18" y2="50"></line>
+    <line class="webSoft" x1="18" y1="-50" x2="-18" y2="50"></line>
+  </svg>
+</div>
+
 
 <div class="hud">
   <h1>ANIMAL RESCUE DIVISION MISSION</h1>
@@ -424,7 +478,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531b";
+const ASSET_VERSION = "20260531f";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -771,7 +825,7 @@ const modelCache = {};
 
   async function moveDiscsSmooth(discs, toPile){
     if (!discs.length) return;
-    playSwish();
+    playWebSound();
     for (let i=0;i<discs.length;i++){
       const el = discs[i];
       const sr = el.getBoundingClientRect();
@@ -985,7 +1039,7 @@ const modelCache = {};
     const np = nextPlace(pk); if (!np || remUnits <= 0) return;
     const fromPile = els.bankPile[pk], toPile = els.bankPile[np]; if (!fromPile || !toPile) return;
     const remDiscs = Array.from(fromPile.querySelectorAll('.disc')).slice(0, remUnits); remDiscs.forEach(d => d.remove());
-    playSwish();
+    playWebSound();
     const fr = fromPile.getBoundingClientRect(), tr = toPile.getBoundingClientRect();
     const sx = fr.left + fr.width/2, sy = fr.top  + fr.height/2, ex = tr.left + tr.width/2, ey = tr.top  + tr.height/2;
     const ghost = document.createElement('div');
@@ -1490,17 +1544,16 @@ function createMissionPods(){
 
   const count = visibleMissions.length;
 
-  // Layout depends on number of animals in the current world.
-  // All animals in this world appear together.
+  // All animals in this world appear together, close enough to be visible on mobile.
   let positions = [];
   if(count <= 3){
-    positions = [[-10,-14],[0,-17],[10,-14]];
+    positions = [[-8,-13],[0,-16],[8,-13]];
   }else if(count === 4){
-    positions = [[-11,-12],[11,-12],[-11,-26],[11,-26]];
+    positions = [[-9,-12],[9,-12],[-9,-24],[9,-24]];
   }else if(count === 5){
-    positions = [[-14,-10],[0,-13],[14,-10],[-8,-28],[8,-28]];
+    positions = [[-12,-10],[0,-13],[12,-10],[-7,-25],[7,-25]];
   }else{
-    positions = [[-16,-10],[0,-12],[16,-10],[-16,-26],[0,-30],[16,-26]];
+    positions = [[-13,-10],[0,-12],[13,-10],[-13,-25],[0,-29],[13,-25]];
   }
 
   visibleMissions.forEach((m, idx)=>{
@@ -1511,9 +1564,9 @@ function createMissionPods(){
   });
 
   // Start far enough to see the whole current world.
-  camera.position.set(0, playerHeight, 5.8);
+  camera.position.set(0, playerHeight, 6.8);
   yaw = 0;
-  pitch = -0.07;
+  pitch = -0.08;
 }
 
 function roundRectSafe(ctx, x, y, w, h, r, fill, stroke) {
@@ -1567,25 +1620,46 @@ function niceAnimalName(fileName){
 }
 
 function makeMissingAnimalCard(fileName){
+  // Friendly fallback if a PNG is not loaded yet.
+  // This keeps the game playable and avoids ugly error-looking cards.
+  const name = niceAnimalName(fileName);
+  const emojiMap = {
+    bear:"🐻", buffalo:"🐃", chick:"🐥", chicken:"🐔", cow:"🐮", crocodile:"🐊",
+    dog:"🐶", duck:"🦆", elephant:"🐘", frog:"🐸", giraffe:"🦒", goat:"🐐",
+    gorilla:"🦍", hippo:"🦛", horse:"🐴", monkey:"🐵", moose:"🫎", narwhal:"🦄",
+    owl:"🦉", panda:"🐼", parrot:"🦜", penguin:"🐧", pig:"🐷", rabbit:"🐰",
+    rhino:"🦏", sloth:"🦥", snake:"🐍", walrus:"🦭", whale:"🐳", zebra:"🦓"
+  };
+  const key = String(fileName || "").replace(".png","").toLowerCase();
+  const emoji = emojiMap[key] || "🐾";
+
   const canvas = document.createElement("canvas");
   canvas.width = 512;
   canvas.height = 512;
   const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#fff7ed";
+
+  ctx.fillStyle = "#fffaf0";
   roundRectSafe(ctx, 28, 28, 456, 456, 44, true, false);
-  ctx.strokeStyle = "#ef4444";
+  ctx.strokeStyle = "#22c55e";
   ctx.lineWidth = 14;
   roundRectSafe(ctx, 28, 28, 456, 456, 44, false, true);
-  ctx.fillStyle = "#7f1d1d";
-  ctx.font = "bold 48px Arial";
+
+  ctx.font = "190px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("Missing PNG", 256, 220);
-  ctx.font = "bold 34px Arial";
-  ctx.fillText(fileName, 256, 285);
+  ctx.fillText(emoji, 256, 210);
+
+  ctx.fillStyle = "#0f2a4a";
+  ctx.font = "bold 50px Comic Sans MS, Arial";
+  ctx.fillText(name, 256, 380);
+
+  ctx.font = "22px Arial";
+  ctx.fillStyle = "#60738c";
+  ctx.fillText("PNG loading fallback", 256, 430);
+
   const tex = new THREE.CanvasTexture(canvas);
   return new THREE.Mesh(
-    new THREE.PlaneGeometry(3.0, 3.0),
+    new THREE.PlaneGeometry(3.25, 3.25),
     new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide })
   );
 }
@@ -1593,10 +1667,16 @@ function makeMissingAnimalCard(fileName){
 function loadAnimalPng(fileName, group){
   const holder = new THREE.Group();
   holder.name = "PNG_ANIMAL_" + fileName;
-  holder.position.set(0, 2.0, 0);
+  holder.position.set(0, 2.25, 0);
   group.add(holder);
 
+  function faceCamera(){
+    holder.lookAt(camera.position.x, holder.position.y + group.position.y, camera.position.z);
+  }
+
   function addTexture(tex){
+    holder.clear();
+
     if ("encoding" in tex && THREE.sRGBEncoding) tex.encoding = THREE.sRGBEncoding;
     tex.needsUpdate = true;
 
@@ -1605,14 +1685,16 @@ function loadAnimalPng(fileName, group){
     const h = image.height || 1;
     const aspect = w / h;
 
-    const height = 3.1;
-    const width = Math.max(1.8, Math.min(3.4, height * aspect));
+    // Larger animal frame for the expanded world.
+    const height = 3.8;
+    const width = Math.max(2.2, Math.min(4.2, height * aspect));
 
+    // White outline card so the animal is clear against the sky.
     const backing = new THREE.Mesh(
-      new THREE.PlaneGeometry(width + .25, height + .25),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .18, side: THREE.DoubleSide })
+      new THREE.PlaneGeometry(width + .38, height + .38),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .32, side: THREE.DoubleSide })
     );
-    backing.position.z = -0.02;
+    backing.position.z = -0.03;
     holder.add(backing);
 
     const mat = new THREE.MeshBasicMaterial({
@@ -1625,6 +1707,16 @@ function loadAnimalPng(fileName, group){
     const plane = new THREE.Mesh(new THREE.PlaneGeometry(width, height), mat);
     plane.position.set(0, 0, 0);
     holder.add(plane);
+
+    faceCamera();
+  }
+
+  function addFallback(){
+    holder.clear();
+    const missing = makeMissingAnimalCard(fileName);
+    missing.position.set(0,0,0);
+    holder.add(missing);
+    faceCamera();
   }
 
   if (window.textureCache[fileName]) {
@@ -1632,19 +1724,37 @@ function loadAnimalPng(fileName, group){
     return holder;
   }
 
-  window.textureLoader.load(
-    "./" + fileName + "?v=" + ASSET_VERSION,
-    (tex) => {
-      window.textureCache[fileName] = tex;
-      addTexture(tex);
-    },
-    undefined,
-    () => {
-      const missing = makeMissingAnimalCard(fileName);
-      holder.add(missing);
-    }
-  );
+  const version = (typeof ASSET_VERSION !== "undefined" ? ASSET_VERSION : "20260531d");
+  const urls = [
+    "./" + fileName,
+    fileName,
+    "./" + fileName + "?v=" + version,
+    "./" + encodeURIComponent(fileName)
+  ];
 
+  function tryTexture(index){
+    const url = urls[index];
+    if (!url) {
+      addFallback();
+      console.warn("PNG fallback used:", fileName);
+      return;
+    }
+
+    window.textureLoader.load(
+      url,
+      (tex) => {
+        window.textureCache[fileName] = tex;
+        addTexture(tex);
+      },
+      undefined,
+      () => {
+        console.warn("PNG load failed, trying next:", url);
+        tryTexture(index + 1);
+      }
+    );
+  }
+
+  tryTexture(0);
   return holder;
 }
 
@@ -1656,7 +1766,7 @@ function makeAnimalPod(m, x, z, localIndex=0){
   const shownName = niceAnimalName(fileName);
 
   const base = new THREE.Mesh(
-    new THREE.CylinderGeometry(3.9,3.9,.10,48),
+    new THREE.CylinderGeometry(4.15,4.15,.10,48),
     new THREE.MeshLambertMaterial({color:0xf6fff6})
   );
   base.position.y = .05;
@@ -1666,66 +1776,31 @@ function makeAnimalPod(m, x, z, localIndex=0){
   for(let i=0;i<18;i++){
     const a = (i/18)*Math.PI*2;
     const post = new THREE.Mesh(new THREE.BoxGeometry(.16,.72,.16), fenceMat);
-    post.position.set(Math.cos(a)*3.35,.36,Math.sin(a)*3.35);
+    post.position.set(Math.cos(a)*3.55,.36,Math.sin(a)*3.55);
     group.add(post);
   }
 
   const cage = new THREE.Mesh(
-    new THREE.SphereGeometry(2.55,24,14),
+    new THREE.SphereGeometry(2.75,24,14),
     new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.10})
   );
-  cage.position.y=2.0;
+  cage.position.y=2.15;
   group.add(cage);
 
   const glow = new THREE.PointLight(WORLDS[m.worldIndex].color, .75, 9);
-  glow.position.y=2.4;
+  glow.position.y=2.6;
   group.add(glow);
 
   const missionNo = getMissionNumberInWorld(m);
   const totalInWorld = getCurrentWorldMissions().length;
   const label = makeFloatingLabel(`${shownName}\nMission ${missionNo}/${totalInWorld}: ${m.dividend} ÷ ${m.divisor}`);
-  label.position.set(0,.55,3.6);
-  label.rotation.x = -0.08;
+  label.position.set(0,.40,4.05);
+  label.rotation.x = -0.10;
   group.add(label);
 
   const animal = loadAnimalPng(fileName, group);
 
   return {mission:m, group, animal, cage, label, fileName};
-}
-
-
-function getAnimalFileForMission(mission){
-  const list = window.animalPngFiles || animalPngFiles || [];
-  const idx = Math.max(0, mission.id) % list.length;
-  return list[idx] || "";
-}
-
-function updateRescuedStrip(){
-  const strip = document.getElementById("rescuedStrip");
-  if (!strip) return;
-
-  const rescued = allMissions.filter(m => completedMissionIds.has(m.id));
-  const maxIcons = 12; // keep HUD neat on mobile
-  const visible = rescued.slice(-maxIcons);
-
-  strip.innerHTML = "";
-
-  visible.forEach(m => {
-    const file = getAnimalFileForMission(m);
-    const img = document.createElement("img");
-    img.className = "rescuedIcon";
-    img.src = "./" + file + "?v=" + (typeof ASSET_VERSION !== "undefined" ? ASSET_VERSION : "20260531a");
-    img.alt = niceAnimalName ? niceAnimalName(file) : file;
-    img.title = img.alt;
-    strip.appendChild(img);
-  });
-
-  if (rescued.length > maxIcons) {
-    const more = document.createElement("span");
-    more.className = "rescuedMore";
-    more.textContent = "+" + (rescued.length - maxIcons);
-    strip.appendChild(more);
-  }
 }
 
 function updateHUD(){
@@ -1946,6 +2021,51 @@ function checkNearPods(){
   }
 }
 
+
+function safePlaySwish(){
+  try{
+    if (typeof playSwish === "function") playWebSound();
+    else if (typeof playCorrect === "function") playCorrect();
+  }catch(e){}
+}
+
+
+
+function safePlayTone(freq=.440,dur=.1,type='sine'){
+  try{
+    if (typeof playTone === "function") safePlayTone(freq,dur,type);
+    else if (typeof beep === "function") beep(freq,dur,type,.08);
+  }catch(e){}
+}
+
+
+function showScreenWeb(){
+  const web = document.getElementById("screenWeb");
+  if(!web) return;
+  web.classList.remove("show");
+  // Force restart animation.
+  void web.offsetWidth;
+  web.classList.add("show");
+  setTimeout(()=>web.classList.remove("show"), 520);
+}
+
+function playWebSound(){
+  try{
+    if (typeof playSwish === "function") {
+      playWebSound();
+      return;
+    }
+    if (typeof beep === "function") {
+      beep(420,.06,'triangle',.07);
+      setTimeout(()=>beep(620,.05,'sine',.05),50);
+      return;
+    }
+    if (typeof playCorrect === "function") {
+      playCorrect();
+    }
+  }catch(e){}
+}
+
 function castWebEffect(targetPos){
   // Child-friendly rescue web: white strands fly from the camera to the target.
   const start = camera.position.clone();
@@ -2002,7 +2122,9 @@ function fireRescueBeam(){
   if(document.getElementById("startScreen").style.display !== "none") return;
   if(document.getElementById("missionPanel").style.display === "flex") return;
 
-  playSwish();
+  // Always show a clear web on screen first. This is reliable on mobile.
+  showScreenWeb();
+  playWebSound();
 
   raycaster.setFromCamera({x:0,y:0}, camera);
   const podMeshes = animals.filter(p=>!p.completed).map(p=>p.cage);
@@ -2012,28 +2134,28 @@ function fireRescueBeam(){
     const cage = hits[0].object;
     const pod = animals.find(p=>p.cage === cage);
     if(pod){
-      castWebEffect(pod.group.position);
-      setTimeout(()=>openMission(pod.mission), 220);
+      // Also attempt the 3D web effect, but the screen web is the main visible effect.
+      try{ castWebEffect(pod.group.position); }catch(e){}
+      setTimeout(()=>openMission(pod.mission), 260);
     }
     return;
   }
 
-  // If pupil is near a pod, cast the web to the nearest animal.
+  // If pupil is near a pod, rescue the nearest animal.
   const near = animals
     .filter(p=>!p.completed)
     .sort((a,b)=>a.group.position.distanceTo(camera.position)-b.group.position.distanceTo(camera.position))[0];
 
-  if(near && near.group.position.distanceTo(camera.position)<6.5){
-    castWebEffect(near.group.position);
-    setTimeout(()=>openMission(near.mission), 220);
+  if(near && near.group.position.distanceTo(camera.position)<7.5){
+    try{ castWebEffect(near.group.position); }catch(e){}
+    setTimeout(()=>openMission(near.mission), 260);
     return;
   }
 
-  // Missed web: cast forward briefly so the action is visible.
-  const dir = new THREE.Vector3();
-  camera.getWorldDirection(dir);
-  castWebEffect(camera.position.clone().add(dir.multiplyScalar(8)));
+  // Miss: still show web, but no mission opens.
   playWrong();
+  document.getElementById("bottomTip").innerHTML =
+    "<b>Web missed!</b><span class='sub'>Aim at an animal bubble or move closer, then press RESCUE again.</span>";
 }
 
 function animate(){
@@ -2049,7 +2171,7 @@ function animate(){
       p.cage.position.y = 2.0 + Math.sin(performance.now()/500 + i)*.08;
       if(p.animal){
         p.animal.lookAt(camera.position.x, p.animal.position.y + p.group.position.y, camera.position.z);
-        p.animal.position.y = 2.0 + Math.sin(performance.now()/420 + i)*.08;
+        p.animal.position.y = 2.25 + Math.sin(performance.now()/420 + i)*.08;
       }
     }else{
       p.group.rotation.y += dt*1.2;
@@ -2089,7 +2211,7 @@ function onResize(){
 }
 
 function ensureAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-function playTone(freq=440, duration=.1, type="sine"){
+function safePlayTone(freq=440, duration=.1, type="sine"){
   ensureAudio();
   const o = audioCtx.createOscillator(), g = audioCtx.createGain();
   o.type = type; o.frequency.value = freq;
@@ -2099,7 +2221,7 @@ function playTone(freq=440, duration=.1, type="sine"){
   o.connect(g); g.connect(audioCtx.destination);
   o.start(); o.stop(audioCtx.currentTime+duration+.02);
 }
-function playTada(){ playTone(523,.1,"sine"); setTimeout(()=>playTone(659,.1,"sine"),110); setTimeout(()=>playTone(784,.16,"sine"),220); }
+function playTada(){ safePlayTone(523,.1,"sine"); setTimeout(()=>safePlayTone(659,.1,"sine"),110); setTimeout(()=>safePlayTone(784,.16,"sine"),220); }
 
 document.getElementById("startBtn").onclick = ()=>{
   ensureAudio();
