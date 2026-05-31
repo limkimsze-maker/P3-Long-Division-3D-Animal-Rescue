@@ -1007,6 +1007,28 @@
     .rewardImageBox img{max-height:50vh;}
   }
 
+
+  /* ===== Final completion picture ===== */
+  .finalCompletionImage{
+    width:min(520px,82vw);
+    max-height:42vh;
+    object-fit:contain;
+    display:block;
+    margin:0 auto 18px;
+    border-radius:24px;
+    border:3px solid #d7eef7;
+    box-shadow:0 14px 34px rgba(15,42,74,.18);
+    background:#eefbff;
+  }
+  @media(max-width:760px){
+    .finalCompletionImage{
+      width:min(420px,86vw);
+      max-height:36vh;
+      border-radius:18px;
+      margin-bottom:12px;
+    }
+  }
+
 </style>
 </head>
 <body>
@@ -1145,18 +1167,7 @@
 
 <div class="screen" id="winScreen" style="display:none;">
   <div class="card finalRanger" style="text-align:center;">
-    <div class="finalTrophy">🏆</div>
-    <div class="rangerArt" style="margin-bottom:14px;">
-      <div class="rangerFace">
-        <div class="rangerHat"></div>
-        <div class="rangerHead"></div>
-        <div class="rangerEye left"></div>
-        <div class="rangerEye right"></div>
-        <div class="rangerSmile"></div>
-        <div class="rangerBody"></div>
-        <div class="rangerBadge"></div>
-      </div>
-    </div>
+    <img class="finalCompletionImage" src="./file_000000007e187207a98d43793c79f3bb.png?v=20260531au" alt="Great Division Ranger completion picture">
     <h1 class="title" style="font-size:44px;">I AM A GREAT DIVISION RANGER!</h1>
     <p class="lead">All 30 animals have been rescued. You completed every long-division world with courage, patience and strong step-by-step thinking.</p>
     <button class="btn" id="restartBtn">Play Again</button>
@@ -1251,7 +1262,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531at";
+const ASSET_VERSION = "20260531au";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
