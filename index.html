@@ -737,8 +737,8 @@
 
 <div class="calibrationOverlay" id="calibrationOverlay" aria-live="polite">
   <div class="calibrationCard">
-    <div class="calibrationTitle">Preparing Screen...</div>
-    <p class="calibrationText">Please wait a moment while the game adjusts to your device.</p>
+    <div class="calibrationTitle">Adjusting Screen...</div>
+    <p class="calibrationText">The game is adjusting to your screen.</p>
     <div class="calibrationDots"><span></span><span></span><span></span></div>
   </div>
 </div>
@@ -843,7 +843,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531ad";
+const ASSET_VERSION = "20260531safe1";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -2726,18 +2726,8 @@ function foldWakeJoltBurst(){
 
 
 async function requestMobileFullscreenOnce(){
-  // Fullscreen request is allowed only after user gesture.
-  // On Android foldables, it often forces the exact viewport recalculation we need.
-  try{
-    if(!isTouchLikeDevice()) return;
-    const el = document.documentElement;
-    if(document.fullscreenElement) return;
-    if(el.requestFullscreen){
-      await el.requestFullscreen({navigationUI:"hide"}).catch(()=>{});
-    }else if(el.webkitRequestFullscreen){
-      el.webkitRequestFullscreen();
-    }
-  }catch(e){}
+  // Disabled: fullscreen caused hangs on some Fold 6 inner-screen tests.
+  return;
 }
 
 function dispatchWakeEvents(){
@@ -2748,88 +2738,57 @@ function dispatchWakeEvents(){
 }
 
 function canvasHideShowWake(){
+  // Safe repaint only. Do not hide/show the canvas because that can hang WebGL.
   try{
-    if(!renderer || !renderer.domElement) return;
-    const canvas = renderer.domElement;
-
     document.body.classList.add("androidWake");
-    canvas.style.display = "none";
-    void document.body.offsetHeight;
-
-    setTimeout(()=>{
-      canvas.style.display = "block";
-      void canvas.offsetHeight;
-      resizeGameRenderer();
-      resetCrosshairToCentre();
-      try{ renderer.render(scene, camera); }catch(e){}
-    }, 70);
-
+    resizeGameRenderer();
+    resetCrosshairToCentre();
+    if(renderer && camera) renderer.render(scene, camera);
     setTimeout(()=>{
       document.body.classList.remove("androidWake");
       resizeGameRenderer();
       resetCrosshairToCentre();
-      try{ renderer.render(scene, camera); }catch(e){}
-    }, 220);
+      if(renderer && camera) renderer.render(scene, camera);
+    }, 120);
   }catch(e){}
 }
 
 function androidNotificationShadeWake(){
-  // Simulates the useful part of pulling down and closing the Android notification shade.
-  dispatchWakeEvents();
-  androidNotificationShadeWake();
-  canvasHideShowWake();
-
-  setTimeout(()=>{ dispatchWakeEvents(); resizeGameRenderer(); resetCrosshairToCentre(); }, 180);
-  setTimeout(()=>{ dispatchWakeEvents(); resizeGameRenderer(); resetCrosshairToCentre(); }, 520);
-  setTimeout(()=>{ dispatchWakeEvents(); resizeGameRenderer(); resetCrosshairToCentre(); }, 980);
-}
-
-async function fullWakeSequence(){
-  await requestMobileFullscreenOnce();
-  androidNotificationShadeWake();
-  wakeFoldableControls();
-}
-
-function showCalibrationOverlay(show){
-  const overlay = document.getElementById("calibrationOverlay");
-  if(!overlay) return;
-  overlay.classList.toggle("show", !!show);
-}
-
-function runDeviceCalibration(done){
-  showCalibrationOverlay(true);
-  androidNotificationShadeWake();
-
-  // Force repeated layout/canvas checks. This is especially useful for foldables
-  // where the inner display sometimes reports its final size only after interaction.
-  const timings = [0, 80, 180, 320, 520, 800, 1150, 1500];
-  timings.forEach(t=>{
+  // Safe Fold 6 wake: resize/reflow pulses only, no blocking overlay, no fullscreen.
+  try{ dispatchWakeEvents(); }catch(e){}
+  try{ foldWakeJoltBurst(); }catch(e){}
+  try{ canvasHideShowWake(); }catch(e){}
+  [80, 220, 520, 900].forEach(t=>{
     setTimeout(()=>{
       try{
-        updateViewportUnit();
+        dispatchWakeEvents();
         resizeGameRenderer();
         resetCrosshairToCentre();
-        wakeFoldableControls();
+        if(renderer && camera) renderer.render(scene, camera);
       }catch(e){}
     }, t);
   });
+}
 
-  // Tiny camera nudge + reset helps some mobile browsers redraw the WebGL canvas.
-  setTimeout(()=>{
-    try{
-      camera.updateProjectionMatrix();
-      renderer.render(scene, camera);
-    }catch(e){}
-  }, 360);
+async function fullWakeSequence(){
+  // Safe non-blocking wake.
+  androidNotificationShadeWake();
+  try{ wakeFoldableControls(); }catch(e){}
+}
 
-  setTimeout(()=>{
-    showCalibrationOverlay(false);
-    try{
-      scheduleResizeGame();
-      resetCrosshairToCentre();
-    }catch(e){}
-    if(typeof done === "function") done();
-  }, 1650);
+function showCalibrationOverlay(show){
+  // Safe version: do not block the game with a calibration overlay.
+  const overlay = document.getElementById("calibrationOverlay");
+  if(!overlay) return;
+  overlay.classList.remove("show");
+  overlay.style.display = "none";
+}
+
+function runDeviceCalibration(done){
+  // Safe calibration: do not show blocking overlay.
+  showCalibrationOverlay(false);
+  androidNotificationShadeWake();
+  setTimeout(()=>{ if(typeof done === "function") done(); }, 180);
 }
 
 function init3D(){
@@ -3874,16 +3833,9 @@ updateSoundButtons();
 document.getElementById("startBtn").onclick = ()=>{
   ensureAudio();
   document.getElementById("startScreen").style.display = "none";
-
+  showCalibrationOverlay(false);
   fullWakeSequence();
-  runDeviceCalibration(()=>{
-    // Pointer lock is optional; avoid it on touch/foldable screens.
-    if(!isTouchLikeDevice()){
-      try{ renderer.domElement.requestPointerLock?.(); }catch(e){}
-    }
-    wakeFoldableControls();
-    updateHUD();
-  });
+  updateHUD();
 };
 document.getElementById("exitMissionBtn").onclick = closeMission;
 document.getElementById("restartBtn").onclick = ()=>{
@@ -4063,7 +4015,7 @@ window.addEventListener("error", (e)=>{
   const box = document.getElementById("runtimeErrorBox");
   if (box) {
     box.style.display = "block";
-    box.textContent = "Something went wrong. Please refresh the page.";
+    box.textContent = "Something went wrong. Tap Wake Screen or refresh if needed."; try{ unblockGameUI(); }catch(_e){}
   }
 });
 
@@ -4080,6 +4032,20 @@ function firstFoldJolt(){
 document.addEventListener("touchstart", firstFoldJolt, {passive:true});
 document.addEventListener("pointerdown", firstFoldJolt, {passive:true});
 
+
+function unblockGameUI(){
+  try{
+    const overlay = document.getElementById("calibrationOverlay");
+    if(overlay){
+      overlay.classList.remove("show");
+      overlay.style.display = "none";
+    }
+    scheduleResizeGame();
+    resetCrosshairToCentre();
+  }catch(e){}
+}
+setInterval(unblockGameUI, 2500);
+
 buildMissionList();
 loadLocalProgress();
 init3D();
@@ -4090,5 +4056,3 @@ saveLocalProgress();
 </script>
 </body>
 </html>
-
-
