@@ -224,6 +224,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
+const ASSET_VERSION = "20260531a";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -1372,7 +1373,7 @@ function loadAnimalPng(fileName, group){
   }
 
   window.textureLoader.load(
-    "./" + fileName,
+    "./" + fileName + "?v=" + ASSET_VERSION,
     (tex) => {
       window.textureCache[fileName] = tex;
       addTexture(tex);
