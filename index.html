@@ -658,6 +658,14 @@
     transform:translateZ(0);
   }
 
+
+  /* Ensure RESCUE button receives touch events above game drag layer */
+  .fireBtn{
+    pointer-events:auto !important;
+    touch-action:manipulation !important;
+    z-index:10025 !important;
+  }
+
 </style>
 </head>
 <body>
@@ -843,7 +851,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531safe1";
+const ASSET_VERSION = "20260531safe2";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -3643,7 +3651,8 @@ function castWebEffect(targetPos){
 }
 
 function fireRescueBeam(){
-  if(document.getElementById("startScreen").style.display !== "none") return;
+  const startScreenEl = document.getElementById("startScreen");
+  if(startScreenEl && startScreenEl.style.display !== "none" && getComputedStyle(startScreenEl).display !== "none") return;
   if(document.getElementById("missionPanel").style.display === "flex") return;
 
   showScreenWeb();
@@ -3854,7 +3863,30 @@ document.querySelectorAll(".pad button[data-key]").forEach(btn=>{
   btn.addEventListener("pointerup", e=>{e.preventDefault(); keys[code]=false;});
   btn.addEventListener("pointerleave", ()=>{keys[code]=false;});
 });
-document.getElementById("fireBtn").addEventListener("pointerdown", e=>{ e.preventDefault(); fireRescueBeam(); });
+let rescueFireLock = false;
+
+function triggerRescueFromButton(e){
+  if(e){
+    e.preventDefault();
+    e.stopPropagation();
+    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+  }
+
+  if(rescueFireLock) return;
+  rescueFireLock = true;
+  setTimeout(()=>{ rescueFireLock = false; }, 450);
+
+  try{ wakeFoldableControls(); }catch(err){}
+  try{ resetCrosshairToCentre(); }catch(err){}
+  fireRescueBeam();
+}
+
+const rescueButton = document.getElementById("fireBtn");
+if(rescueButton){
+  rescueButton.addEventListener("pointerdown", triggerRescueFromButton, {passive:false});
+  rescueButton.addEventListener("touchstart", triggerRescueFromButton, {passive:false});
+  rescueButton.addEventListener("click", triggerRescueFromButton, {passive:false});
+}
 const tiltUpButton = document.getElementById("tiltUpBtn");
 const tiltDownButton = document.getElementById("tiltDownBtn");
 if(tiltUpButton) tiltUpButton.addEventListener("pointerdown", e=>{ e.preventDefault(); pitch = Math.min(1.35, pitch + 0.22); });
@@ -3902,7 +3934,7 @@ function isOverlayOpen(){
 
 function shouldIgnoreAimTarget(target){
   return !!(target && (
-    target.closest(".fireBtn") ||
+    (target.closest(".fireBtn") || target.id === "fireBtn") ||
     target.closest(".pad") ||
     target.closest(".soundToggle") ||
     target.closest(".controlRefreshBtn") ||
@@ -4020,8 +4052,14 @@ window.addEventListener("error", (e)=>{
 });
 
 
-document.addEventListener("touchstart", wakeFoldableControls, {passive:true});
-document.addEventListener("pointerdown", wakeFoldableControls, {passive:true});
+document.addEventListener("touchstart", (e)=>{
+  if(e.target && (e.target.closest(".fireBtn") || e.target.id === "fireBtn")) return;
+  wakeFoldableControls();
+}, {passive:true});
+document.addEventListener("pointerdown", (e)=>{
+  if(e.target && (e.target.closest(".fireBtn") || e.target.id === "fireBtn")) return;
+  wakeFoldableControls();
+}, {passive:true});
 
 let hasDoneFirstFoldJolt = false;
 function firstFoldJolt(){
