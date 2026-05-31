@@ -476,6 +476,32 @@
     .bottomTip{bottom:calc(14px + var(--safeBottom));}
   }
 
+
+  /* ===== Always-visible Exit Mission button ===== */
+  .missionBar{
+    position:fixed !important;
+    top:calc(10px + env(safe-area-inset-top,0px)) !important;
+    right:calc(10px + env(safe-area-inset-right,0px)) !important;
+    z-index:10030 !important;
+    display:flex !important;
+  }
+  .missionBar button{
+    background:rgba(15,42,74,.94) !important;
+    color:white !important;
+    box-shadow:0 8px 20px rgba(0,0,0,.28) !important;
+  }
+  @media(max-width:760px){
+    .missionBar{
+      top:calc(8px + env(safe-area-inset-top,0px)) !important;
+      right:8px !important;
+    }
+    .missionBar button{
+      font-size:14px !important;
+      padding:10px 14px !important;
+      border-radius:14px !important;
+    }
+  }
+
 </style>
 </head>
 <body>
@@ -508,17 +534,14 @@
   <div class="row"><span>Score: <span id="scoreText">0/30</span></span><span>Health: <span id="healthText">♥♥♥</span></span></div>
   <div class="world" id="worldText">World 1: Division Facts</div>
   <div class="rescuedStrip" id="rescuedStrip" aria-label="Rescued animals"></div>
-  <div class="small">Walk near a glowing rescue pod. Complete the exact long division algorithm to save the animal.</div>
+  <div class="small">Complete the division mission to save the animal.</div>
 </div>
 
-<div class="topRight">
-  Mouse-look: click the game<br>
-  Move: WASD / Arrow keys • RESCUE button casts web • ESC unlocks
-</div>
+<div class="topRight" style="display:none;"></div>
 
 <div class="bottomTip" id="bottomTip">
-  Walk near a glowing animal pod or cast a web to start a rescue.
-  <span class="sub">Drag on the right side to look around, or use ▲ ▼ tilt buttons.</span>
+  Move near an animal, then press RESCUE.
+  <span class="sub">Complete the division mission to save the animal.</span>
 </div>
 
 <div id="mobileControls">
@@ -541,18 +564,19 @@
   <div class="card">
     <h1 class="title">3D Animal Rescue Division Mission</h1>
     <p class="lead">
-      The game now uses your uploaded <b>30 PNG animals</b> in sequence. Each world is bigger and shows all animals for that stage. Pupils cast a rescue web, then solve the guided long-division mission.
+      Rescue the animals by completing guided long-division missions. Finish each world to unlock the next one.
     </p>
     <div class="worldGrid">
       <div class="worldCard"><b>World 1:</b> Division Facts<br>8 ÷ 2 = 4</div>
-      <div class="worldCard"><b>World 2:</b> Clean Division<br>86 ÷ 2, 864 ÷ 2</div>
-      <div class="worldCard"><b>World 3:</b> First Digit Too Small<br>48 ÷ 6, 304 ÷ 7</div>
-      <div class="worldCard"><b>World 4:</b> Regrouping Rescue<br>2-digit and 3-digit regrouping</div>
-      <div class="worldCard"><b>World 5:</b> Zero Power<br>204, 210 style answers</div>
-      <div class="worldCard"><b>World 6:</b> Remainder Rescue<br>1-digit, 2-digit, 3-digit remainders</div>
-      <div class="worldCard"><b>World 7:</b> Master Mission<br>Mixed long division</div>
+      <div class="worldCard"><b>World 2:</b> No Regrouping<br>86 ÷ 2, 864 ÷ 2</div>
+      <div class="worldCard"><b>World 3:</b> Start Carefully<br>48 ÷ 6, 304 ÷ 7</div>
+      <div class="worldCard"><b>World 4:</b> Regrouping<br>2-digit and 3-digit regrouping</div>
+      <div class="worldCard"><b>World 5:</b> Zero in the Answer<br>204, 210 style answers</div>
+      <div class="worldCard"><b>World 6:</b> Remainders<br>1-digit, 2-digit, 3-digit remainders</div>
+      <div class="worldCard"><b>World 7:</b> Final Challenge<br>Mixed long division</div>
     </div>
-    <button class="btn" id="startBtn">Start Rescue Mission</button>
+    <p class="lead" style="font-size:14px;margin-top:8px;"><b>Your progress is saved on this device.</b></p>
+    <button class="btn" id="startBtn">Start / Continue</button>
   </div>
 </div>
 
@@ -656,7 +680,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531s";
+const ASSET_VERSION = "20260531u";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -992,44 +1016,6 @@ const algorithmTemplate = `
     .bottomTip{bottom:calc(14px + var(--safeBottom));}
   }
 
-
-  .algoSoundToggle{
-    position:fixed;
-    top:10px;
-    left:10px;
-    z-index:9999;
-    border:0;
-    border-radius:999px;
-    padding:8px 11px;
-    background:rgba(15,42,74,.88);
-    color:#fff;
-    font-weight:1000;
-    font-size:13px;
-    box-shadow:0 4px 10px rgba(0,0,0,.18);
-  }
-  .algoSoundToggle.off{background:rgba(90,90,100,.86);}
-  @media(max-width:760px){
-    .app{padding:8px 8px 12px;}
-    .topbar{padding:10px; border-radius:18px;}
-    .brand .title{font-size:28px;}
-    .brand .sub{font-size:11px;}
-    .exprPill{padding:8px 9px;}
-    .exprPill .big{font-size:24px;}
-    .exprAns{min-width:76px; height:34px; font-size:20px;}
-    .livePanel{padding:12px;}
-    .liveHead{display:block;}
-    .liveHead h2{font-size:24px;}
-    .liveHead p{font-size:12px;}
-    .stepBadge{display:inline-block; margin-top:8px; font-size:12px; padding:7px 9px;}
-    .railCard{padding:12px;}
-    .railCard h3{font-size:24px;}
-    .algoActionPanel{padding:10px;}
-    .btn.prominent{font-size:18px; padding:13px 17px;}
-    .stepTitle{font-size:30px;}
-    .stepText{font-size:15px;}
-    .algoSoundToggle{top:8px; left:8px; font-size:12px; padding:7px 9px;}
-  }
-
   /* ===== Mobile space saver for algorithm work ===== */
   .matToggleRow{
     margin:10px 0 0;
@@ -1293,12 +1279,11 @@ const algorithmTemplate = `
 </style>
 </head>
 <body>
-<button class="algoSoundToggle" id="algoSoundToggle" type="button">🔊 Sound On</button>
 <div class="app">
   <div class="topbar">
     <div class="brand">
       <div class="title">Division</div>
-      <div class="sub">Place Value Discs — single mat, exact algorithm style</div>
+      <div class="sub">Long Division Mission</div>
     </div>
     <div class="topActions">
       <button class="btn matToggle" id="btnMatToggle" type="button">👁️ Hide Place Value Mat</button>
@@ -1315,7 +1300,7 @@ const algorithmTemplate = `
         <div class="liveHead">
           <div>
             <h2 id="questionTitle">Divide 246 by 2.</h2>
-            <p id="questionSub">Pupils fill in the <b>red-boxed spaces</b> in the algorithm, then press Check Step.</p>
+            <p id="questionSub">Fill in the highlighted spaces, then press Check Step.</p>
           </div>
           <div class="stepBadge" id="progressBadge">Step 0 of 3</div>
         </div>
@@ -1331,12 +1316,12 @@ const algorithmTemplate = `
           <button class="btn matToggle" id="btnMatToggle2" type="button">👁️ Hide Place Value Mat</button>
         </div>
         <div class="smallMuted" style="margin:-2px 0 10px">
-          Fill in <b>all digits</b> in the algorithm (quotient + working). Fill the <b>red-boxed spaces</b> first, then press <b>Check Step</b>.
+          Fill in the highlighted spaces, then press <b>Check Step</b>.
         </div>
         <div class="algoWrap"><div class="algoFit" id="algoFit"></div></div>
         <div class="answerLine" id="answerLine">Answer: —</div>
         <div class="algoActionPanel">
-          <div class="algoActionNote pupilNote"><b>Pupils:</b> Fill in the <b>red-boxed spaces</b> in the algorithm first, then press <b>Check Step</b>.</div>
+          <div class="algoActionNote pupilNote">Fill in the highlighted spaces, then press <b>Check Step</b>.</div>
           <div class="numPadHelp">Tap a box, then tap a number.</div>
           <div class="numPad compactNumPad oneRowNumPad" id="numPad" aria-label="Number keypad">
             <button type="button" data-num="1">1</button>
@@ -1431,13 +1416,7 @@ const algorithmTemplate = `
     }catch(e){}
     return localSoundOn;
   }
-  function syncAlgoSoundButton(){
-    const b = document.getElementById("algoSoundToggle");
-    if(!b) return;
-    const on = isSoundOn();
-    b.textContent = on ? "🔊 Sound On" : "🔇 Sound Off";
-    b.classList.toggle("off", !on);
-  }
+  function syncAlgoSoundButton(){}
   window.addEventListener("message", (e)=>{
     if(e.data && e.data.type === "soundState"){
       localSoundOn = !!e.data.soundOn;
@@ -1848,13 +1827,6 @@ const algorithmTemplate = `
     enableInputs(); updateUI(); requestAnimationFrame(fitAll);
   }
 
-  const algoSoundButton = document.getElementById("algoSoundToggle");
-  if(algoSoundButton){
-    algoSoundButton.addEventListener("click", ()=>{
-      try{ parent.postMessage({type:"toggleSound"}, "*"); }catch(e){ localSoundOn = !localSoundOn; syncAlgoSoundButton(); }
-    });
-  }
-
 
   function isSmallScreen(){
     return window.matchMedia && window.matchMedia("(max-width: 760px)").matches;
@@ -2000,12 +1972,12 @@ const algorithmTemplate = `
 
 const WORLDS = [
   {name:"World 1: Division Facts", focus:"Basic 1-digit ÷ 1-digit. Build recall before long division.", color:0x6ee7b7, questions:[{dividend:8, divisor:2},{dividend:9, divisor:3},{dividend:6, divisor:2}]},
-  {name:"World 2: Clean Division", focus:"2-digit and 3-digit ÷ 1-digit, no regrouping.", color:0x93c5fd, questions:[{dividend:86, divisor:2},{dividend:69, divisor:3},{dividend:864, divisor:2},{dividend:963, divisor:3}]},
-  {name:"World 3: First Digit Too Small", focus:"The first digit is smaller than the divisor. Pupils learn to look at the next place value.", color:0xfcd34d, questions:[{dividend:48, divisor:6},{dividend:35, divisor:5},{dividend:304, divisor:7},{dividend:126, divisor:4}]},
-  {name:"World 4: Regrouping Rescue", focus:"Temporary remainders during working are regrouped to the next place.", color:0xf9a8d4, questions:[{dividend:75, divisor:3},{dividend:86, divisor:4},{dividend:864, divisor:4},{dividend:875, divisor:5}]},
-  {name:"World 5: Zero Power", focus:"Zeros in the quotient: 0 in the middle or at the end matters.", color:0xc4b5fd, questions:[{dividend:816, divisor:4},{dividend:824, divisor:4},{dividend:840, divisor:4},{dividend:630, divisor:3}]},
-  {name:"World 6: Remainder Rescue", focus:"Final remainders after the last digit.", color:0xfdba74, questions:[{dividend:7, divisor:2},{dividend:85, divisor:4},{dividend:865, divisor:4},{dividend:304, divisor:7},{dividend:999, divisor:8}]},
-  {name:"World 7: Master Mission", focus:"Mixed practice. Pupils decide what the algorithm needs.", color:0x67e8f9, questions:[{dividend:96, divisor:4},{dividend:432, divisor:6},{dividend:912, divisor:8},{dividend:728, divisor:7},{dividend:304, divisor:7},{dividend:905, divisor:5}]}
+  {name:"World 2: No Regrouping", focus:"2-digit and 3-digit ÷ 1-digit, no regrouping.", color:0x93c5fd, questions:[{dividend:86, divisor:2},{dividend:69, divisor:3},{dividend:864, divisor:2},{dividend:963, divisor:3}]},
+  {name:"World 3: Start Carefully", focus:"The first digit is smaller than the divisor. Pupils learn to look at the next place value.", color:0xfcd34d, questions:[{dividend:48, divisor:6},{dividend:35, divisor:5},{dividend:304, divisor:7},{dividend:126, divisor:4}]},
+  {name:"World 4: Regrouping", focus:"Temporary remainders during working are regrouped to the next place.", color:0xf9a8d4, questions:[{dividend:75, divisor:3},{dividend:86, divisor:4},{dividend:864, divisor:4},{dividend:875, divisor:5}]},
+  {name:"World 5: Zero in the Answer", focus:"Zeros in the quotient: 0 in the middle or at the end matters.", color:0xc4b5fd, questions:[{dividend:816, divisor:4},{dividend:824, divisor:4},{dividend:840, divisor:4},{dividend:630, divisor:3}]},
+  {name:"World 6: Remainders", focus:"Final remainders after the last digit.", color:0xfdba74, questions:[{dividend:7, divisor:2},{dividend:85, divisor:4},{dividend:865, divisor:4},{dividend:304, divisor:7},{dividend:999, divisor:8}]},
+  {name:"World 7: Final Challenge", focus:"Mixed practice. Pupils decide what the algorithm needs.", color:0x67e8f9, questions:[{dividend:96, divisor:4},{dividend:432, divisor:6},{dividend:912, divisor:8},{dividend:728, divisor:7},{dividend:304, divisor:7},{dividend:905, divisor:5}]}
 ];
 const animalNames = ["Bunny","Panda","Otter","Koala","Deer","Fox","Penguin","Kitten","Puppy","Turtle","Chick","Hamster"];
 
@@ -2013,6 +1985,52 @@ let allMissions = [], currentWorldIndex = 0, score = 0, health = 3, activeMissio
 let scene, camera, renderer, clock, yaw = 0, pitch = -0.08, keys = {}, animals = [], raycaster = new THREE.Raycaster(), particles = [], mouseLocked = false, playerHeight = 1.7;
 let lookDrag = {active:false, x:0, y:0};
 let audioCtx = null;
+
+const SAVE_KEY = "divisionRangerProgress_v1";
+
+function saveLocalProgress(){
+  try{
+    const data = {
+      completedMissionIds: Array.from(completedMissionIds || []),
+      currentWorldIndex,
+      score,
+      health,
+      savedAt: Date.now()
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  }catch(e){}
+}
+
+function loadLocalProgress(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    if(!data || !Array.isArray(data.completedMissionIds)) return;
+    completedMissionIds = new Set(data.completedMissionIds.map(Number).filter(Number.isFinite));
+    currentWorldIndex = Math.max(0, Math.min(WORLDS.length - 1, Number(data.currentWorldIndex) || 0));
+    score = Math.max(0, Math.min(allMissions.length, Number(data.score) || completedMissionIds.size));
+    health = Math.max(0, Math.min(3, Number(data.health) || 3));
+
+    // If saved world is already complete, move to first incomplete world.
+    for(let i=0;i<WORLDS.length;i++){
+      const remaining = allMissions.filter(m => m.worldIndex === i && !completedMissionIds.has(m.id));
+      if(remaining.length){
+        currentWorldIndex = i;
+        break;
+      }
+      if(i === WORLDS.length - 1 && remaining.length === 0){
+        currentWorldIndex = WORLDS.length - 1;
+      }
+    }
+    score = completedMissionIds.size;
+  }catch(e){}
+}
+
+function clearLocalProgress(){
+  try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+}
+
 let soundEnabled = localStorage.getItem("animalRescueSound") !== "off";
 window.getSoundEnabled = function(){ return soundEnabled; };
 
@@ -2825,6 +2843,7 @@ function onAlgorithmComplete(){
   const justCompletedMission = activeMission;
   completedMissionIds.add(activeMission.id);
   score++;
+  saveLocalProgress();
   updateHUD();
   rescueAnimalVisual(justCompletedMission.id);
   playCorrect();
@@ -2840,6 +2859,7 @@ function onAlgorithmComplete(){
       showRangerStageComplete(completedWorldIndex, () => {
         if (currentWorldIndex < WORLDS.length - 1) {
           currentWorldIndex++;
+          saveLocalProgress();
           createMissionPods();
           updateHUD();
           const next = getActiveMissionForWorld();
@@ -2847,6 +2867,7 @@ function onAlgorithmComplete(){
             "<b>" + WORLDS[currentWorldIndex].name + " unlocked!</b><span class='sub'>Next rescue: " +
             (next ? ("Save the " + niceAnimalName(getAnimalFileForMission(next)) + ": " + next.dividend + " ÷ " + next.divisor) : "") + "</span>";
         } else {
+          saveLocalProgress();
           document.getElementById("winScreen").style.display = "flex";
           playTada();
           burstConfetti(180);
@@ -2918,7 +2939,7 @@ function checkNearPods(){
   if(nearest && dist < 5.0){
     document.getElementById("bottomTip").innerHTML = 'Press tap RESCUE to start: <b>' + nearest.mission.dividend + ' ÷ ' + nearest.mission.divisor + '</b><span class="sub">' + nearest.mission.focus + '</span>';
   }else{
-    document.getElementById("bottomTip").innerHTML = 'All animals for this world are shown. Cast a web at the animal you want to rescue.<span class="sub">Drag on the right side to look around. Tap RESCUE near an enclosure.</span>';
+    document.getElementById("bottomTip").innerHTML = 'Move near an animal, then press RESCUE.<span class="sub">Complete the division mission to save it.</span>';
   }
 }
 
@@ -3083,7 +3104,7 @@ function fireRescueBeam(){
 
   playWrong();
   document.getElementById("bottomTip").innerHTML =
-    "<b>Web missed!</b><span class='sub'>Move closer to an animal, then press RESCUE again.</span>";
+    "<b>Move closer to an animal.</b><span class='sub'>Then press RESCUE again.</span>";
 }
 
 function animate(){
@@ -3223,6 +3244,7 @@ document.getElementById("startBtn").onclick = ()=>{
 };
 document.getElementById("exitMissionBtn").onclick = closeMission;
 document.getElementById("restartBtn").onclick = ()=>{
+  clearLocalProgress();
   completedMissionIds.clear();
   currentWorldIndex = 0;
   score=0; health=3;
@@ -3271,7 +3293,7 @@ window.addEventListener("error", (e)=>{
   const box = document.getElementById("runtimeErrorBox");
   if (box) {
     box.style.display = "block";
-    box.textContent = "Game script error: " + (e.message || "Unknown error");
+    box.textContent = "Something went wrong. Please refresh the page.";
   }
 });
 
@@ -3288,9 +3310,11 @@ if(window.visualViewport){
 }
 
 buildMissionList();
+loadLocalProgress();
 init3D();
 updateRescuedStrip();
 updateHUD();
+saveLocalProgress();
 </script>
 </body>
 </html>
