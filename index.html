@@ -304,6 +304,41 @@
     .pad{transform:scale(.82); transform-origin:bottom left}
     .fireBtn,.tiltStack{transform:scale(.82); transform-origin:bottom right}
   }
+
+  /* Big visible web burst override */
+  .screenWeb{
+    position:fixed;
+    left:50%;
+    top:50%;
+    width:150px !important;
+    height:150px !important;
+    transform:translate(-50%,-50%) scale(.1);
+    z-index:10001 !important;
+    pointer-events:none;
+    opacity:0;
+    filter:drop-shadow(0 0 16px rgba(255,255,255,1)) drop-shadow(0 0 8px rgba(125,211,252,.9));
+  }
+  .screenWeb.show{ animation:bigWebBurst .78s ease-out forwards !important; }
+  .screenWeb svg{ width:100%; height:100%; overflow:visible; }
+  .screenWeb line,.screenWeb circle{
+    stroke:white;
+    stroke-width:6;
+    fill:none;
+    stroke-linecap:round;
+  }
+  .screenWeb .webSoft{
+    stroke:#c7f9ff;
+    stroke-width:4;
+    opacity:.95;
+  }
+  @keyframes bigWebBurst{
+    0%{opacity:0; transform:translate(-50%,-50%) scale(.08) rotate(-8deg);}
+    10%{opacity:1;}
+    45%{opacity:1; transform:translate(-50%,-50%) scale(2.1) rotate(8deg);}
+    78%{opacity:.9; transform:translate(-50%,-50%) scale(2.45) rotate(14deg);}
+    100%{opacity:0; transform:translate(-50%,-50%) scale(2.7) rotate(18deg);}
+  }
+
 </style>
 </head>
 <body>
@@ -311,18 +346,23 @@
 <div id="runtimeErrorBox" style="display:none;position:fixed;left:10px;right:10px;bottom:80px;z-index:99;background:#fff1f2;color:#7f1d1d;border:2px solid #ef4444;border-radius:14px;padding:10px;font-weight:bold;font-family:Arial,sans-serif;"></div>
 <div id="centerDot"></div>
 
+
 <div class="screenWeb" id="screenWeb" aria-hidden="true">
-  <svg viewBox="-60 -60 120 120">
-    <circle r="24"></circle>
-    <circle class="webSoft" r="42"></circle>
-    <line x1="0" y1="-52" x2="0" y2="52"></line>
-    <line x1="-52" y1="0" x2="52" y2="0"></line>
-    <line x1="-38" y1="-38" x2="38" y2="38"></line>
-    <line x1="-38" y1="38" x2="38" y2="-38"></line>
-    <line class="webSoft" x1="-18" y1="-50" x2="18" y2="50"></line>
-    <line class="webSoft" x1="18" y1="-50" x2="-18" y2="50"></line>
+  <svg viewBox="-80 -80 160 160">
+    <circle r="22"></circle>
+    <circle class="webSoft" r="44"></circle>
+    <circle class="webSoft" r="66"></circle>
+    <line x1="0" y1="-78" x2="0" y2="78"></line>
+    <line x1="-78" y1="0" x2="78" y2="0"></line>
+    <line x1="-56" y1="-56" x2="56" y2="56"></line>
+    <line x1="-56" y1="56" x2="56" y2="-56"></line>
+    <line class="webSoft" x1="-28" y1="-74" x2="28" y2="74"></line>
+    <line class="webSoft" x1="28" y1="-74" x2="-28" y2="74"></line>
+    <line class="webSoft" x1="-74" y1="-28" x2="74" y2="28"></line>
+    <line class="webSoft" x1="-74" y1="28" x2="74" y2="-28"></line>
   </svg>
 </div>
+
 
 
 <div class="hud">
@@ -478,7 +518,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531f";
+const ASSET_VERSION = "20260531g";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -642,6 +682,41 @@ const algorithmTemplate = `
     .qIn,.wIn{width:48px;height:38px;font-size:22px}
     .pvMat{min-height:360px}
   }
+
+  /* Big visible web burst override */
+  .screenWeb{
+    position:fixed;
+    left:50%;
+    top:50%;
+    width:150px !important;
+    height:150px !important;
+    transform:translate(-50%,-50%) scale(.1);
+    z-index:10001 !important;
+    pointer-events:none;
+    opacity:0;
+    filter:drop-shadow(0 0 16px rgba(255,255,255,1)) drop-shadow(0 0 8px rgba(125,211,252,.9));
+  }
+  .screenWeb.show{ animation:bigWebBurst .78s ease-out forwards !important; }
+  .screenWeb svg{ width:100%; height:100%; overflow:visible; }
+  .screenWeb line,.screenWeb circle{
+    stroke:white;
+    stroke-width:6;
+    fill:none;
+    stroke-linecap:round;
+  }
+  .screenWeb .webSoft{
+    stroke:#c7f9ff;
+    stroke-width:4;
+    opacity:.95;
+  }
+  @keyframes bigWebBurst{
+    0%{opacity:0; transform:translate(-50%,-50%) scale(.08) rotate(-8deg);}
+    10%{opacity:1;}
+    45%{opacity:1; transform:translate(-50%,-50%) scale(2.1) rotate(8deg);}
+    78%{opacity:.9; transform:translate(-50%,-50%) scale(2.45) rotate(14deg);}
+    100%{opacity:0; transform:translate(-50%,-50%) scale(2.7) rotate(18deg);}
+  }
+
 </style>
 </head>
 <body>
@@ -1803,6 +1878,31 @@ function makeAnimalPod(m, x, z, localIndex=0){
   return {mission:m, group, animal, cage, label, fileName};
 }
 
+
+function updateRescuedStrip(){
+  const strip = document.getElementById("rescuedStrip");
+  if (!strip) return;
+  const rescued = allMissions.filter(m => completedMissionIds.has(m.id));
+  const maxIcons = 12;
+  const visible = rescued.slice(-maxIcons);
+  strip.innerHTML = "";
+  visible.forEach(m => {
+    const file = getAnimalFileForMission(m);
+    const img = document.createElement("img");
+    img.className = "rescuedIcon";
+    img.src = "./" + file + "?v=" + (typeof ASSET_VERSION !== "undefined" ? ASSET_VERSION : "20260531g");
+    img.alt = niceAnimalName(file);
+    img.title = img.alt;
+    strip.appendChild(img);
+  });
+  if (rescued.length > maxIcons) {
+    const more = document.createElement("span");
+    more.className = "rescuedMore";
+    more.textContent = "+" + (rescued.length - maxIcons);
+    strip.appendChild(more);
+  }
+}
+
 function updateHUD(){
   updateRescuedStrip();
   document.getElementById("scoreText").textContent = score + "/" + allMissions.length;
@@ -2049,22 +2149,55 @@ function showScreenWeb(){
   setTimeout(()=>web.classList.remove("show"), 520);
 }
 
+
 function playWebSound(){
   try{
-    if (typeof playSwish === "function") {
-      playWebSound();
-      return;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = audioCtx || (Ctx ? new Ctx() : null);
+    if(!ctx) { if(typeof playCorrect === "function") playCorrect(); return; }
+    audioCtx = ctx;
+    if(ctx.state === "suspended") ctx.resume().catch(()=>{});
+
+    const t0 = ctx.currentTime;
+    const dur = 0.42;
+
+    // Noise swoosh
+    const bufferSize = Math.floor(ctx.sampleRate * dur);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i=0;i<bufferSize;i++){
+      const x = i / bufferSize;
+      const env = Math.sin(Math.PI * x);
+      data[i] = (Math.random()*2 - 1) * env;
     }
-    if (typeof beep === "function") {
-      beep(420,.06,'triangle',.07);
-      setTimeout(()=>beep(620,.05,'sine',.05),50);
-      return;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(1300, t0);
+    filter.frequency.exponentialRampToValueAtTime(240, t0 + dur);
+    filter.Q.setValueAtTime(1.2, t0);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.34, t0 + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+    noise.connect(filter).connect(gain).connect(ctx.destination);
+    noise.start(t0);
+    noise.stop(t0 + dur + .02);
+
+    // Bright snap at launch
+    if(typeof beep === "function"){
+      beep(880,.07,"triangle",.09);
+      setTimeout(()=>beep(520,.08,"sine",.07),65);
     }
-    if (typeof playCorrect === "function") {
-      playCorrect();
-    }
-  }catch(e){}
+  }catch(e){
+    try{ if(typeof beep === "function") beep(420,.08,"triangle",.08); }catch(_){}
+  }
 }
+
 
 function castWebEffect(targetPos){
   // Child-friendly rescue web: white strands fly from the camera to the target.
@@ -2122,7 +2255,6 @@ function fireRescueBeam(){
   if(document.getElementById("startScreen").style.display !== "none") return;
   if(document.getElementById("missionPanel").style.display === "flex") return;
 
-  // Always show a clear web on screen first. This is reliable on mobile.
   showScreenWeb();
   playWebSound();
 
@@ -2134,25 +2266,22 @@ function fireRescueBeam(){
     const cage = hits[0].object;
     const pod = animals.find(p=>p.cage === cage);
     if(pod){
-      // Also attempt the 3D web effect, but the screen web is the main visible effect.
       try{ castWebEffect(pod.group.position); }catch(e){}
-      setTimeout(()=>openMission(pod.mission), 260);
+      setTimeout(()=>openMission(pod.mission), 320);
     }
     return;
   }
 
-  // If pupil is near a pod, rescue the nearest animal.
   const near = animals
     .filter(p=>!p.completed)
     .sort((a,b)=>a.group.position.distanceTo(camera.position)-b.group.position.distanceTo(camera.position))[0];
 
   if(near && near.group.position.distanceTo(camera.position)<7.5){
     try{ castWebEffect(near.group.position); }catch(e){}
-    setTimeout(()=>openMission(near.mission), 260);
+    setTimeout(()=>openMission(near.mission), 320);
     return;
   }
 
-  // Miss: still show web, but no mission opens.
   playWrong();
   document.getElementById("bottomTip").innerHTML =
     "<b>Web missed!</b><span class='sub'>Aim at an animal bubble or move closer, then press RESCUE again.</span>";
