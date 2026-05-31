@@ -104,6 +104,7 @@
 </head>
 <body>
 <div id="game"></div>
+<div id="runtimeErrorBox" style="display:none;position:fixed;left:10px;right:10px;bottom:80px;z-index:99;background:#fff1f2;color:#7f1d1d;border:2px solid #ef4444;border-radius:14px;padding:10px;font-weight:bold;font-family:Arial,sans-serif;"></div>
 <div id="centerDot"></div>
 
 <div class="hud">
@@ -851,7 +852,7 @@ const WORLDS = [
 ];
 const animalNames = ["Bunny","Panda","Otter","Koala","Deer","Fox","Penguin","Kitten","Puppy","Turtle","Chick","Hamster"];
 
-let allMissions = [], score = 0, health = 3, activeMission = null, completedMissionIds = new Set();
+let allMissions = [], currentWorldIndex = 0, score = 0, health = 3, activeMission = null, completedMissionIds = new Set();
 let scene, camera, renderer, clock, yaw = 0, pitch = -0.08, keys = {}, animals = [], raycaster = new THREE.Raycaster(), particles = [], mouseLocked = false, playerHeight = 1.7;
 let lookDrag = {active:false, x:0, y:0};
 let audioCtx = null;
@@ -951,10 +952,20 @@ function buildMissionList(){
   });
 }
 
+function getCurrentWorldMissions(){
+  return allMissions.filter(m => m.worldIndex === currentWorldIndex);
+}
+function getCurrentWorldRemaining(){
+  return getCurrentWorldMissions().filter(m => !completedMissionIds.has(m.id));
+}
+function isCurrentWorldComplete(){
+  return getCurrentWorldMissions().length > 0 && getCurrentWorldRemaining().length === 0;
+}
+
 function init3D(){
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xbfefff);
-  scene.fog = new THREE.Fog(0xbfefff, 55, 150);
+  scene.background = new THREE.Color(0xdff8ff);
+  scene.fog = new THREE.Fog(0xdff8ff, 55, 150);
 
   camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
   camera.position.set(0, playerHeight, 18);
@@ -963,6 +974,7 @@ function init3D(){
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
+  renderer.setClearColor(0xdff8ff, 1);
   document.getElementById("game").appendChild(renderer.domElement);
 
   clock = new THREE.Clock();
@@ -1146,7 +1158,7 @@ function createMissionPods(){
 
   // Show only the current world's animals.
   // World 1 is intentionally small: only 3 animals in a cosy rescue clearing.
-  const visibleMissions = getCurrentWorldMissions();
+  const visibleMissions = (typeof getCurrentWorldMissions === 'function') ? getCurrentWorldMissions() : allMissions.filter(m => m.worldIndex === 0);
   const positions = [
     new THREE.Vector3(-7, 0, -10),
     new THREE.Vector3(0, 0, -13),
@@ -1219,8 +1231,13 @@ function makeAnimalPod(m, x, z){
 function updateHUD(){
   document.getElementById("scoreText").textContent = score + "/" + allMissions.length;
   document.getElementById("healthText").textContent = "♥".repeat(health) + "♡".repeat(3-health);
-  const next = allMissions.find(m=>!completedMissionIds.has(m.id));
-  document.getElementById("worldText").textContent = next ? (next.worldName + " — " + next.focus) : "All worlds completed!";
+  const currentWorld = WORLDS[currentWorldIndex];
+  const worldMissions = getCurrentWorldMissions();
+  const worldTotal = worldMissions.length;
+  const worldDone = worldMissions.filter(m=>completedMissionIds.has(m.id)).length;
+  document.getElementById("worldText").textContent = currentWorld
+    ? (currentWorld.name + " (" + worldDone + "/" + worldTotal + ") — " + currentWorld.focus)
+    : "All worlds completed!";
 }
 
 function openMission(mission){
@@ -1245,11 +1262,25 @@ function onAlgorithmComplete(){
   updateHUD();
   rescueAnimalVisual(activeMission.id);
   playTada();
+
   setTimeout(()=>{
     closeMission();
-    if(score >= allMissions.length){
-      document.getElementById("winScreen").style.display = "flex";
-      playTada();
+
+    // Only 3 animals are shown in World 1.
+    // After all current-world animals are rescued, unlock and display the next world.
+    if (isCurrentWorldComplete()) {
+      if (currentWorldIndex < WORLDS.length - 1) {
+        currentWorldIndex++;
+        createMissionPods();
+        updateHUD();
+        document.getElementById("bottomTip").innerHTML =
+          "<b>" + WORLDS[currentWorldIndex].name + " unlocked!</b><span class='sub'>" +
+          WORLDS[currentWorldIndex].focus + "</span>";
+        playTada();
+      } else {
+        document.getElementById("winScreen").style.display = "flex";
+        playTada();
+      }
     }
   }, 800);
 }
@@ -1404,6 +1435,7 @@ document.getElementById("startBtn").onclick = ()=>{
 document.getElementById("exitMissionBtn").onclick = closeMission;
 document.getElementById("restartBtn").onclick = ()=>{
   completedMissionIds.clear();
+  currentWorldIndex = 0;
   score=0; health=3;
   document.getElementById("winScreen").style.display = "none";
   createMissionPods();
@@ -1445,6 +1477,14 @@ lookZone.addEventListener("pointermove", e=>{
 });
 
 initModelLoader();
+window.addEventListener("error", (e)=>{
+  const box = document.getElementById("runtimeErrorBox");
+  if (box) {
+    box.style.display = "block";
+    box.textContent = "Game script error: " + (e.message || "Unknown error");
+  }
+});
+
 buildMissionList();
 init3D();
 updateHUD();
