@@ -680,7 +680,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531v";
+const ASSET_VERSION = "20260531w";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -1333,6 +1333,129 @@ const algorithmTemplate = `
     .fixedNumPad .utility,
     .fixedNumPad .danger{
       font-size:11px !important;
+    }
+  }
+
+  /* ===== Cleaner mobile algorithm layout ===== */
+  .rightRail > .railCard:last-child{
+    display:none !important; /* hide Mission Prompt */
+  }
+
+  .algoActionBtns{
+    display:grid !important;
+    grid-template-columns:1fr auto !important;
+    align-items:center !important;
+    gap:8px !important;
+  }
+  .algoActionBtns .btn.gold{
+    min-width:82px;
+  }
+
+  .stepBox{
+    padding:8px 10px !important;
+    border-radius:14px !important;
+  }
+  .stepTitle{
+    font-size:24px !important;
+    margin:0 0 4px !important;
+    text-underline-offset:4px !important;
+  }
+  .stepText{
+    font-size:14px !important;
+    line-height:1.12 !important;
+  }
+
+  .algoActionPanel{
+    position:relative !important;
+    bottom:auto !important;
+    z-index:1 !important;
+    box-shadow:none !important;
+  }
+
+  @media(max-width:760px){
+    .mainGrid{
+      gap:8px !important;
+    }
+    .rightRail{
+      gap:8px !important;
+    }
+    .railCard{
+      padding:8px !important;
+      border-radius:18px !important;
+    }
+    .railCard h3{
+      font-size:30px !important;
+      margin-bottom:4px !important;
+    }
+    .smallMuted{
+      font-size:11px !important;
+      line-height:1.16 !important;
+      margin-bottom:4px !important;
+    }
+    .algoWrap{
+      padding:6px !important;
+      overflow:visible !important;
+    }
+
+    /* Make the long-division board shorter so the full algorithm is visible. */
+    .algoLabels{
+      grid-template-columns:42px repeat(var(--cols), 66px) var(--remW, 0px) !important;
+      font-size:12px !important;
+    }
+    .algoLabels .lab{
+      padding:5px 0 !important;
+    }
+    .algoRow{
+      grid-template-columns:42px repeat(var(--cols), 66px) var(--remW, 0px) !important;
+    }
+    .algoCell{
+      height:43px !important;
+      font-size:26px !important;
+    }
+    .algoRow.quot .algoCell{
+      height:42px !important;
+      font-size:22px !important;
+    }
+    .qIn,.wIn{
+      width:42px !important;
+      height:32px !important;
+      border-radius:10px !important;
+      font-size:21px !important;
+    }
+    .algoRow.remFinal{
+      top:-43px !important;
+    }
+
+    .algoActionPanel{
+      margin-top:7px !important;
+      padding:7px !important;
+      border-radius:15px !important;
+    }
+    .algoActionNote.pupilNote{
+      font-size:11px !important;
+      padding:6px 8px !important;
+      line-height:1.12 !important;
+    }
+    .btn.prominent{
+      font-size:18px !important;
+      padding:10px 12px !important;
+      width:100% !important;
+    }
+    .algoActionBtns .btn.gold{
+      padding:10px 12px !important;
+      font-size:15px !important;
+      min-width:72px !important;
+    }
+
+    .stepBox{
+      padding:7px 9px !important;
+      border-radius:13px !important;
+    }
+    .stepTitle{
+      font-size:22px !important;
+    }
+    .stepText{
+      font-size:13px !important;
     }
   }
 </style>
@@ -3319,8 +3442,8 @@ document.querySelectorAll(".pad button[data-key]").forEach(btn=>{
   btn.addEventListener("pointerleave", ()=>{keys[code]=false;});
 });
 document.getElementById("fireBtn").addEventListener("pointerdown", e=>{ e.preventDefault(); fireRescueBeam(); });
-document.getElementById("tiltUpBtn").addEventListener("pointerdown", e=>{ e.preventDefault(); pitch = Math.max(-1.45, pitch - 0.22); });
-document.getElementById("tiltDownBtn").addEventListener("pointerdown", e=>{ e.preventDefault(); pitch = Math.min(1.35, pitch + 0.22); });
+document.getElementById("tiltUpBtn").addEventListener("pointerdown", e=>{ e.preventDefault(); pitch = Math.min(1.35, pitch + 0.22); });
+document.getElementById("tiltDownBtn").addEventListener("pointerdown", e=>{ e.preventDefault(); pitch = Math.max(-1.45, pitch - 0.22); });
 
 // Mobile/tablet drag-look: drag on the right side of the screen to look left/right/up/down.
 // This fixes the problem where pointer lock does not tilt well inside mobile browsers.
@@ -3340,12 +3463,51 @@ lookZone.addEventListener("pointermove", e=>{
   lookDrag.x = e.clientX;
   lookDrag.y = e.clientY;
   yaw -= dx * 0.006;
-  pitch -= dy * 0.006;
+  // Finger up should look up; finger down should look down.
+  pitch += dy * 0.006;
   pitch = Math.max(-1.45, Math.min(1.35, pitch));
 });
 ["pointerup","pointercancel","pointerleave"].forEach(type=>{
   lookZone.addEventListener(type, ()=>{ lookDrag.active = false; });
 });
+
+
+// Touch-drag anywhere on the 3D game area to move the crosshair.
+// This does not cast the web; only the RESCUE button casts the web.
+const gameArea = document.getElementById("game");
+let gameLookDrag = {active:false, x:0, y:0};
+function isOverlayOpen(){
+  return document.getElementById("startScreen").style.display !== "none" ||
+         document.getElementById("missionPanel").style.display === "flex" ||
+         document.getElementById("winScreen").style.display === "flex";
+}
+if(gameArea){
+  gameArea.addEventListener("pointerdown", e=>{
+    if(isOverlayOpen()) return;
+    e.preventDefault();
+    gameLookDrag.active = true;
+    gameLookDrag.x = e.clientX;
+    gameLookDrag.y = e.clientY;
+    try{ gameArea.setPointerCapture?.(e.pointerId); }catch(err){}
+  });
+  gameArea.addEventListener("pointermove", e=>{
+    if(!gameLookDrag.active) return;
+    e.preventDefault();
+    const dx = e.clientX - gameLookDrag.x;
+    const dy = e.clientY - gameLookDrag.y;
+    gameLookDrag.x = e.clientX;
+    gameLookDrag.y = e.clientY;
+
+    yaw -= dx * 0.006;
+    // Finger up should look up; finger down should look down.
+    pitch += dy * 0.006;
+    pitch = Math.max(-1.45, Math.min(1.35, pitch));
+  });
+  ["pointerup","pointercancel","pointerleave"].forEach(type=>{
+    gameArea.addEventListener(type, ()=>{ gameLookDrag.active = false; });
+  });
+}
+
 
 initModelLoader();
 window.addEventListener("error", (e)=>{
