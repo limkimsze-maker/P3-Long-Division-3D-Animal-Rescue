@@ -798,6 +798,43 @@
     font-weight:800;
   }
 
+
+  /* ===== Cover page with uploaded ranger image ===== */
+  .coverImageWrap{
+    margin:0 auto 16px;
+    border-radius:24px;
+    overflow:hidden;
+    border:3px solid #d7eef7;
+    box-shadow:0 16px 38px rgba(15,42,74,.18);
+    background:#eefbff;
+  }
+  .coverImageWrap img{
+    display:block;
+    width:100%;
+    height:auto;
+  }
+  .coverStartPanel{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    margin-top:10px;
+  }
+  .coverLead{
+    text-align:center;
+    font-size:17px;
+    line-height:1.35;
+    color:#445d7a;
+    margin:8px auto 10px;
+    max-width:760px;
+  }
+  @media(max-width:760px){
+    .coverImageWrap{border-radius:18px;margin-bottom:12px;}
+    .coverLead{font-size:14px;margin:6px auto 8px;}
+    .coverStartPanel{margin-top:6px;}
+  }
+
 </style>
 </head>
 <body>
@@ -856,37 +893,17 @@
 
 <div class="screen" id="startScreen">
   <div class="card">
-    <h1 class="title">Long Division Ranger: Animal Rescue</h1>
-    <p class="lead">Help the Ranger rescue animals by solving long-division missions. Clear each world to unlock the next adventure.</p>
+    <div class="coverImageWrap">
+      <img src="./file_00000000836c71faa2e0e13bac5217c7.png" alt="Long Division Ranger: Animal Rescue cover image">
+    </div>
 
-    <div class="startHero">
-      <div class="heroArt" aria-hidden="true">
-        <div class="heroGround"></div>
-        <div class="heroAnimals">
-          <div class="heroAnimal">🐻</div>
-          <div class="heroAnimal tall">🦒</div>
-          <div class="heroAnimal">🐥</div>
-          <div class="heroAnimal">🐘</div>
-        </div>
-        <div class="rangerPlaceholder">
-          <div class="hatTop"></div>
-          <div class="hatBrim"></div>
-          <div class="head"></div>
-          <div class="eye left"></div>
-          <div class="eye right"></div>
-          <div class="smile"></div>
-          <div class="body"></div>
-          <div class="badge"></div>
-        </div>
-      </div>
-      <div class="heroCopy">
-        <div class="heroBadge">7 worlds • 30 rescue missions</div>
-        <h2>Become a Long Division Ranger!</h2>
-        <p>Move around the world, aim at an animal, press <b>RESCUE</b>, then solve the long-division mission to save it.</p>
-        <div class="startActions">
-          <button class="btn startBtnBig" id="startBtn">Start Adventure</button>
-        </div>
-      </div>
+    <p class="coverLead">
+      Aim at an animal, press <b>RESCUE</b>, and complete the long-division mission to save it.
+      Your progress is saved on this device.
+    </p>
+
+    <div class="coverStartPanel">
+      <button class="btn startBtnBig" id="startBtn">Start Adventure</button>
     </div>
 
     <div class="howToPlay">
@@ -902,7 +919,6 @@
           <div class="resetInfoNote">
             <b>Need to restart from World 1?</b> Open <b>How to Play</b> and hold the <b>Reset Progress</b> button for 2 seconds.
           </div>
-
           <div class="worldGrid">
             <div class="worldCard"><b>World 1:</b> Division Facts<br>8 ÷ 2, 9 ÷ 3, 6 ÷ 2</div>
             <div class="worldCard"><b>World 2:</b> Clean Division<br>86 ÷ 2, 69 ÷ 3, 864 ÷ 2</div>
@@ -1030,7 +1046,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531aj";
+const ASSET_VERSION = "20260531ak";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
