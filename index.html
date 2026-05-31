@@ -680,7 +680,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531u";
+const ASSET_VERSION = "20260531v";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -1276,6 +1276,65 @@ const algorithmTemplate = `
       font-size:12px !important;
     }
   }
+
+  /* ===== Fixed keypad: no scrolling, all buttons visible ===== */
+  .fixedNumPad,
+  .numPad.fixedNumPad{
+    display:grid !important;
+    grid-template-columns:repeat(12, minmax(0, 1fr)) !important;
+    gap:3px !important;
+    overflow:visible !important;
+    padding:2px 0 4px !important;
+    margin:4px 0 5px !important;
+    width:100% !important;
+    max-width:100% !important;
+  }
+  .fixedNumPad button,
+  .numPad.fixedNumPad button{
+    min-width:0 !important;
+    width:auto !important;
+    height:32px !important;
+    padding:2px 0 !important;
+    border-radius:9px !important;
+    font-size:15px !important;
+    line-height:1 !important;
+    box-shadow:0 2px 0 rgba(15,42,74,.12) !important;
+  }
+  .fixedNumPad .utility,
+  .fixedNumPad .danger{
+    font-size:12px !important;
+  }
+
+  /* On narrow phones, use 2 rows so nothing is hidden. */
+  @media(max-width:430px){
+    .fixedNumPad,
+    .numPad.fixedNumPad{
+      grid-template-columns:repeat(6, minmax(0, 1fr)) !important;
+      gap:4px !important;
+    }
+    .fixedNumPad button,
+    .numPad.fixedNumPad button{
+      height:34px !important;
+      font-size:16px !important;
+      border-radius:9px !important;
+    }
+    .fixedNumPad .utility,
+    .fixedNumPad .danger{
+      font-size:12px !important;
+    }
+  }
+
+  @media(max-width:360px){
+    .fixedNumPad button,
+    .numPad.fixedNumPad button{
+      height:32px !important;
+      font-size:15px !important;
+    }
+    .fixedNumPad .utility,
+    .fixedNumPad .danger{
+      font-size:11px !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -1323,7 +1382,7 @@ const algorithmTemplate = `
         <div class="algoActionPanel">
           <div class="algoActionNote pupilNote">Fill in the highlighted spaces, then press <b>Check Step</b>.</div>
           <div class="numPadHelp">Tap a box, then tap a number.</div>
-          <div class="numPad compactNumPad oneRowNumPad" id="numPad" aria-label="Number keypad">
+          <div class="numPad compactNumPad fixedNumPad" id="numPad" aria-label="Number keypad">
             <button type="button" data-num="1">1</button>
             <button type="button" data-num="2">2</button>
             <button type="button" data-num="3">3</button>
