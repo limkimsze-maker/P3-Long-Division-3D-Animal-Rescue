@@ -109,7 +109,7 @@
 
 <div class="hud">
   <h1>ANIMAL RESCUE DIVISION MISSION</h1>
-  <div class="row"><span>Score: <span id="scoreText">0/0</span></span><span>Health: <span id="healthText">♥♥♥</span></span></div>
+  <div class="row"><span>Score: <span id="scoreText">0/30</span></span><span>Health: <span id="healthText">♥♥♥</span></span></div>
   <div class="world" id="worldText">World 1: Division Facts</div>
   <div class="small">Walk near a glowing rescue pod. Complete the exact long division algorithm to save the animal.</div>
 </div>
@@ -144,7 +144,7 @@
   <div class="card">
     <h1 class="title">3D Animal Rescue Division Mission</h1>
     <p class="lead">
-      The game now uses your uploaded <b>30 PNG animals</b>. Pupils complete one animal rescue mission at a time across 7 worlds.
+      The game now uses your uploaded <b>30 PNG animals</b> in sequence. Pupils complete 30 animal rescue missions across 7 worlds, one animal at a time.
     </p>
     <div class="worldGrid">
       <div class="worldCard"><b>World 1:</b> Division Facts<br>8 ÷ 2 = 4</div>
@@ -180,6 +180,54 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
+
+// ===== 30 PNG animal files uploaded in the GitHub repository root =====
+// Sequence follows the uploaded file list order.
+// IMPORTANT: filenames are case-sensitive on GitHub Pages.
+window.animalPngFiles = [
+  "bear.png",
+  "buffalo.png",
+  "chick.png",
+  "chicken.png",
+  "cow.png",
+  "crocodile.png",
+  "dog.png",
+  "duck.png",
+  "elephant.png",
+  "frog.png",
+  "giraffe.png",
+  "goat.png",
+  "gorilla.png",
+  "hippo.png",
+  "horse.png",
+  "monkey.png",
+  "moose.png",
+  "narwhal.png",
+  "owl.png",
+  "panda.png",
+  "parrot.png",
+  "penguin.png",
+  "pig.png",
+  "rabbit.png",
+  "rhino.png",
+  "sloth.png",
+  "snake.png",
+  "walrus.png",
+  "whale.png",
+  "zebra.png"
+];
+
+// Short alias used by the game. Also placed on window for safety.
+var animalPngFiles = window.animalPngFiles;
+
+window.textureLoader = window.textureLoader || new THREE.TextureLoader();
+window.textureCache = window.textureCache || {};
+var textureLoader = window.textureLoader;
+var textureCache = window.textureCache;
+
+
+console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
+
 const algorithmTemplate = `
 <!doctype html>
 <html lang="en">
@@ -427,41 +475,7 @@ const algorithmTemplate = `
 
 // ===== 30 PNG animal files uploaded in the GitHub repository root =====
 // IMPORTANT: filenames are case-sensitive on GitHub Pages.
-const animalPngFiles = [
-  "cow.png",
-  "elephant.png",
-  "horse.png",
-  "monkey.png",
-  "moose.png",
-  "narwhal.png",
-  "owl.png",
-  "panda.png",
-  "parrot.png",
-  "penguin.png",
-  "pig.png",
-  "rabbit.png",
-  "rhino.png",
-  "sloth.png",
-  "snake.png",
-  "walrus.png",
-  "whale.png",
-  "zebra.png",
-  "bear.png",
-  "buffalo.png",
-  "chick.png",
-  "chicken.png",
-  "crocodile.png",
-  "dog.png",
-  "duck.png",
-  "frog.png",
-  "giraffe.png",
-  "goat.png",
-  "gorilla.png",
-  "hippo.png"
-];
 
-const textureLoader = new THREE.TextureLoader();
-const textureCache = {};
 
 let gltfLoader = null;
 const modelCache = {};
@@ -876,7 +890,7 @@ const WORLDS = [
   {name:"World 3: First Digit Too Small", focus:"The first digit is smaller than the divisor. Pupils learn to look at the next place value.", color:0xfcd34d, questions:[{dividend:48, divisor:6},{dividend:35, divisor:5},{dividend:304, divisor:7},{dividend:126, divisor:4}]},
   {name:"World 4: Regrouping Rescue", focus:"Temporary remainders during working are regrouped to the next place.", color:0xf9a8d4, questions:[{dividend:75, divisor:3},{dividend:86, divisor:4},{dividend:864, divisor:4},{dividend:875, divisor:5}]},
   {name:"World 5: Zero Power", focus:"Zeros in the quotient: 0 in the middle or at the end matters.", color:0xc4b5fd, questions:[{dividend:816, divisor:4},{dividend:824, divisor:4},{dividend:840, divisor:4},{dividend:630, divisor:3}]},
-  {name:"World 6: Remainder Rescue", focus:"Final remainders after the last digit.", color:0xfdba74, questions:[{dividend:7, divisor:2},{dividend:85, divisor:4},{dividend:865, divisor:4},{dividend:304, divisor:7}]},
+  {name:"World 6: Remainder Rescue", focus:"Final remainders after the last digit.", color:0xfdba74, questions:[{dividend:7, divisor:2},{dividend:85, divisor:4},{dividend:865, divisor:4},{dividend:304, divisor:7},{dividend:999, divisor:8}]},
   {name:"World 7: Master Mission", focus:"Mixed practice. Pupils decide what the algorithm needs.", color:0x67e8f9, questions:[{dividend:96, divisor:4},{dividend:432, divisor:6},{dividend:912, divisor:8},{dividend:728, divisor:7},{dividend:304, divisor:7},{dividend:905, divisor:5}]}
 ];
 const animalNames = ["Bunny","Panda","Otter","Koala","Deer","Fox","Penguin","Kitten","Puppy","Turtle","Chick","Hamster"];
@@ -1278,6 +1292,12 @@ function makeFloatingLabel(text){
   );
 }
 
+
+function getAnimalFileForMission(mission){
+  const idx = Math.max(0, mission.id) % window.animalPngFiles.length;
+  return window.animalPngFiles[idx];
+}
+
 function niceAnimalName(fileName){
   return String(fileName || "")
     .replace(".png","")
@@ -1346,15 +1366,15 @@ function loadAnimalPng(fileName, group){
     holder.add(plane);
   }
 
-  if (textureCache[fileName]) {
-    addTexture(textureCache[fileName]);
+  if (window.textureCache[fileName]) {
+    addTexture(window.textureCache[fileName]);
     return holder;
   }
 
-  textureLoader.load(
+  window.textureLoader.load(
     "./" + fileName,
     (tex) => {
-      textureCache[fileName] = tex;
+      window.textureCache[fileName] = tex;
       addTexture(tex);
     },
     undefined,
@@ -1371,7 +1391,7 @@ function makeAnimalPod(m, x, z, localIndex=0){
   const group = new THREE.Group();
   group.position.set(x,0,z);
 
-  const fileName = animalPngFiles[m.id % animalPngFiles.length];
+  const fileName = getAnimalFileForMission(m);
   const shownName = niceAnimalName(fileName);
 
   const base = new THREE.Mesh(
@@ -1423,7 +1443,7 @@ function updateHUD(){
   const active = getActiveMissionForWorld();
 
   if(currentWorld && active){
-    const animalFile = animalPngFiles[active.id % animalPngFiles.length];
+    const animalFile = getAnimalFileForMission(active);
     const animalName = niceAnimalName(animalFile);
     const missionNo = getMissionNumberInWorld(active);
     document.getElementById("worldText").textContent =
@@ -1470,7 +1490,7 @@ function onAlgorithmComplete(){
         const next = getActiveMissionForWorld();
         document.getElementById("bottomTip").innerHTML =
           "<b>" + WORLDS[currentWorldIndex].name + " unlocked!</b><span class='sub'>Next mission: " +
-          (next ? ("Save the " + niceAnimalName(animalPngFiles[next.id % animalPngFiles.length]) + ": " + next.dividend + " ÷ " + next.divisor) : "") + "</span>";
+          (next ? ("Save the " + niceAnimalName(getAnimalFileForMission(next)) + ": " + next.dividend + " ÷ " + next.divisor) : "") + "</span>";
         playTada();
       } else {
         document.getElementById("winScreen").style.display = "flex";
@@ -1483,7 +1503,7 @@ function onAlgorithmComplete(){
       const next = getActiveMissionForWorld();
       document.getElementById("bottomTip").innerHTML =
         "<b>Next rescue mission!</b><span class='sub'>" +
-        (next ? ("Save the " + niceAnimalName(animalPngFiles[next.id % animalPngFiles.length]) + ": " + next.dividend + " ÷ " + next.divisor) : "Continue") +
+        (next ? ("Save the " + niceAnimalName(getAnimalFileForMission(next)) + ": " + next.dividend + " ÷ " + next.divisor) : "Continue") +
         "</span>";
     }
   }, 900);
