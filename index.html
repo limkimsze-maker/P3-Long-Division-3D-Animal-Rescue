@@ -957,7 +957,7 @@
     height:100%;
     width:0%;
     background:linear-gradient(90deg,#22c55e,#84cc16);
-    animation:travelFill 1.5s ease-out forwards;
+    animation:travelFill 4s ease-out forwards;
   }
   @keyframes travelFill{to{width:100%;}}
 
@@ -1187,7 +1187,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531al";
+const ASSET_VERSION = "20260531am";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -3430,7 +3430,7 @@ function showTravelToNextWorld(nextWorldIndex, done){
   const overlay = document.getElementById("travelOverlay");
   const msg = document.getElementById("travelMsg");
   if(msg){
-    msg.textContent = "The rescued animals pass the ranger a map. Ride the horse quickly to " + WORLDS[nextWorldIndex].name + "!";
+    msg.textContent = "The rescued animals pass the ranger a map. Ride the horse to " + WORLDS[nextWorldIndex].name + "!";
   }
   if(overlay){
     overlay.classList.add("show");
@@ -3446,7 +3446,7 @@ function showTravelToNextWorld(nextWorldIndex, done){
   setTimeout(()=>{
     if(overlay) overlay.classList.remove("show");
     if(typeof done === "function") done();
-  }, 1550);
+  }, 4000);
 }
 
 function createWorld(){
