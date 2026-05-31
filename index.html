@@ -120,8 +120,8 @@
 </div>
 
 <div class="bottomTip" id="bottomTip">
-  Walk to a glowing animal rescue pod.
-  <span class="sub">Drag on the right side to look up/down/left/right, or use ▲ ▼ tilt buttons.</span>
+  Walk to the glowing PNG animal rescue pod.
+  <span class="sub">Drag on the right side to look around, or use ▲ ▼ tilt buttons.</span>
 </div>
 
 <div id="mobileControls">
@@ -424,6 +424,9 @@ const algorithmTemplate = `
 // Uploaded animal model files in your GitHub repository root.
 // IMPORTANT: GitHub filenames are case-sensitive. These must match exactly.
 // World 1 now uses Cow, Elephant and Horse.
+
+// ===== 30 PNG animal files uploaded in the GitHub repository root =====
+// IMPORTANT: filenames are case-sensitive on GitHub Pages.
 const animalPngFiles = [
   "cow.png",
   "elephant.png",
@@ -457,10 +460,9 @@ const animalPngFiles = [
   "hippo.png"
 ];
 
-// These are 2D PNG animals, placed as billboards in the 3D enclosure.
-// GitHub filenames are case-sensitive; keep the names lowercase as uploaded.
 const textureLoader = new THREE.TextureLoader();
 const textureCache = {};
+
 let gltfLoader = null;
 const modelCache = {};
   function ensureAudio(){ const Ctx = window.AudioContext || window.webkitAudioContext; if (!Ctx) return null; if (!audioCtx) audioCtx = new Ctx(); if (audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{}); return audioCtx; }
