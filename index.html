@@ -22,6 +22,33 @@
   .hud .row{font-size:17px; font-weight:bold; display:flex; justify-content:space-between; gap:12px}
   .hud .small{margin-top:6px; font-size:12px; opacity:.9; line-height:1.25}
   .hud .world{margin-top:7px; font-size:13px; color:#fff4bf; line-height:1.25}
+  .rescuedStrip{
+    margin-top:8px;
+    display:flex;
+    gap:5px;
+    align-items:center;
+    flex-wrap:wrap;
+    max-height:42px;
+    overflow:hidden;
+  }
+  .rescuedIcon{
+    width:28px;
+    height:28px;
+    border-radius:9px;
+    background:rgba(255,255,255,.92);
+    border:1px solid rgba(255,255,255,.75);
+    object-fit:contain;
+    padding:2px;
+    box-shadow:0 2px 6px rgba(0,0,0,.18);
+  }
+  .rescuedMore{
+    color:#dff8ff;
+    font-size:12px;
+    font-weight:bold;
+    padding:2px 5px;
+    border-radius:999px;
+    background:rgba(255,255,255,.12);
+  }
   .topRight{
     position:fixed; top:12px; right:12px; z-index:5; background:rgba(8,24,48,.70); color:white; border:2px solid rgba(255,255,255,.35);
     border-radius:14px; padding:10px 13px; font-size:13px; line-height:1.25; max-width:330px;
@@ -111,6 +138,7 @@
   <h1>ANIMAL RESCUE DIVISION MISSION</h1>
   <div class="row"><span>Score: <span id="scoreText">0/30</span></span><span>Health: <span id="healthText">♥♥♥</span></span></div>
   <div class="world" id="worldText">World 1: Division Facts</div>
+  <div class="rescuedStrip" id="rescuedStrip" aria-label="Rescued animals"></div>
   <div class="small">Walk near a glowing rescue pod. Complete the exact long division algorithm to save the animal.</div>
 </div>
 
@@ -1433,7 +1461,43 @@ function makeAnimalPod(m, x, z, localIndex=0){
   return {mission:m, group, animal, cage, label, fileName};
 }
 
+
+function getAnimalFileForMission(mission){
+  const list = window.animalPngFiles || animalPngFiles || [];
+  const idx = Math.max(0, mission.id) % list.length;
+  return list[idx] || "";
+}
+
+function updateRescuedStrip(){
+  const strip = document.getElementById("rescuedStrip");
+  if (!strip) return;
+
+  const rescued = allMissions.filter(m => completedMissionIds.has(m.id));
+  const maxIcons = 12; // keep HUD neat on mobile
+  const visible = rescued.slice(-maxIcons);
+
+  strip.innerHTML = "";
+
+  visible.forEach(m => {
+    const file = getAnimalFileForMission(m);
+    const img = document.createElement("img");
+    img.className = "rescuedIcon";
+    img.src = "./" + file + "?v=" + (typeof ASSET_VERSION !== "undefined" ? ASSET_VERSION : "20260531a");
+    img.alt = niceAnimalName ? niceAnimalName(file) : file;
+    img.title = img.alt;
+    strip.appendChild(img);
+  });
+
+  if (rescued.length > maxIcons) {
+    const more = document.createElement("span");
+    more.className = "rescuedMore";
+    more.textContent = "+" + (rescued.length - maxIcons);
+    strip.appendChild(more);
+  }
+}
+
 function updateHUD(){
+  updateRescuedStrip();
   document.getElementById("scoreText").textContent = score + "/" + allMissions.length;
   document.getElementById("healthText").textContent = "♥".repeat(health) + "♡".repeat(3-health);
 
@@ -1665,6 +1729,7 @@ document.getElementById("restartBtn").onclick = ()=>{
   currentWorldIndex = 0;
   score=0; health=3;
   document.getElementById("winScreen").style.display = "none";
+  updateRescuedStrip();
   createMissionPods();
   updateHUD();
 };
@@ -1714,6 +1779,7 @@ window.addEventListener("error", (e)=>{
 
 buildMissionList();
 init3D();
+updateRescuedStrip();
 updateHUD();
 </script>
 </body>
