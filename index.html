@@ -144,7 +144,7 @@
   <div class="card">
     <h1 class="title">3D Animal Rescue Division Mission</h1>
     <p class="lead">
-      Stage 1 is now a small rescue farm with only <b>3 simple enclosures</b>: Cow, Elephant and Horse. Complete these 3 guided division missions first, then the next world unlocks.
+      The game now shows <b>one animal rescue mission at a time</b>. Pupils complete 29 missions across 7 worlds, with one clear animal and one division question on screen.
     </p>
     <div class="worldGrid">
       <div class="worldCard"><b>World 1:</b> Division Facts<br>8 ÷ 2 = 4</div>
@@ -911,8 +911,11 @@ function fitModelToPod(model, targetHeight=1.8){
   return model;
 }
 
-function loadAnimalModel(fileName, fallbackAnimal, group, localIndex=0){
-  if (!gltfLoader || !fileName) return;
+function loadAnimalModel(fileName, group, localIndex=0){
+  if (!gltfLoader || !fileName) {
+    console.warn("GLTFLoader missing or filename missing:", fileName);
+    return;
+  }
 
   const candidates = [
     fileName,
@@ -920,35 +923,75 @@ function loadAnimalModel(fileName, fallbackAnimal, group, localIndex=0){
     fileName.charAt(0).toLowerCase() + fileName.slice(1)
   ].filter((v, i, arr) => v && arr.indexOf(v) === i);
 
-  function placeLoadedModel(source){
-    // The GLB is optional. The built-in animal remains visible.
-    // This avoids the "only elephant appears" problem when cow/horse GLBs have strange scale or origin.
-    const model = cloneGLTFScene(source);
-    fitModelToPod(model, 1.2);
-    model.position.set(0, .75, 0);
-    model.rotation.y = Math.PI;
+  function normaliseAndAdd(source, usedFileName){
+    const raw = cloneGLTFScene(source);
 
-    // Put uploaded model slightly behind the guaranteed animal.
-    // If it looks good, it enriches the animal. If not, the guaranteed animal is still visible.
-    model.position.z -= .15;
-    model.traverse(obj=>{
-      if(obj.isMesh){
+    // Put the loaded GLB inside a wrapper.
+    // This fixes many GLB origin/centre problems because we move the raw model
+    // relative to the wrapper instead of trusting its original origin.
+    const wrapper = new THREE.Group();
+    wrapper.name = "GLB_WRAPPER_" + usedFileName;
+
+    raw.updateMatrixWorld(true);
+    let box = new THREE.Box3().setFromObject(raw);
+    let size = new THREE.Vector3();
+    let center = new THREE.Vector3();
+    box.getSize(size);
+    box.getCenter(center);
+
+    const maxDim = Math.max(size.x, size.y, size.z) || 1;
+    const targetMax = 1.95;
+    const scale = targetMax / maxDim;
+
+    raw.scale.setScalar(scale);
+    raw.updateMatrixWorld(true);
+
+    box = new THREE.Box3().setFromObject(raw);
+    size = new THREE.Vector3();
+    center = new THREE.Vector3();
+    box.getSize(size);
+    box.getCenter(center);
+
+    // Re-centre on x/z and place bottom at y=0.
+    raw.position.x += -center.x;
+    raw.position.z += -center.z;
+    raw.position.y += -box.min.y;
+
+    raw.traverse(obj => {
+      if (obj.isMesh) {
         obj.castShadow = true;
+        obj.receiveShadow = true;
         obj.frustumCulled = false;
+
+        // Some GLBs have very dark materials under simple lighting.
+        // Keep original material, but make sure it is visible enough.
+        if (obj.material) {
+          obj.material.side = THREE.DoubleSide;
+          obj.material.needsUpdate = true;
+        }
       }
     });
-    group.add(model);
+
+    wrapper.add(raw);
+    wrapper.position.set(0, 0.20, 0);
+    wrapper.rotation.y = Math.PI; // face player
+    group.add(wrapper);
+
+    console.log("Loaded GLB:", usedFileName, "size:", size, "scale:", scale);
   }
 
   function tryLoad(index){
     const candidate = candidates[index];
     if (!candidate) {
       console.warn("Could not load any model candidate for:", fileName);
+      const missing = makeFloatingLabel("Model missing\n" + fileName);
+      missing.position.set(0,1.9,0);
+      group.add(missing);
       return;
     }
 
     if (modelCache[candidate]) {
-      placeLoadedModel(modelCache[candidate]);
+      normaliseAndAdd(modelCache[candidate], candidate);
       return;
     }
 
@@ -956,10 +999,13 @@ function loadAnimalModel(fileName, fallbackAnimal, group, localIndex=0){
       "./" + candidate,
       (gltf) => {
         modelCache[candidate] = gltf.scene;
-        placeLoadedModel(gltf.scene);
+        normaliseAndAdd(gltf.scene, candidate);
       },
       undefined,
-      () => tryLoad(index + 1)
+      (err) => {
+        console.warn("Failed GLB candidate:", candidate, err);
+        tryLoad(index + 1);
+      }
     );
   }
 
@@ -984,6 +1030,16 @@ function getCurrentWorldRemaining(){
 }
 function isCurrentWorldComplete(){
   return getCurrentWorldMissions().length > 0 && getCurrentWorldRemaining().length === 0;
+}
+
+function getActiveMissionForWorld(){
+  return getCurrentWorldRemaining()[0] || null;
+}
+
+function getMissionNumberInWorld(mission){
+  const worldMissions = getCurrentWorldMissions();
+  const idx = worldMissions.findIndex(m => m.id === mission.id);
+  return idx >= 0 ? idx + 1 : 1;
 }
 
 function init3D(){
@@ -1036,62 +1092,59 @@ function init3D(){
 }
 
 function createWorld(){
-  // Ultra-simple Stage 1 farm: only 3 enclosures, no big world.
+  // One-animal mission arena.
+  // Pupils focus on only one animal and one division question at a time.
   const groundMat = new THREE.MeshLambertMaterial({color:0xeafff4});
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(36,26), groundMat);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(42,34), groundMat);
   ground.rotation.x = -Math.PI/2;
   ground.position.z = -6;
   ground.receiveShadow = true;
   scene.add(ground);
 
-  // Clear blue walkway in front of the enclosures.
+  // Main rescue path.
   const walkway = new THREE.Mesh(
-    new THREE.BoxGeometry(28,.05,2.1),
+    new THREE.BoxGeometry(18,.05,2.2),
     new THREE.MeshLambertMaterial({color:0xb7f3ff})
   );
-  walkway.position.set(0,.07,-1.7);
+  walkway.position.set(0,.07,-1.2);
   walkway.receiveShadow = true;
   scene.add(walkway);
 
-  // Three clean enclosure pads.
-  const padColors = [0xfff6b8, 0xffe6f3, 0xe0f5ff];
-  const padXs = [-3.8, 0, 3.8];
-  padXs.forEach((x,i)=>{
-    const pad = new THREE.Mesh(
-      new THREE.CylinderGeometry(2.8,2.8,.08,36),
-      new THREE.MeshLambertMaterial({color:padColors[i]})
-    );
-    pad.position.set(x,.05,-7.0);
-    pad.receiveShadow = true;
-    scene.add(pad);
-  });
+  // One central enclosure pad.
+  const pad = new THREE.Mesh(
+    new THREE.CylinderGeometry(4.0,4.0,.08,48),
+    new THREE.MeshLambertMaterial({color:0xfff6d6})
+  );
+  pad.position.set(0,.05,-8);
+  pad.receiveShadow = true;
+  scene.add(pad);
 
-  // Short boundary fence at the back and sides only.
+  // Outer decorative fence, far enough not to block the animal.
   const fenceMat = new THREE.MeshLambertMaterial({color:0xb98750});
-  for(let x=-14; x<=14; x+=2){
+  for(let x=-16; x<=16; x+=2){
     const post = new THREE.Mesh(new THREE.BoxGeometry(.25,1.0,.25), fenceMat);
-    post.position.set(x,.5,-11.7);
+    post.position.set(x,.5,-14);
     scene.add(post);
   }
-  for(let z=-10; z<=1; z+=2){
-    [-13.5,13.5].forEach(x=>{
+  for(let z=-13; z<=2; z+=2){
+    [-17,17].forEach(x=>{
       const post = new THREE.Mesh(new THREE.BoxGeometry(.25,1.0,.25), fenceMat);
       post.position.set(x,.5,z);
       scene.add(post);
     });
   }
 
-  // A few background trees only, far behind the animals.
-  makeTree(-15,-14);
-  makeTree(15,-14);
-  makeTree(-12,2);
-  makeTree(12,2);
+  // Background trees only.
+  makeTree(-16,-16);
+  makeTree(16,-16);
+  makeTree(-18,1);
+  makeTree(18,1);
 
-  // Flowers near the front; not blocking animals.
+  // Flowers in front, not near animal.
   const flowerColors = [0xff6fae,0xffd166,0x8d5cf6,0x60a5fa,0xffffff];
   for(let i=0;i<18;i++){
     const x = -12 + Math.random()*24;
-    const z = -0.6 + Math.random()*2.5;
+    const z = 0.2 + Math.random()*3;
     const stem = new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.28,6), new THREE.MeshLambertMaterial({color:0x238a4b}));
     stem.position.set(x,.14,z);
     scene.add(stem);
@@ -1100,8 +1153,8 @@ function createWorld(){
     scene.add(bloom);
   }
 
-  // Soft lights above each enclosure.
-  [-4.2,0,4.2].forEach(x=>makeLamp(x,-10.5));
+  // Light post behind the single animal.
+  makeLamp(0,-12.5);
 }
 
 function makeTree(x,z){
@@ -1151,138 +1204,17 @@ function createMissionPods(){
   animals.forEach(a=>scene.remove(a.group));
   animals = [];
 
-  const visibleMissions = getCurrentWorldMissions().slice(0, 3);
-  const positions = [
-    new THREE.Vector3(-3.8, 0, -7.0),
-    new THREE.Vector3(0, 0, -7.0),
-    new THREE.Vector3(3.8, 0, -7.0)
-  ];
+  const mission = getActiveMissionForWorld();
+  if (!mission) return;
 
-  visibleMissions.forEach((m, idx)=>{
-    const pos = positions[idx];
-    const pod = makeAnimalPod(m, pos.x, pos.z, idx);
-    scene.add(pod.group);
-    animals.push(pod);
-  });
+  const pod = makeAnimalPod(mission, 0, -8, 0);
+  scene.add(pod.group);
+  animals.push(pod);
 
-  // Start directly facing the 3 animals.
-  camera.position.set(0, playerHeight, 6.2);
+  // Start directly facing the one animal.
+  camera.position.set(0, playerHeight, 5.8);
   yaw = 0;
-  pitch = -0.10;
-}
-
-
-function roundRectSafe(ctx, x, y, w, h, r, fill, stroke) {
-  ctx.beginPath();
-  ctx.moveTo(x+r,y);
-  ctx.arcTo(x+w,y,x+w,y+h,r);
-  ctx.arcTo(x+w,y+h,x,y+h,r);
-  ctx.arcTo(x,y+h,x,y,r);
-  ctx.arcTo(x,y,x+w,y,r);
-  ctx.closePath();
-  if(fill) ctx.fill();
-  if(stroke) ctx.stroke();
-}
-
-function makeFloatingLabel(text){
-  text = String(text || "").replace(/\\n/g, "\n");
-  const canvas = document.createElement("canvas");
-  canvas.width = 640;
-  canvas.height = 180;
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "rgba(8,24,48,.88)";
-  roundRectSafe(ctx, 16, 16, 608, 148, 22, true, false);
-  ctx.strokeStyle = "rgba(255,255,255,.75)";
-  ctx.lineWidth = 5;
-  roundRectSafe(ctx, 16, 16, 608, 148, 22, false, true);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 30px Comic Sans MS, Arial";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  const lines = text.split("\n").slice(0, 2);
-  lines.forEach((line, i) => ctx.fillText(line, 320, 62 + i * 42));
-  const tex = new THREE.CanvasTexture(canvas);
-  return new THREE.Mesh(
-    new THREE.PlaneGeometry(2.15, .62),
-    new THREE.MeshBasicMaterial({ map: tex, transparent: true })
-  );
-}
-
-
-function makeGuaranteedAnimal(type){
-  // Built-in simple animal figure so the stage works even if a GLB is missing,
-  // tiny, transparent, badly centred, or not supported by the browser.
-  const g = new THREE.Group();
-
-  const dark = new THREE.MeshLambertMaterial({color:0x111827});
-  const white = new THREE.MeshLambertMaterial({color:0xffffff});
-  const brown = new THREE.MeshLambertMaterial({color:0x9a5a26});
-  const tan = new THREE.MeshLambertMaterial({color:0xc68642});
-  const grey = new THREE.MeshLambertMaterial({color:0x8b8f98});
-  const black = new THREE.MeshLambertMaterial({color:0x222222});
-
-  function sphere(x,y,z,sx,sy,sz,mat){
-    const m = new THREE.Mesh(new THREE.SphereGeometry(0.45,16,10), mat);
-    m.position.set(x,y,z);
-    m.scale.set(sx,sy,sz);
-    g.add(m);
-    return m;
-  }
-  function box(x,y,z,sx,sy,sz,mat){
-    const m = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), mat);
-    m.position.set(x,y,z);
-    m.scale.set(sx,sy,sz);
-    g.add(m);
-    return m;
-  }
-  function cyl(x,y,z,r,h,mat){
-    const m = new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,10), mat);
-    m.position.set(x,y,z);
-    g.add(m);
-    return m;
-  }
-
-  if(type === "Cow"){
-    sphere(0,1.0,0,1.35,.72,.7,white);
-    sphere(.9,1.18,.25,.55,.45,.5,white);
-    sphere(.72,1.28,.62,.07,.07,.07,black);
-    sphere(1.02,1.28,.62,.07,.07,.07,black);
-    box(-.35,1.15,.55,.38,.28,.08,black);
-    box(.25,.95,.56,.32,.22,.08,black);
-    box(-.65,1.02,-.52,.28,.24,.08,black);
-    for(const x of [-.55,-.2,.25,.6]) cyl(x,.45,0,.08,.8,black);
-    const horn1 = new THREE.Mesh(new THREE.ConeGeometry(.08,.28,8), tan);
-    horn1.position.set(.72,1.72,.15); horn1.rotation.z=.45; g.add(horn1);
-    const horn2 = horn1.clone(); horn2.position.x=1.05; horn2.rotation.z=-.45; g.add(horn2);
-  } else if(type === "Horse"){
-    sphere(0,1.0,0,1.45,.68,.62,brown);
-    sphere(.95,1.32,.2,.48,.42,.42,brown);
-    sphere(.82,1.4,.56,.06,.06,.06,dark);
-    sphere(1.05,1.4,.56,.06,.06,.06,dark);
-    box(-.55,1.55,0,.16,.55,.12,dark); // mane
-    for(const x of [-.55,-.2,.25,.6]) cyl(x,.47,0,.07,.85,brown);
-    const tail = new THREE.Mesh(new THREE.CylinderGeometry(.06,.09,.85,8), dark);
-    tail.position.set(-1.05,1.05,-.08); tail.rotation.z=.8; g.add(tail);
-    const ear1 = new THREE.Mesh(new THREE.ConeGeometry(.09,.32,8), brown);
-    ear1.position.set(.8,1.78,.12); g.add(ear1);
-    const ear2 = ear1.clone(); ear2.position.x=1.05; g.add(ear2);
-  } else {
-    // Elephant
-    sphere(0,1.0,0,1.45,.85,.85,grey);
-    sphere(1.0,1.2,.05,.62,.58,.58,grey);
-    sphere(.83,1.28,.6,.07,.07,.07,dark);
-    sphere(1.12,1.28,.6,.07,.07,.07,dark);
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(.10,.13,.85,12), grey);
-    trunk.position.set(1.42,.85,.22); trunk.rotation.z=.65; g.add(trunk);
-    sphere(.68,1.2,.08,.28,.55,.1,grey);
-    sphere(1.25,1.2,.08,.28,.55,.1,grey);
-    for(const x of [-.55,-.2,.25,.6]) cyl(x,.43,0,.09,.75,grey);
-  }
-
-  g.scale.set(1.25,1.25,1.25);
-  g.position.y = 0.2;
-  g.rotation.y = Math.PI;
-  return g;
+  pitch = -0.08;
 }
 
 function makeAnimalPod(m, x, z, localIndex=0){
@@ -1290,58 +1222,75 @@ function makeAnimalPod(m, x, z, localIndex=0){
   group.position.set(x,0,z);
   group.scale.set(1.0,1.0,1.0);
 
-  const stageNames = ["Cow", "Elephant", "Horse"];
-  const shownName = stageNames[localIndex] || m.animal;
+  const currentWorldMissions = getCurrentWorldMissions();
+  const localMissionIndex = currentWorldMissions.findIndex(mm => mm.id === m.id);
+  const worldModels = animalModelsByWorld[m.worldIndex] || ["Cow.glb", "Elephant.glb", "Horse.glb"];
+  const modelFile = worldModels[Math.max(0, localMissionIndex) % worldModels.length];
+  const shownName = modelFile ? modelFile.replace(".glb","") : m.animal;
 
-  // Simple low fence around the animal.
+  // Clear central enclosure.
+  const base = new THREE.Mesh(
+    new THREE.CylinderGeometry(3.9,3.9,.10,48),
+    new THREE.MeshLambertMaterial({color:0xf6fff6})
+  );
+  base.position.y = .05;
+  group.add(base);
+
+  // Low circular fence.
   const fenceMat = new THREE.MeshLambertMaterial({color:0xb98750});
-  for(let i=0;i<10;i++){
-    const a = (i/10)*Math.PI*2;
-    const post = new THREE.Mesh(new THREE.BoxGeometry(.18,.7,.18), fenceMat);
-    post.position.set(Math.cos(a)*2.05,.35,Math.sin(a)*2.05);
+  for(let i=0;i<18;i++){
+    const a = (i/18)*Math.PI*2;
+    const post = new THREE.Mesh(new THREE.BoxGeometry(.16,.72,.16), fenceMat);
+    post.position.set(Math.cos(a)*3.35,.36,Math.sin(a)*3.35);
     group.add(post);
   }
 
-  // Small glowing rescue bubble.
+  // Rescue target bubble.
   const cage = new THREE.Mesh(
-    new THREE.SphereGeometry(1.75,20,12),
-    new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.16})
+    new THREE.SphereGeometry(2.55,24,14),
+    new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.11})
   );
-  cage.position.y=1.65;
+  cage.position.y=2.0;
   group.add(cage);
 
-  const glow = new THREE.PointLight(WORLDS[m.worldIndex].color, .65, 7);
-  glow.position.y=2.0;
+  const glow = new THREE.PointLight(WORLDS[m.worldIndex].color, .75, 9);
+  glow.position.y=2.4;
   group.add(glow);
 
-  // Guaranteed visible animal. This is the main animal for gameplay.
-  const animal = makeGuaranteedAnimal(shownName);
-  group.add(animal);
-
-  // Small name plate in front, not blocking the animal.
-  const label = makeFloatingLabel(`${shownName}\n${m.dividend} ÷ ${m.divisor}`);
-  label.position.set(0,.50,2.35);
-  label.rotation.x = -0.1;
+  // Mission name and question plate.
+  const missionNo = getMissionNumberInWorld(m);
+  const totalInWorld = getCurrentWorldMissions().length;
+  const label = makeFloatingLabel(`${shownName}\nMission ${missionNo}/${totalInWorld}: ${m.dividend} ÷ ${m.divisor}`);
+  label.position.set(0,.55,3.6);
+  label.rotation.x = -0.08;
   group.add(label);
 
-  // Optional: also try to load the uploaded GLB model.
-  const worldModels = animalModelsByWorld[m.worldIndex] || ["Cow.glb", "Elephant.glb", "Horse.glb"];
-  const modelFile = worldModels[localIndex % worldModels.length];
-  loadAnimalModel(modelFile, animal, group, localIndex);
+  // GLB ONLY. No built-in animal cards.
+  loadAnimalModel(modelFile, group, localMissionIndex);
 
-  return {mission:m, group, animal, cage, label, completed:false};
+  return {mission:m, group, animal:null, cage, label, completed:false};
 }
 
 function updateHUD(){
   document.getElementById("scoreText").textContent = score + "/" + allMissions.length;
   document.getElementById("healthText").textContent = "♥".repeat(health) + "♡".repeat(3-health);
+
   const currentWorld = WORLDS[currentWorldIndex];
   const worldMissions = getCurrentWorldMissions();
   const worldTotal = worldMissions.length;
   const worldDone = worldMissions.filter(m=>completedMissionIds.has(m.id)).length;
-  document.getElementById("worldText").textContent = currentWorld
-    ? (currentWorld.name + " (" + worldDone + "/" + worldTotal + ") — " + currentWorld.focus)
-    : "All worlds completed!";
+  const active = getActiveMissionForWorld();
+
+  if(currentWorld && active){
+    const missionNo = getMissionNumberInWorld(active);
+    document.getElementById("worldText").textContent =
+      `${currentWorld.name} (${worldDone}/${worldTotal}) — Mission ${missionNo}: ${active.dividend} ÷ ${active.divisor}`;
+  }else if(currentWorld){
+    document.getElementById("worldText").textContent =
+      `${currentWorld.name} complete — ${currentWorld.focus}`;
+  }else{
+    document.getElementById("worldText").textContent = "All worlds completed!";
+  }
 }
 
 function openMission(mission){
@@ -1370,23 +1319,31 @@ function onAlgorithmComplete(){
   setTimeout(()=>{
     closeMission();
 
-    // Only 3 animals are shown in World 1.
-    // After all current-world animals are rescued, unlock and display the next world.
     if (isCurrentWorldComplete()) {
       if (currentWorldIndex < WORLDS.length - 1) {
         currentWorldIndex++;
         createMissionPods();
         updateHUD();
+        const next = getActiveMissionForWorld();
         document.getElementById("bottomTip").innerHTML =
-          "<b>" + WORLDS[currentWorldIndex].name + " unlocked!</b><span class='sub'>" +
-          WORLDS[currentWorldIndex].focus + "</span>";
+          "<b>" + WORLDS[currentWorldIndex].name + " unlocked!</b><span class='sub'>Next mission: " +
+          (next ? (next.dividend + " ÷ " + next.divisor) : "") + "</span>";
         playTada();
       } else {
         document.getElementById("winScreen").style.display = "flex";
         playTada();
       }
+    } else {
+      // Same world, next mission/animal appears.
+      createMissionPods();
+      updateHUD();
+      const next = getActiveMissionForWorld();
+      document.getElementById("bottomTip").innerHTML =
+        "<b>Next rescue mission!</b><span class='sub'>" +
+        (next ? (next.dividend + " ÷ " + next.divisor) : "Continue") +
+        "</span>";
     }
-  }, 800);
+  }, 900);
 }
 
 window.addEventListener("message", (e)=>{
@@ -1436,7 +1393,7 @@ function checkNearPods(){
   if(nearest && dist < 5.0){
     document.getElementById("bottomTip").innerHTML = 'Press Click/F or tap RESCUE to start: <b>' + nearest.mission.dividend + ' ÷ ' + nearest.mission.divisor + '</b><span class="sub">' + nearest.mission.focus + '</span>';
   }else{
-    document.getElementById("bottomTip").innerHTML = 'World 1 has only 3 enclosures: Cow, Elephant and Horse. All 3 should be visible in front.<span class="sub">Drag on the right side to look around. Tap RESCUE near an enclosure.</span>';
+    document.getElementById("bottomTip").innerHTML = 'One animal appears at a time. Complete the rescue, then the next animal appears.<span class="sub">Drag on the right side to look around. Tap RESCUE near an enclosure.</span>';
   }
 }
 function fireRescueBeam(){
@@ -1477,11 +1434,9 @@ function animate(){
   animals.forEach((p,i)=>{
     p.group.rotation.y += dt * .25;
     if(!p.completed){
-      p.cage.position.y = 2.35 + Math.sin(performance.now()/500 + i)*.12;
-      p.animal.position.y = 1.45 + Math.sin(performance.now()/420 + i)*.08;
+      p.cage.position.y = 1.78 + Math.sin(performance.now()/500 + i)*.08;
     }else{
-      p.animal.rotation.y += dt*2.4;
-      p.animal.position.y = 1.45 + Math.sin(performance.now()/210 + i)*.2;
+      p.group.rotation.y += dt*1.2;
     }
     if(p.label) p.label.lookAt(camera.position.x, camera.position.y, camera.position.z);
   });
