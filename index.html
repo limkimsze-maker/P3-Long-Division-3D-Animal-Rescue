@@ -375,7 +375,7 @@
 
 <div class="topRight">
   Mouse-look: click the game<br>
-  Move: WASD / Arrow keys • Click/F: rescue beam • ESC unlocks
+  Move: WASD / Arrow keys • RESCUE button casts web • ESC unlocks
 </div>
 
 <div class="bottomTip" id="bottomTip">
@@ -518,7 +518,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531i";
+const ASSET_VERSION = "20260531j";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -1478,9 +1478,9 @@ function init3D(){
   document.addEventListener("keyup", e=>keys[e.code]=false);
 
   renderer.domElement.addEventListener("click", ()=>{
+    // Click/tap only activates looking. It must NOT shoot the rescue web.
     if(document.getElementById("missionPanel").style.display === "flex") return;
     renderer.domElement.requestPointerLock?.();
-    fireRescueBeam();
   });
   document.addEventListener("pointerlockchange", ()=>{
     mouseLocked = document.pointerLockElement === renderer.domElement;
@@ -1621,27 +1621,27 @@ function createMissionPods(){
 
   const count = visibleMissions.length;
 
-  // All animals in this world appear together, close enough to be visible on mobile.
+  // Mobile-friendly layout: animals are nearer and spread in an arc.
   let positions = [];
   if(count <= 3){
-    positions = [[-8,-13],[0,-16],[8,-13]];
+    positions = [[-7,-11],[0,-13],[7,-11]];
   }else if(count === 4){
-    positions = [[-9,-12],[9,-12],[-9,-24],[9,-24]];
+    positions = [[-8,-10],[8,-10],[-7,-21],[7,-21]];
   }else if(count === 5){
-    positions = [[-12,-10],[0,-13],[12,-10],[-7,-25],[7,-25]];
+    positions = [[-10,-9],[0,-11],[10,-9],[-6,-21],[6,-21]];
   }else{
-    positions = [[-13,-10],[0,-12],[13,-10],[-13,-25],[0,-29],[13,-25]];
+    positions = [[-11,-9],[0,-10.5],[11,-9],[-11,-20],[0,-23],[11,-20]];
   }
 
   visibleMissions.forEach((m, idx)=>{
-    const [x,z] = positions[idx] || [0, -16 - idx*5];
+    const [x,z] = positions[idx] || [0, -14 - idx*4];
     const pod = makeAnimalPod(m, x, z, idx);
     scene.add(pod.group);
     animals.push(pod);
   });
 
-  // Start far enough to see the whole current world.
-  camera.position.set(0, playerHeight, 6.8);
+  // Start with a clear view of the whole current stage.
+  camera.position.set(0, playerHeight, 7.8);
   yaw = 0;
   pitch = -0.08;
 }
@@ -1697,13 +1697,11 @@ function niceAnimalName(fileName){
 }
 
 function makeMissingAnimalCard(fileName){
-  // Friendly fallback if a PNG is not loaded yet.
-  // This keeps the game playable and avoids ugly error-looking cards.
   const name = niceAnimalName(fileName);
   const emojiMap = {
     bear:"🐻", buffalo:"🐃", chick:"🐥", chicken:"🐔", cow:"🐮", crocodile:"🐊",
     dog:"🐶", duck:"🦆", elephant:"🐘", frog:"🐸", giraffe:"🦒", goat:"🐐",
-    gorilla:"🦍", hippo:"🦛", horse:"🐴", monkey:"🐵", moose:"🫎", narwhal:"🦄",
+    gorilla:"🦍", hippo:"🦛", horse:"🐴", monkey:"🐵", moose:"🫎", narwhal:"🐳",
     owl:"🦉", panda:"🐼", parrot:"🦜", penguin:"🐧", pig:"🐷", rabbit:"🐰",
     rhino:"🦏", sloth:"🦥", snake:"🐍", walrus:"🦭", whale:"🐳", zebra:"🦓"
   };
@@ -1711,32 +1709,33 @@ function makeMissingAnimalCard(fileName){
   const emoji = emojiMap[key] || "🐾";
 
   const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 512;
+  canvas.width = 768;
+  canvas.height = 768;
   const ctx = canvas.getContext("2d");
 
-  ctx.fillStyle = "#fffaf0";
-  roundRectSafe(ctx, 28, 28, 456, 456, 44, true, false);
+  ctx.fillStyle = "#fffdf5";
+  roundRectSafe(ctx, 36, 36, 696, 696, 64, true, false);
   ctx.strokeStyle = "#22c55e";
-  ctx.lineWidth = 14;
-  roundRectSafe(ctx, 28, 28, 456, 456, 44, false, true);
+  ctx.lineWidth = 18;
+  roundRectSafe(ctx, 36, 36, 696, 696, 64, false, true);
 
-  ctx.font = "190px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif";
+  ctx.font = "270px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(emoji, 256, 210);
+  ctx.fillText(emoji, 384, 310);
 
   ctx.fillStyle = "#0f2a4a";
-  ctx.font = "bold 50px Comic Sans MS, Arial";
-  ctx.fillText(name, 256, 380);
+  ctx.font = "bold 72px Comic Sans MS, Arial";
+  ctx.fillText(name, 384, 570);
 
-  ctx.font = "22px Arial";
+  ctx.font = "30px Arial";
   ctx.fillStyle = "#60738c";
-  ctx.fillText("PNG loading fallback", 256, 430);
+  ctx.fillText("Animal rescue card", 384, 635);
 
   const tex = new THREE.CanvasTexture(canvas);
+  tex.needsUpdate = true;
   return new THREE.Mesh(
-    new THREE.PlaneGeometry(3.25, 3.25),
+    new THREE.PlaneGeometry(4.1, 4.1),
     new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide })
   );
 }
@@ -1744,11 +1743,30 @@ function makeMissingAnimalCard(fileName){
 function loadAnimalPng(fileName, group){
   const holder = new THREE.Group();
   holder.name = "PNG_ANIMAL_" + fileName;
-  holder.position.set(0, 2.25, 0);
+  holder.position.set(0, 2.75, 0);
   group.add(holder);
 
+  function makeFrame(width, height){
+    const back = new THREE.Mesh(
+      new THREE.PlaneGeometry(width + .55, height + .55),
+      new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:.55, side:THREE.DoubleSide })
+    );
+    back.position.z = -0.05;
+    holder.add(back);
+
+    const rim = new THREE.Mesh(
+      new THREE.PlaneGeometry(width + .70, height + .70),
+      new THREE.MeshBasicMaterial({ color:0x12345a, transparent:true, opacity:.18, side:THREE.DoubleSide })
+    );
+    rim.position.z = -0.08;
+    holder.add(rim);
+  }
+
   function faceCamera(){
-    holder.lookAt(camera.position.x, holder.position.y + group.position.y, camera.position.z);
+    // Billboard direction: always face the player camera.
+    const worldPos = new THREE.Vector3();
+    holder.getWorldPosition(worldPos);
+    holder.lookAt(camera.position.x, worldPos.y, camera.position.z);
   }
 
   function addTexture(tex){
@@ -1762,37 +1780,40 @@ function loadAnimalPng(fileName, group){
     const h = image.height || 1;
     const aspect = w / h;
 
-    // Larger animal frame for the expanded world.
-    const height = 3.8;
-    const width = Math.max(2.2, Math.min(4.2, height * aspect));
+    // Bigger, reliable animal size for mobile.
+    const height = 4.4;
+    const width = Math.max(2.6, Math.min(4.9, height * aspect));
 
-    // White outline card so the animal is clear against the sky.
-    const backing = new THREE.Mesh(
-      new THREE.PlaneGeometry(width + .38, height + .38),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .32, side: THREE.DoubleSide })
-    );
-    backing.position.z = -0.03;
-    holder.add(backing);
+    makeFrame(width, height);
 
     const mat = new THREE.MeshBasicMaterial({
       map: tex,
       transparent: true,
       side: THREE.DoubleSide,
-      alphaTest: 0.02
+      alphaTest: 0.01
     });
 
     const plane = new THREE.Mesh(new THREE.PlaneGeometry(width, height), mat);
-    plane.position.set(0, 0, 0);
+    plane.position.set(0, 0, 0.02);
+    plane.name = "animal_png_plane";
     holder.add(plane);
+
+    // Extra sprite backup. If the plane angle is odd, sprite still faces camera.
+    const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent:true, opacity:.98 });
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.scale.set(width * .92, height * .92, 1);
+    sprite.position.set(0, 0, .10);
+    sprite.name = "animal_png_sprite_backup";
+    holder.add(sprite);
 
     faceCamera();
   }
 
   function addFallback(){
     holder.clear();
-    const missing = makeMissingAnimalCard(fileName);
-    missing.position.set(0,0,0);
-    holder.add(missing);
+    const fallback = makeMissingAnimalCard(fileName);
+    fallback.position.set(0,0,0);
+    holder.add(fallback);
     faceCamera();
   }
 
@@ -1801,19 +1822,20 @@ function loadAnimalPng(fileName, group){
     return holder;
   }
 
-  const version = (typeof ASSET_VERSION !== "undefined" ? ASSET_VERSION : "20260531d");
+  const version = (typeof ASSET_VERSION !== "undefined" ? ASSET_VERSION : "20260531j");
   const urls = [
-    "./" + fileName,
-    fileName,
     "./" + fileName + "?v=" + version,
-    "./" + encodeURIComponent(fileName)
+    "./" + fileName,
+    fileName + "?v=" + version,
+    fileName,
+    "./" + encodeURIComponent(fileName) + "?v=" + version
   ];
 
   function tryTexture(index){
     const url = urls[index];
     if (!url) {
       addFallback();
-      console.warn("PNG fallback used:", fileName);
+      console.warn("Animal PNG fallback used after all retries:", fileName);
       return;
     }
 
@@ -1822,10 +1844,11 @@ function loadAnimalPng(fileName, group){
       (tex) => {
         window.textureCache[fileName] = tex;
         addTexture(tex);
+        console.log("Animal PNG loaded:", fileName, "from", url);
       },
       undefined,
       () => {
-        console.warn("PNG load failed, trying next:", url);
+        console.warn("Animal PNG load failed, trying next:", url);
         tryTexture(index + 1);
       }
     );
@@ -1843,7 +1866,7 @@ function makeAnimalPod(m, x, z, localIndex=0){
   const shownName = niceAnimalName(fileName);
 
   const base = new THREE.Mesh(
-    new THREE.CylinderGeometry(4.15,4.15,.10,48),
+    new THREE.CylinderGeometry(4.35,4.35,.10,48),
     new THREE.MeshLambertMaterial({color:0xf6fff6})
   );
   base.position.y = .05;
@@ -1853,33 +1876,33 @@ function makeAnimalPod(m, x, z, localIndex=0){
   for(let i=0;i<18;i++){
     const a = (i/18)*Math.PI*2;
     const post = new THREE.Mesh(new THREE.BoxGeometry(.16,.72,.16), fenceMat);
-    post.position.set(Math.cos(a)*3.55,.36,Math.sin(a)*3.55);
+    post.position.set(Math.cos(a)*3.75,.36,Math.sin(a)*3.75);
     group.add(post);
   }
 
   const cage = new THREE.Mesh(
-    new THREE.SphereGeometry(2.75,24,14),
+    new THREE.SphereGeometry(3.05,24,14),
     new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.10})
   );
-  cage.position.y=2.15;
+  cage.position.y=2.55;
   group.add(cage);
 
-  const glow = new THREE.PointLight(WORLDS[m.worldIndex].color, .75, 9);
-  glow.position.y=2.6;
+  const glow = new THREE.PointLight(WORLDS[m.worldIndex].color, .85, 10);
+  glow.position.y=2.85;
   group.add(glow);
 
   const missionNo = getMissionNumberInWorld(m);
   const totalInWorld = getCurrentWorldMissions().length;
   const label = makeFloatingLabel(`${shownName}\nMission ${missionNo}/${totalInWorld}: ${m.dividend} ÷ ${m.divisor}`);
-  label.position.set(0,.40,4.05);
-  label.rotation.x = -0.10;
+  // Put label lower and slightly forward so it does not cover the animal.
+  label.position.set(0,-.05,4.45);
+  label.rotation.x = -0.12;
   group.add(label);
 
   const animal = loadAnimalPng(fileName, group);
 
   return {mission:m, group, animal, cage, label, fileName};
 }
-
 
 function updateRescuedStrip(){
   const strip = document.getElementById("rescuedStrip");
@@ -2087,7 +2110,8 @@ function rescueAnimalVisual(missionId){
 
 function onKeyDown(e){
   keys[e.code] = true;
-  if(e.code === "KeyF") fireRescueBeam();
+  // Web shooting is intentionally disabled for keyboard/canvas click.
+  // Pupils must press the visible RESCUE button to cast the web.
   if(e.code === "Escape") document.exitPointerLock?.();
 }
 function updateCamera(dt){
@@ -2117,7 +2141,7 @@ function checkNearPods(){
     if(d < dist){dist=d; nearest=p;}
   });
   if(nearest && dist < 5.0){
-    document.getElementById("bottomTip").innerHTML = 'Press Click/F or tap RESCUE to start: <b>' + nearest.mission.dividend + ' ÷ ' + nearest.mission.divisor + '</b><span class="sub">' + nearest.mission.focus + '</span>';
+    document.getElementById("bottomTip").innerHTML = 'Press tap RESCUE to start: <b>' + nearest.mission.dividend + ' ÷ ' + nearest.mission.divisor + '</b><span class="sub">' + nearest.mission.focus + '</span>';
   }else{
     document.getElementById("bottomTip").innerHTML = 'All animals for this world are shown. Cast a web at the animal you want to rescue.<span class="sub">Drag on the right side to look around. Tap RESCUE near an enclosure.</span>';
   }
@@ -2283,7 +2307,7 @@ function fireRescueBeam(){
 
   playWrong();
   document.getElementById("bottomTip").innerHTML =
-    "<b>Web missed!</b><span class='sub'>Aim at an animal bubble or move closer, then press RESCUE again.</span>";
+    "<b>Web missed!</b><span class='sub'>Move closer to an animal, then press RESCUE again.</span>";
 }
 
 function animate(){
