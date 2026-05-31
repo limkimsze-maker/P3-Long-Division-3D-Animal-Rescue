@@ -921,24 +921,29 @@ function loadAnimalModel(fileName, fallbackAnimal, group, localIndex=0){
   ].filter((v, i, arr) => v && arr.indexOf(v) === i);
 
   function placeLoadedModel(source){
+    // The GLB is optional. The built-in animal remains visible.
+    // This avoids the "only elephant appears" problem when cow/horse GLBs have strange scale or origin.
     const model = cloneGLTFScene(source);
-    fitModelToPod(model, 1.75);
+    fitModelToPod(model, 1.2);
+    model.position.set(0, .75, 0);
+    model.rotation.y = Math.PI;
 
-    // Clear placement. Put model in front-centre of each enclosure.
-    model.position.set(0, .68, 0);
-    model.rotation.y = Math.PI; // face the player
+    // Put uploaded model slightly behind the guaranteed animal.
+    // If it looks good, it enriches the animal. If not, the guaranteed animal is still visible.
+    model.position.z -= .15;
+    model.traverse(obj=>{
+      if(obj.isMesh){
+        obj.castShadow = true;
+        obj.frustumCulled = false;
+      }
+    });
     group.add(model);
-
-    // Hide fallback only after model has actually been added.
-    fallbackAnimal.visible = false;
   }
 
   function tryLoad(index){
     const candidate = candidates[index];
     if (!candidate) {
       console.warn("Could not load any model candidate for:", fileName);
-      // Keep fallback animal visible if GLB fails.
-      fallbackAnimal.visible = true;
       return;
     }
 
@@ -1050,13 +1055,13 @@ function createWorld(){
 
   // Three clean enclosure pads.
   const padColors = [0xfff6b8, 0xffe6f3, 0xe0f5ff];
-  const padXs = [-7, 0, 7];
+  const padXs = [-3.8, 0, 3.8];
   padXs.forEach((x,i)=>{
     const pad = new THREE.Mesh(
       new THREE.CylinderGeometry(2.8,2.8,.08,36),
       new THREE.MeshLambertMaterial({color:padColors[i]})
     );
-    pad.position.set(x,.05,-7.3);
+    pad.position.set(x,.05,-7.0);
     pad.receiveShadow = true;
     scene.add(pad);
   });
@@ -1069,7 +1074,7 @@ function createWorld(){
     scene.add(post);
   }
   for(let z=-10; z<=1; z+=2){
-    [-15,15].forEach(x=>{
+    [-13.5,13.5].forEach(x=>{
       const post = new THREE.Mesh(new THREE.BoxGeometry(.25,1.0,.25), fenceMat);
       post.position.set(x,.5,z);
       scene.add(post);
@@ -1096,7 +1101,7 @@ function createWorld(){
   }
 
   // Soft lights above each enclosure.
-  [-7,0,7].forEach(x=>makeLamp(x,-10.5));
+  [-4.2,0,4.2].forEach(x=>makeLamp(x,-10.5));
 }
 
 function makeTree(x,z){
@@ -1148,9 +1153,9 @@ function createMissionPods(){
 
   const visibleMissions = getCurrentWorldMissions().slice(0, 3);
   const positions = [
-    new THREE.Vector3(-7, 0, -7.3),
-    new THREE.Vector3(0, 0, -7.3),
-    new THREE.Vector3(7, 0, -7.3)
+    new THREE.Vector3(-3.8, 0, -7.0),
+    new THREE.Vector3(0, 0, -7.0),
+    new THREE.Vector3(3.8, 0, -7.0)
   ];
 
   visibleMissions.forEach((m, idx)=>{
@@ -1161,9 +1166,9 @@ function createMissionPods(){
   });
 
   // Start directly facing the 3 animals.
-  camera.position.set(0, playerHeight, 3.3);
+  camera.position.set(0, playerHeight, 6.2);
   yaw = 0;
-  pitch = -0.08;
+  pitch = -0.10;
 }
 
 
@@ -1191,16 +1196,93 @@ function makeFloatingLabel(text){
   ctx.lineWidth = 5;
   roundRectSafe(ctx, 16, 16, 608, 148, 22, false, true);
   ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 34px Comic Sans MS, Arial";
+  ctx.font = "bold 30px Comic Sans MS, Arial";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   const lines = text.split("\n").slice(0, 2);
-  lines.forEach((line, i) => ctx.fillText(line, 320, 62 + i * 46));
+  lines.forEach((line, i) => ctx.fillText(line, 320, 62 + i * 42));
   const tex = new THREE.CanvasTexture(canvas);
   return new THREE.Mesh(
-    new THREE.PlaneGeometry(2.8, .8),
+    new THREE.PlaneGeometry(2.15, .62),
     new THREE.MeshBasicMaterial({ map: tex, transparent: true })
   );
+}
+
+
+function makeGuaranteedAnimal(type){
+  // Built-in simple animal figure so the stage works even if a GLB is missing,
+  // tiny, transparent, badly centred, or not supported by the browser.
+  const g = new THREE.Group();
+
+  const dark = new THREE.MeshLambertMaterial({color:0x111827});
+  const white = new THREE.MeshLambertMaterial({color:0xffffff});
+  const brown = new THREE.MeshLambertMaterial({color:0x9a5a26});
+  const tan = new THREE.MeshLambertMaterial({color:0xc68642});
+  const grey = new THREE.MeshLambertMaterial({color:0x8b8f98});
+  const black = new THREE.MeshLambertMaterial({color:0x222222});
+
+  function sphere(x,y,z,sx,sy,sz,mat){
+    const m = new THREE.Mesh(new THREE.SphereGeometry(0.45,16,10), mat);
+    m.position.set(x,y,z);
+    m.scale.set(sx,sy,sz);
+    g.add(m);
+    return m;
+  }
+  function box(x,y,z,sx,sy,sz,mat){
+    const m = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), mat);
+    m.position.set(x,y,z);
+    m.scale.set(sx,sy,sz);
+    g.add(m);
+    return m;
+  }
+  function cyl(x,y,z,r,h,mat){
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,10), mat);
+    m.position.set(x,y,z);
+    g.add(m);
+    return m;
+  }
+
+  if(type === "Cow"){
+    sphere(0,1.0,0,1.35,.72,.7,white);
+    sphere(.9,1.18,.25,.55,.45,.5,white);
+    sphere(.72,1.28,.62,.07,.07,.07,black);
+    sphere(1.02,1.28,.62,.07,.07,.07,black);
+    box(-.35,1.15,.55,.38,.28,.08,black);
+    box(.25,.95,.56,.32,.22,.08,black);
+    box(-.65,1.02,-.52,.28,.24,.08,black);
+    for(const x of [-.55,-.2,.25,.6]) cyl(x,.45,0,.08,.8,black);
+    const horn1 = new THREE.Mesh(new THREE.ConeGeometry(.08,.28,8), tan);
+    horn1.position.set(.72,1.72,.15); horn1.rotation.z=.45; g.add(horn1);
+    const horn2 = horn1.clone(); horn2.position.x=1.05; horn2.rotation.z=-.45; g.add(horn2);
+  } else if(type === "Horse"){
+    sphere(0,1.0,0,1.45,.68,.62,brown);
+    sphere(.95,1.32,.2,.48,.42,.42,brown);
+    sphere(.82,1.4,.56,.06,.06,.06,dark);
+    sphere(1.05,1.4,.56,.06,.06,.06,dark);
+    box(-.55,1.55,0,.16,.55,.12,dark); // mane
+    for(const x of [-.55,-.2,.25,.6]) cyl(x,.47,0,.07,.85,brown);
+    const tail = new THREE.Mesh(new THREE.CylinderGeometry(.06,.09,.85,8), dark);
+    tail.position.set(-1.05,1.05,-.08); tail.rotation.z=.8; g.add(tail);
+    const ear1 = new THREE.Mesh(new THREE.ConeGeometry(.09,.32,8), brown);
+    ear1.position.set(.8,1.78,.12); g.add(ear1);
+    const ear2 = ear1.clone(); ear2.position.x=1.05; g.add(ear2);
+  } else {
+    // Elephant
+    sphere(0,1.0,0,1.45,.85,.85,grey);
+    sphere(1.0,1.2,.05,.62,.58,.58,grey);
+    sphere(.83,1.28,.6,.07,.07,.07,dark);
+    sphere(1.12,1.28,.6,.07,.07,.07,dark);
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(.10,.13,.85,12), grey);
+    trunk.position.set(1.42,.85,.22); trunk.rotation.z=.65; g.add(trunk);
+    sphere(.68,1.2,.08,.28,.55,.1,grey);
+    sphere(1.25,1.2,.08,.28,.55,.1,grey);
+    for(const x of [-.55,-.2,.25,.6]) cyl(x,.43,0,.09,.75,grey);
+  }
+
+  g.scale.set(1.25,1.25,1.25);
+  g.position.y = 0.2;
+  g.rotation.y = Math.PI;
+  return g;
 }
 
 function makeAnimalPod(m, x, z, localIndex=0){
@@ -1216,14 +1298,14 @@ function makeAnimalPod(m, x, z, localIndex=0){
   for(let i=0;i<10;i++){
     const a = (i/10)*Math.PI*2;
     const post = new THREE.Mesh(new THREE.BoxGeometry(.18,.7,.18), fenceMat);
-    post.position.set(Math.cos(a)*2.25,.35,Math.sin(a)*2.25);
+    post.position.set(Math.cos(a)*2.05,.35,Math.sin(a)*2.05);
     group.add(post);
   }
 
   // Small glowing rescue bubble.
   const cage = new THREE.Mesh(
-    new THREE.SphereGeometry(1.72,20,12),
-    new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.20})
+    new THREE.SphereGeometry(1.75,20,12),
+    new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.16})
   );
   cage.position.y=1.65;
   group.add(cage);
@@ -1232,35 +1314,17 @@ function makeAnimalPod(m, x, z, localIndex=0){
   glow.position.y=2.0;
   group.add(glow);
 
-  // Clear fallback animal, visible until GLB successfully loads.
-  const animal = new THREE.Group();
-  animal.position.y=.85;
-  const fallbackColors = [0xffffff, 0x8f8f8f, 0xc58b58];
-  const body = new THREE.Mesh(
-    new THREE.SphereGeometry(.62,14,10),
-    new THREE.MeshLambertMaterial({color:fallbackColors[localIndex] || 0xfff3c4})
-  );
-  body.scale.set(1.25,.9,.75);
-  animal.add(body);
-  const head = new THREE.Mesh(
-    new THREE.SphereGeometry(.34,14,10),
-    new THREE.MeshLambertMaterial({color:fallbackColors[localIndex] || 0xffe4a6})
-  );
-  head.position.set(0,.48,.52);
-  animal.add(head);
-  const eyeMat = new THREE.MeshBasicMaterial({color:0x10233f});
-  const eye1 = new THREE.Mesh(new THREE.SphereGeometry(.04,8,8), eyeMat);
-  eye1.position.set(-.1,.53,.8);
-  const eye2 = eye1.clone(); eye2.position.x=.1;
-  animal.add(eye1,eye2);
+  // Guaranteed visible animal. This is the main animal for gameplay.
+  const animal = makeGuaranteedAnimal(shownName);
   group.add(animal);
 
-  // Small name plate in front, not blocking the model.
+  // Small name plate in front, not blocking the animal.
   const label = makeFloatingLabel(`${shownName}\n${m.dividend} ÷ ${m.divisor}`);
-  label.position.set(0,.82,2.7);
+  label.position.set(0,.50,2.35);
   label.rotation.x = -0.1;
   group.add(label);
 
+  // Optional: also try to load the uploaded GLB model.
   const worldModels = animalModelsByWorld[m.worldIndex] || ["Cow.glb", "Elephant.glb", "Horse.glb"];
   const modelFile = worldModels[localIndex % worldModels.length];
   loadAnimalModel(modelFile, animal, group, localIndex);
@@ -1372,7 +1436,7 @@ function checkNearPods(){
   if(nearest && dist < 5.0){
     document.getElementById("bottomTip").innerHTML = 'Press Click/F or tap RESCUE to start: <b>' + nearest.mission.dividend + ' ÷ ' + nearest.mission.divisor + '</b><span class="sub">' + nearest.mission.focus + '</span>';
   }else{
-    document.getElementById("bottomTip").innerHTML = 'World 1 has only 3 enclosures: Cow, Elephant and Horse.<span class="sub">Drag on the right side to look around. Tap RESCUE near an enclosure.</span>';
+    document.getElementById("bottomTip").innerHTML = 'World 1 has only 3 enclosures: Cow, Elephant and Horse. All 3 should be visible in front.<span class="sub">Drag on the right side to look around. Tap RESCUE near an enclosure.</span>';
   }
 }
 function fireRescueBeam(){
