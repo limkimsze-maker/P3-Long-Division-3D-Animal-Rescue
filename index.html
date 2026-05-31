@@ -1087,7 +1087,7 @@
             <li>Complete the long-division algorithm to save the animal.</li>
             <li>Use the keypad to fill in the highlighted boxes.</li>
             <li>Your progress is saved on this device.</li>
-            <li>World completion pictures use these filenames: <b>world1_complete.png</b>, <b>world2_complete.png</b>, <b>world3_compete.png</b>, <b>world4_compete.png</b>, <b>world5_complete.png</b>, <b>world6_complete.png</b>, <b>world7_complete.png</b>.</li>
+            <li>World completion pictures are loaded from fixed GitHub permalinks.</li>
           </ul>
           <div class="resetInfoNote">
             <b>Need to restart from World 1?</b> Open <b>How to Play</b> and hold the <b>Reset Progress</b> button for 2 seconds.
@@ -1227,13 +1227,13 @@ var animalPngFiles = window.animalPngFiles;
 // One picture will be shown after completing each world from World 1 to World 7.
 // Rename your uploaded pictures to these filenames for the smoothest setup.
 const WORLD_COMPLETION_IMAGES = [
-  "world1_complete.png",
-  "world2_complete.png",
-  "world3_compete.png",
-  "world4_compete.png",
-  "world5_complete.png",
-  "world6_complete.png",
-  "world7_complete.png"
+  "https://raw.githubusercontent.com/limkimsze-maker/P3-Long-Division-3D-Animal-Rescue/63132828fb1a04238791b321c8de08ae5957e376/world1_complete.png",
+  "https://raw.githubusercontent.com/limkimsze-maker/P3-Long-Division-3D-Animal-Rescue/63132828fb1a04238791b321c8de08ae5957e376/world2_complete.png",
+  "https://raw.githubusercontent.com/limkimsze-maker/P3-Long-Division-3D-Animal-Rescue/63132828fb1a04238791b321c8de08ae5957e376/world3_compete.png",
+  "https://raw.githubusercontent.com/limkimsze-maker/P3-Long-Division-3D-Animal-Rescue/63132828fb1a04238791b321c8de08ae5957e376/world4_compete.png",
+  "https://raw.githubusercontent.com/limkimsze-maker/P3-Long-Division-3D-Animal-Rescue/63132828fb1a04238791b321c8de08ae5957e376/world5_complete.png",
+  "https://raw.githubusercontent.com/limkimsze-maker/P3-Long-Division-3D-Animal-Rescue/63132828fb1a04238791b321c8de08ae5957e376/world6_complete.png",
+  "https://raw.githubusercontent.com/limkimsze-maker/P3-Long-Division-3D-Animal-Rescue/63132828fb1a04238791b321c8de08ae5957e376/world7_complete.png"
 ];
 
 const WORLD_COMPLETION_SPEECHES = [
@@ -1251,7 +1251,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531aq";
+const ASSET_VERSION = "20260531ar";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -4066,38 +4066,43 @@ function getWorldCompletedMissions(worldIndex){
 function setRewardImageWithFallback(img, missing, file, worldName){
   if(!img || !file) return;
 
-  const basePages = "https://limkimsze-maker.github.io/P3-Long-Division-3D-Animal-Rescue/";
-  const rawBase = "https://raw.githubusercontent.com/limkimsze-maker/P3-Long-Division-3D-Animal-Rescue/main/";
   const version = (typeof ASSET_VERSION !== "undefined" ? ASSET_VERSION : Date.now());
+  const isAbsolute = /^https?:\/\//i.test(file);
 
-  const candidates = [
-    "./" + file + "?v=" + version,
-    file + "?v=" + version,
-    basePages + file + "?v=" + version,
-    rawBase + file + "?v=" + version
-  ];
+  // If a permalink/raw URL is provided, use it directly first.
+  // If a simple filename is provided, try local GitHub Pages paths.
+  const candidates = isAbsolute
+    ? [
+        file + (file.includes("?") ? "&" : "?") + "v=" + version,
+        file
+      ]
+    : [
+        "./" + file + "?v=" + version,
+        file + "?v=" + version,
+        "https://limkimsze-maker.github.io/P3-Long-Division-3D-Animal-Rescue/" + file + "?v=" + version,
+        "https://raw.githubusercontent.com/limkimsze-maker/P3-Long-Division-3D-Animal-Rescue/main/" + file + "?v=" + version
+      ];
 
   let attempt = 0;
 
+  function displayName(){
+    try{
+      const u = new URL(file);
+      return u.pathname.split("/").pop() || file;
+    }catch(e){
+      return file;
+    }
+  }
+
   function tryNext(){
     if(attempt >= candidates.length){
-      // One delayed retry because GitHub Pages sometimes takes a short while
-      // after a file rename/upload even though the repo page already shows it.
-      setTimeout(()=>{
-        if(attempt < candidates.length + 1){
-          attempt++;
-          img.src = basePages + file + "?retry=" + Date.now();
-        }else{
-          img.style.display = "none";
-          if(missing){
-            missing.style.display = "block";
-            missing.innerHTML =
-              "Reward picture could not load for " + worldName + ".<br>" +
-              "The filename looks correct: <b>" + file + "</b>.<br>" +
-              "The HTML is now using the filename configured for this world. If it still does not show, wait a minute for GitHub Pages to refresh, then reopen with a new ?v= number.";
-          }
-        }
-      }, 1200);
+      img.style.display = "none";
+      if(missing){
+        missing.style.display = "block";
+        missing.innerHTML =
+          "Reward picture could not load for " + worldName + ".<br>" +
+          "The configured file is <b>" + displayName() + "</b>.";
+      }
       return;
     }
 
