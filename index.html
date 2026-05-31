@@ -1,4 +1,3 @@
-<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -144,8 +143,7 @@
   <div class="card">
     <h1 class="title">3D Animal Rescue Division Mission</h1>
     <p class="lead">
-      This revised version uses the <b>exact long division algorithm style you provided</b>, instead of the simplified board.
-      When pupils enter a rescue mission, the game opens your algorithm panel for step-by-step solving.
+      Stage 1 is now a small rescue farm with only <b>3 simple enclosures</b>: Cow, Elephant and Horse. Complete these 3 guided division missions first, then the next world unlocks.
     </p>
     <div class="worldGrid">
       <div class="worldCard"><b>World 1:</b> Division Facts<br>8 ÷ 2 = 4</div>
@@ -426,7 +424,7 @@ const algorithmTemplate = `
 // IMPORTANT: GitHub filenames are case-sensitive. These must match exactly.
 // World 1 now uses Cow, Elephant and Horse.
 const animalModelsByWorld = [
-  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 1: Division Facts
+  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 1: exact current files: Cow, Elephant, horse
   ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 2: temporary until more animals are added
   ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 3: temporary until more animals are added
   ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 4: temporary until more animals are added
@@ -861,7 +859,7 @@ let audioCtx = null;
 // IMPORTANT: GitHub filenames are case-sensitive. These must match exactly.
 // World 1 now uses Cow, Elephant and Horse.
 const animalModelsByWorld = [
-  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 1: Division Facts
+  ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 1: exact current files: Cow, Elephant, horse
   ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 2: temporary until more animals are added
   ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 3: temporary until more animals are added
   ["Cow.glb", "Elephant.glb", "Horse.glb"], // World 4: temporary until more animals are added
@@ -915,31 +913,47 @@ function fitModelToPod(model, targetHeight=1.8){
 function loadAnimalModel(fileName, fallbackAnimal, group){
   if (!gltfLoader || !fileName) return;
 
-  if (modelCache[fileName]) {
-    const model = cloneGLTFScene(modelCache[fileName]);
-    fitModelToPod(model, 1.9);
-    model.position.y = 1.2;
-    group.add(model);
-    fallbackAnimal.visible = false;
-    return;
-  }
+  // Try exact filename first, then common case variants.
+  // This is important because GitHub Pages is case-sensitive.
+  const candidates = [
+    fileName,
+    fileName.charAt(0).toUpperCase() + fileName.slice(1),
+    fileName.charAt(0).toLowerCase() + fileName.slice(1)
+  ].filter((v, i, arr) => v && arr.indexOf(v) === i);
 
-  gltfLoader.load(
-    "./" + fileName,
-    (gltf) => {
-      modelCache[fileName] = gltf.scene;
-      const model = cloneGLTFScene(gltf.scene);
-      fitModelToPod(model, 1.9);
-      model.position.y = 1.2;
+  function tryLoad(index){
+    const candidate = candidates[index];
+    if (!candidate) {
+      console.warn("Could not load any model candidate for:", fileName);
+      fallbackAnimal.visible = true;
+      return;
+    }
+
+    if (modelCache[candidate]) {
+      const model = cloneGLTFScene(modelCache[candidate]);
+      fitModelToPod(model, 2.2);
+      model.position.y = 1.0;
       group.add(model);
       fallbackAnimal.visible = false;
-    },
-    undefined,
-    (err) => {
-      console.warn("Could not load animal model:", fileName, err);
-      // Keep fallback shape animal visible.
+      return;
     }
-  );
+
+    gltfLoader.load(
+      "./" + candidate,
+      (gltf) => {
+        modelCache[candidate] = gltf.scene;
+        const model = cloneGLTFScene(gltf.scene);
+        fitModelToPod(model, 2.2);
+        model.position.y = 1.0;
+        group.add(model);
+        fallbackAnimal.visible = false;
+      },
+      undefined,
+      () => tryLoad(index + 1)
+    );
+  }
+
+  tryLoad(0);
 }
 
 function buildMissionList(){
@@ -1012,46 +1026,55 @@ function init3D(){
 }
 
 function createWorld(){
-  const groundMat = new THREE.MeshLambertMaterial({color:0x7ee7d6});
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(180,180), groundMat);
+  // Small, simple first-stage rescue park.
+  // No huge city. No faraway animals. Only a cosy clearing for three enclosures.
+  const groundMat = new THREE.MeshLambertMaterial({color:0xe8fff4});
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(52,40), groundMat);
   ground.rotation.x = -Math.PI/2;
+  ground.position.z = -6;
   ground.receiveShadow = true;
   scene.add(ground);
 
-  const roadMat = new THREE.MeshLambertMaterial({color:0x405d75});
-  const road1 = new THREE.Mesh(new THREE.BoxGeometry(14, .04, 160), roadMat);
-  road1.position.set(0,.02,0);
-  scene.add(road1);
-  const road2 = new THREE.Mesh(new THREE.BoxGeometry(160, .04, 14), roadMat);
-  road2.position.set(0,.03,0);
-  scene.add(road2);
+  // Soft blue border path around the three enclosures.
+  const pathMat = new THREE.MeshLambertMaterial({color:0x97e6ee});
+  const path = new THREE.Mesh(new THREE.TorusGeometry(12.5, .28, 8, 96), pathMat);
+  path.rotation.x = Math.PI/2;
+  path.position.set(0,.08,-8);
+  scene.add(path);
 
-  // Bright central rescue plaza so the first view is less empty.
-  const plaza = new THREE.Mesh(
-    new THREE.CylinderGeometry(12,12,.06,48),
-    new THREE.MeshLambertMaterial({color:0xe8fff4})
-  );
-  plaza.position.set(0,.09,0);
-  plaza.receiveShadow = true;
-  scene.add(plaza);
+  // Three simple circular pads for Cow, Elephant, Horse.
+  const padColors = [0xfff4b8, 0xffe4f2, 0xdff7ff];
+  const padXs = [-8, 0, 8];
+  padXs.forEach((x,i)=>{
+    const pad = new THREE.Mesh(
+      new THREE.CylinderGeometry(3.15,3.15,.08,36),
+      new THREE.MeshLambertMaterial({color:padColors[i]})
+    );
+    pad.position.set(x,.05,-8);
+    pad.receiveShadow = true;
+    scene.add(pad);
+  });
 
-  // Small first-stage rescue clearing: a visible fence ring and flowers
-  // to make the world feel intentionally compact rather than empty.
+  // Small fence boundary around the first-stage area.
   const fenceMat = new THREE.MeshLambertMaterial({color:0x9a6b3f});
-  for(let i=0;i<16;i++){
-    const a = (i/16)*Math.PI*2;
+  for(let i=0;i<24;i++){
+    const a = (i/24)*Math.PI*2;
     const fx = Math.cos(a)*16;
-    const fz = Math.sin(a)*16 - 8;
-    const post = new THREE.Mesh(new THREE.BoxGeometry(.35,1.25,.35), fenceMat);
-    post.position.set(fx,.65,fz);
-    post.rotation.y = -a;
+    const fz = Math.sin(a)*10 - 8;
+    const post = new THREE.Mesh(new THREE.BoxGeometry(.32,1.1,.32), fenceMat);
+    post.position.set(fx,.55,fz);
     scene.add(post);
   }
+
+  // A few trees at the back only, so the view is not cluttered.
+  [-18,-14,14,18].forEach((x, i)=> makeTree(x, -20 + (i%2)*2));
+  [-21,21].forEach(x=> makeTree(x, 2));
+
+  // Flowers near the front.
   const flowerColors = [0xff6fae,0xffd166,0x8d5cf6,0x60a5fa,0xffffff];
-  for(let i=0;i<38;i++){
+  for(let i=0;i<26;i++){
     const x = -13 + Math.random()*26;
-    const z = -20 + Math.random()*21;
-    if(Math.abs(x)<3 && z>-3) continue;
+    const z = -2 + Math.random()*8;
     const stem = new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.35,6), new THREE.MeshLambertMaterial({color:0x238a4b}));
     stem.position.set(x,.18,z);
     scene.add(stem);
@@ -1060,53 +1083,8 @@ function createWorld(){
     scene.add(bloom);
   }
 
-  const lineMat = new THREE.MeshBasicMaterial({color:0xffffff});
-  for(let i=-70;i<=70;i+=12){
-    const mark = new THREE.Mesh(new THREE.BoxGeometry(.5,.05,5), lineMat);
-    mark.position.set(0,.07,i);
-    scene.add(mark);
-    const mark2 = new THREE.Mesh(new THREE.BoxGeometry(5,.05,.5), lineMat);
-    mark2.position.set(i,.08,0);
-    scene.add(mark2);
-  }
-
-  const colors = [0xffb3c7,0xa7f3d0,0xfde68a,0xbfdbfe,0xddd6fe,0xfecaca];
-  for(let i=0;i<18;i++){
-    const w = 5+Math.random()*6, h = 4+Math.random()*8, d = 5+Math.random()*6;
-    const mat = new THREE.MeshLambertMaterial({color:colors[i%colors.length]});
-    const b = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
-    const side = i%4;
-    let x,z;
-    if(side===0){x=-35-Math.random()*35; z=-60+Math.random()*120;}
-    if(side===1){x=35+Math.random()*35; z=-60+Math.random()*120;}
-    if(side===2){z=-35-Math.random()*35; x=-60+Math.random()*120;}
-    if(side===3){z=35+Math.random()*35; x=-60+Math.random()*120;}
-    b.position.set(x,h/2,z);
-    b.castShadow = true;
-    b.receiveShadow = true;
-    scene.add(b);
-  }
-
-  for(let i=0;i<42;i++){
-    const x = -75 + Math.random()*150;
-    const z = -75 + Math.random()*150;
-    if(Math.abs(x)<12 || Math.abs(z)<12) continue;
-    makeTree(x,z);
-  }
-  for(let i=-60;i<=60;i+=20){
-    makeLamp(9,i); makeLamp(-9,i); makeLamp(i,9); makeLamp(i,-9);
-  }
-
-  const radius = 42;
-  WORLDS.forEach((w,i)=>{
-    const angle = (i/WORLDS.length)*Math.PI*2;
-    const x = Math.cos(angle)*radius;
-    const z = Math.sin(angle)*radius;
-    const sign = makeSign(w.name.replace(":","\\n"), w.color);
-    sign.position.set(x,2.7,z);
-    sign.lookAt(0,2.2,0);
-    scene.add(sign);
-  });
+  // Light posts behind each enclosure.
+  [-8,0,8].forEach(x=>makeLamp(x,-12.2));
 }
 
 function makeTree(x,z){
@@ -1156,109 +1134,85 @@ function createMissionPods(){
   animals.forEach(a=>scene.remove(a.group));
   animals = [];
 
-  // Show only the current world's animals.
-  // World 1 is intentionally small: only 3 animals in a cosy rescue clearing.
-  const visibleMissions = (typeof getCurrentWorldMissions === 'function') ? getCurrentWorldMissions() : allMissions.filter(m => m.worldIndex === 0);
+  const visibleMissions = getCurrentWorldMissions().slice(0, 3);
+
+  // Only three enclosures in Stage 1: Cow, Elephant, Horse.
   const positions = [
-    new THREE.Vector3(-7, 0, -10),
-    new THREE.Vector3(0, 0, -13),
-    new THREE.Vector3(7, 0, -10),
-    new THREE.Vector3(-9, 0, -3),
-    new THREE.Vector3(9, 0, -3),
-    new THREE.Vector3(0, 0, -20)
+    new THREE.Vector3(-8, 0, -8),
+    new THREE.Vector3(0, 0, -8),
+    new THREE.Vector3(8, 0, -8)
   ];
 
   visibleMissions.forEach((m, idx)=>{
-    const pos = positions[idx] || new THREE.Vector3((idx%3-1)*7, 0, -10 - Math.floor(idx/3)*7);
-    const pod = makeAnimalPod(m, pos.x, pos.z);
+    const pos = positions[idx];
+    const pod = makeAnimalPod(m, pos.x, pos.z, idx);
     scene.add(pod.group);
     animals.push(pod);
   });
 
-  // Start pupils facing the small rescue clearing whenever a new world opens.
-  camera.position.set(0, playerHeight, 7);
+  // Player starts close enough to see all 3 enclosures immediately.
+  camera.position.set(0, playerHeight, 5.8);
   yaw = 0;
-  pitch = -0.08;
+  pitch = -0.14;
 }
 
-
-
-function roundRect(ctx, x, y, w, h, r, fill, stroke) {
-  ctx.beginPath();
-  ctx.moveTo(x+r,y);
-  ctx.arcTo(x+w,y,x+w,y+h,r);
-  ctx.arcTo(x+w,y+h,x,y+h,r);
-  ctx.arcTo(x,y+h,x,y,r);
-  ctx.arcTo(x,y,x+w,y,r);
-  ctx.closePath();
-  if(fill) ctx.fill();
-  if(stroke) ctx.stroke();
-}
-
-function makeFloatingLabel(text){
-  const canvas = document.createElement("canvas");
-  canvas.width = 768;
-  canvas.height = 256;
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "rgba(8,24,48,.78)";
-  roundRect(ctx, 16, 16, 736, 224, 28, true, false);
-  ctx.strokeStyle = "rgba(255,255,255,.65)";
-  ctx.lineWidth = 5;
-  roundRect(ctx, 16, 16, 736, 224, 28, false, true);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 34px Comic Sans MS, Arial";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  text.split("\n").forEach((line,i)=>ctx.fillText(line,384,72+i*52));
-  const tex = new THREE.CanvasTexture(canvas);
-  return new THREE.Mesh(
-    new THREE.PlaneGeometry(5.8,1.9),
-    new THREE.MeshBasicMaterial({map:tex, transparent:true})
-  );
-}
-
-function makeAnimalPod(m, x, z){
+function makeAnimalPod(m, x, z, localIndex=0){
   const group = new THREE.Group();
   group.position.set(x,0,z);
-  group.scale.set(1.6,1.6,1.6);
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(2.2,2.2,.35,24), new THREE.MeshLambertMaterial({color:WORLDS[m.worldIndex].color}));
-  base.position.y=.18;
+  group.scale.set(1.25,1.25,1.25);
+
+  // Simple enclosure ring around the animal.
+  const fenceMat = new THREE.MeshLambertMaterial({color:0x9a6b3f});
+  for(let i=0;i<12;i++){
+    const a = (i/12)*Math.PI*2;
+    const post = new THREE.Mesh(new THREE.BoxGeometry(.22,.9,.22), fenceMat);
+    post.position.set(Math.cos(a)*2.45,.45,Math.sin(a)*2.45);
+    group.add(post);
+  }
+
+  const base = new THREE.Mesh(
+    new THREE.CylinderGeometry(2.65,2.65,.16,36),
+    new THREE.MeshLambertMaterial({color:WORLDS[m.worldIndex].color})
+  );
+  base.position.y=.08;
   group.add(base);
-  const cage = new THREE.Mesh(new THREE.SphereGeometry(1.55,18,12), new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.22}));
-  cage.position.y=2.35;
+
+  const cage = new THREE.Mesh(
+    new THREE.SphereGeometry(1.85,20,12),
+    new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.18})
+  );
+  cage.position.y=1.9;
   group.add(cage);
-  const glow = new THREE.PointLight(WORLDS[m.worldIndex].color, .9, 10);
-  glow.position.y=2.5;
+
+  const glow = new THREE.PointLight(WORLDS[m.worldIndex].color, .7, 8);
+  glow.position.y=2.2;
   group.add(glow);
 
+  // Fallback simple animal, visible only if GLB fails.
   const animal = new THREE.Group();
-  animal.position.y=1.45;
-  const body = new THREE.Mesh(new THREE.SphereGeometry(.75,14,10), new THREE.MeshLambertMaterial({color:0xfff3c4}));
+  animal.position.y=.75;
+  const body = new THREE.Mesh(new THREE.SphereGeometry(.62,14,10), new THREE.MeshLambertMaterial({color:0xfff3c4}));
   body.scale.set(1,1.1,.9);
   animal.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(.55,14,10), new THREE.MeshLambertMaterial({color:0xffe4a6}));
-  head.position.y=.8;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(.45,14,10), new THREE.MeshLambertMaterial({color:0xffe4a6}));
+  head.position.y=.68;
   animal.add(head);
-  const earMat = new THREE.MeshLambertMaterial({color:0xffd2a1});
-  const e1 = new THREE.Mesh(new THREE.ConeGeometry(.18,.65,10), earMat);
-  e1.position.set(-.32,1.35,0); e1.rotation.z=.18;
-  const e2 = e1.clone(); e2.position.x=.32; e2.rotation.z=-.18;
-  animal.add(e1,e2);
   const eyeMat = new THREE.MeshBasicMaterial({color:0x10233f});
-  const eye1 = new THREE.Mesh(new THREE.SphereGeometry(.06,8,8), eyeMat);
-  eye1.position.set(-.18,.88,.48);
-  const eye2 = eye1.clone(); eye2.position.x=.18;
+  const eye1 = new THREE.Mesh(new THREE.SphereGeometry(.05,8,8), eyeMat);
+  eye1.position.set(-.15,.76,.42);
+  const eye2 = eye1.clone(); eye2.position.x=.15;
   animal.add(eye1,eye2);
   group.add(animal);
 
-  const label = makeFloatingLabel(m.worldName + "\\n" + m.dividend + " ÷ " + m.divisor + "\\nSave the " + m.animal + "!");
-  label.position.y=4.4;
+  const animalNamesForStage = ["Cow", "Elephant", "Horse"];
+  const shownName = animalNamesForStage[localIndex] || m.animal;
+  const label = makeFloatingLabel(`${shownName}\n${m.dividend} ÷ ${m.divisor}\nTap RESCUE`);
+  label.position.y=3.55;
   group.add(label);
 
-  // Try to replace the placeholder shape animal with your uploaded GLB models.
-  // Uses Cow.glb and Elephant.glb alternately. If a model fails to load, the fallback animal remains.
+  // Exact Stage 1 mapping: Cow, Elephant, horse.
   const worldModels = animalModelsByWorld[m.worldIndex] || ["Cow.glb", "Elephant.glb", "Horse.glb"];
-  const modelFile = worldModels[m.id % worldModels.length];
+  const modelFile = worldModels[localIndex % worldModels.length];
   loadAnimalModel(modelFile, animal, group);
 
   return {mission:m, group, animal, cage, label, completed:false};
@@ -1368,7 +1322,7 @@ function checkNearPods(){
   if(nearest && dist < 5.0){
     document.getElementById("bottomTip").innerHTML = 'Press Click/F or tap RESCUE to start: <b>' + nearest.mission.dividend + ' ÷ ' + nearest.mission.divisor + '</b><span class="sub">' + nearest.mission.focus + '</span>';
   }else{
-    document.getElementById("bottomTip").innerHTML = 'World 1 starts small: rescue only these 3 animals first.<span class="sub">After this, the world will expand gradually.</span>';
+    document.getElementById("bottomTip").innerHTML = 'World 1 starts small: rescue the Cow, Elephant and Horse only.<span class="sub">Drag on the right side to look around. Tap RESCUE near an enclosure.</span>';
   }
 }
 function fireRescueBeam(){
@@ -1495,7 +1449,7 @@ lookZone.addEventListener("pointerdown", e=>{
   lookDrag.active = true;
   lookDrag.x = e.clientX;
   lookDrag.y = e.clientY;
-  lookZone.setPointerCapture?.(e.pointerId);
+  try { lookZone.setPointerCapture?.(e.pointerId); } catch(err) { /* Some mobile browsers throw here; drag-look still works. */ }
 });
 lookZone.addEventListener("pointermove", e=>{
   if(!lookDrag.active) return;
