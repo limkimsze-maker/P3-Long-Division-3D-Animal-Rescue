@@ -116,7 +116,7 @@
   .tiltStack{position:absolute; right:205px; bottom:100px; display:grid; gap:8px; pointer-events:auto}
   .tiltStack button{width:54px; height:54px; border:0; border-radius:16px; background:rgba(44,123,229,.78); color:white; font-weight:bold; font-size:20px; box-shadow:0 4px 0 rgba(0,0,0,.25)}
   .lookZone{
-    position:absolute; right:0; top:0; bottom:0; width:45vw; pointer-events:auto;
+    position:absolute; right:0; top:0; bottom:0; width:45vw; pointer-events:none;
     background:linear-gradient(90deg, transparent, rgba(44,123,229,.035));
   }
   .credit{position:fixed; right:8px; bottom:4px; z-index:7; font-size:11px; color:rgba(255,255,255,.86); text-shadow:0 1px 3px rgba(0,0,0,.7); pointer-events:none}
@@ -531,6 +531,37 @@
   /* Finger aiming replaces the old blue up/down tilt buttons. */
   .tiltStack{display:none !important;}
 
+
+  /* ===== Universal phone / foldable compatibility fix ===== */
+  html, body{
+    width:100%;
+    height:100%;
+    min-height:100%;
+    overflow:hidden;
+    overscroll-behavior:none;
+    touch-action:none;
+  }
+  #game{
+    position:fixed;
+    inset:0;
+    width:100vw;
+    height:100dvh;
+    min-height:100svh;
+    overflow:hidden;
+    touch-action:none;
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  canvas{
+    width:100% !important;
+    height:100% !important;
+    touch-action:none !important;
+  }
+  @supports not (height: 100dvh){
+    #game{height:calc(var(--vh) * 100);}
+  }
+
 </style>
 </head>
 <body>
@@ -706,7 +737,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531y";
+const ASSET_VERSION = "20260531z";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -2465,6 +2496,54 @@ function updateCrosshairFromFinger(clientX, clientY){
 
 function resetCrosshairToCentre(){
   aimNdc.set(0, 0);
+  const dot = document.getElementById("centerDot");
+  if(dot){
+    dot.style.left = "50%";
+    dot.style.top = "50%";
+  }
+}
+
+
+function getGameSize(){
+  const game = document.getElementById("game");
+  const rect = game ? game.getBoundingClientRect() : {width: window.innerWidth, height: window.innerHeight};
+  let w = Math.round(rect.width || window.innerWidth || 1);
+  let h = Math.round(rect.height || window.innerHeight || 1);
+
+  // Foldable and mobile browsers sometimes report 0 during folding/reflow.
+  if(!w || w < 100) w = Math.round(window.innerWidth || screen.width || 360);
+  if(!h || h < 100){
+    if(window.visualViewport && window.visualViewport.height) h = Math.round(window.visualViewport.height);
+    else h = Math.round(window.innerHeight || screen.height || 640);
+  }
+  return {w, h};
+}
+
+function updateViewportUnit(){
+  const size = getGameSize();
+  document.documentElement.style.setProperty("--vh", (size.h * 0.01) + "px");
+}
+
+function resizeGameRenderer(){
+  if(!renderer || !camera) return;
+  updateViewportUnit();
+  const size = getGameSize();
+
+  camera.aspect = size.w / size.h;
+  camera.updateProjectionMatrix();
+
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(size.w, size.h, false);
+
+  // Centre aim/raycast after any fold, resize or rotation.
+  resetCrosshairToCentre();
+}
+
+function scheduleResizeGame(){
+  requestAnimationFrame(()=>resizeGameRenderer());
+  setTimeout(()=>resizeGameRenderer(), 80);
+  setTimeout(()=>resizeGameRenderer(), 280);
+  setTimeout(()=>resizeGameRenderer(), 650);
 }
 
 function init3D(){
@@ -2472,11 +2551,12 @@ function init3D(){
   scene.background = new THREE.Color(0xdff8ff);
   scene.fog = new THREE.Fog(0xdff8ff, 55, 150);
 
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth/((window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight), 0.1, 1000);
+  const initialSize = getGameSize();
+  camera = new THREE.PerspectiveCamera(75, initialSize.w / initialSize.h, 0.1, 1000);
   camera.position.set(0, playerHeight, 18);
 
   renderer = new THREE.WebGLRenderer({antialias:true});
-  renderer.setSize(window.innerWidth, (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight);
+  renderer.setSize(initialSize.w, initialSize.h, false);
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
   renderer.setClearColor(0xdff8ff, 1);
@@ -2496,6 +2576,20 @@ function init3D(){
   createMissionPods();
 
   window.addEventListener("resize", onResize);
+  window.addEventListener("orientationchange", scheduleResizeGame);
+  window.addEventListener("pageshow", scheduleResizeGame);
+  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) scheduleResizeGame(); });
+  if(window.visualViewport){
+    window.visualViewport.addEventListener("resize", scheduleResizeGame);
+    window.visualViewport.addEventListener("scroll", scheduleResizeGame);
+  }
+  if(window.ResizeObserver){
+    const gameEl = document.getElementById("game");
+    if(gameEl){
+      const ro = new ResizeObserver(()=>scheduleResizeGame());
+      ro.observe(gameEl);
+    }
+  }
   document.addEventListener("keydown", onKeyDown);
   document.addEventListener("keyup", e=>keys[e.code]=false);
 
@@ -2979,6 +3073,7 @@ function openMission(mission){
 function closeMission(){
   document.getElementById("missionPanel").style.display = "none";
   document.getElementById("algoFrame").srcdoc = "";
+  scheduleResizeGame();
 }
 
 
@@ -3313,6 +3408,34 @@ function fireRescueBeam(){
     return;
   }
 
+  // Foldable/mobile fallback: if the animal is near the centre of the screen,
+  // rescue it even if the transparent cage raycast misses.
+  let best = null;
+  let bestScore = Infinity;
+  const size = getGameSize();
+  const centre = new THREE.Vector2(size.w/2, size.h/2);
+  animals.filter(p=>!p.completed).forEach(p=>{
+    const pos = p.group.position.clone();
+    pos.y += 2.2;
+    const projected = pos.project(camera);
+    if(projected.z < -1 || projected.z > 1) return;
+    const sx = (projected.x * .5 + .5) * size.w;
+    const sy = (-projected.y * .5 + .5) * size.h;
+    const screenDist = Math.hypot(sx - centre.x, sy - centre.y);
+    const worldDist = p.group.position.distanceTo(camera.position);
+    const score = screenDist + Math.max(0, worldDist - 10) * 20;
+    if(score < bestScore){
+      bestScore = score;
+      best = p;
+    }
+  });
+
+  if(best && bestScore < Math.min(size.w, size.h) * 0.22){
+    try{ castWebEffect(best.group.position); }catch(e){}
+    setTimeout(()=>openMission(best.mission), 320);
+    return;
+  }
+
   const near = animals
     .filter(p=>!p.completed)
     .sort((a,b)=>a.group.position.distanceTo(camera.position)-b.group.position.distanceTo(camera.position))[0];
@@ -3375,12 +3498,7 @@ function updateSparkles(dt){
   }
 }
 function onResize(){
-  updateViewportUnit();
-  const w = window.innerWidth;
-  const h = (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight;
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
-  renderer.setSize(w, h);
+  scheduleResizeGame();
 }
 
 function ensureAudio(){
@@ -3460,7 +3578,9 @@ updateSoundButtons();
 document.getElementById("startBtn").onclick = ()=>{
   ensureAudio();
   document.getElementById("startScreen").style.display = "none";
-  renderer.domElement.requestPointerLock?.();
+  scheduleResizeGame();
+  // Pointer lock is optional; mobile browsers often do not allow it.
+  try{ renderer.domElement.requestPointerLock?.(); }catch(e){}
   updateHUD();
 };
 document.getElementById("exitMissionBtn").onclick = closeMission;
@@ -3515,24 +3635,34 @@ lookZone.addEventListener("pointermove", e=>{
 
 // Touch-drag anywhere on the 3D game area to move the view.
 // The crosshair stays fixed in the centre. Only the RESCUE button casts the web.
+// This works across iOS, Android, Samsung A-series and foldable inner screens.
 const gameArea = document.getElementById("game");
-let gameLookDrag = {active:false, x:0, y:0};
+let gameLookDrag = {active:false, x:0, y:0, pointerId:null};
 function isOverlayOpen(){
   return document.getElementById("startScreen").style.display !== "none" ||
          document.getElementById("missionPanel").style.display === "flex" ||
          document.getElementById("winScreen").style.display === "flex";
 }
+function dragSensitivity(){
+  const size = getGameSize();
+  // Slightly lower sensitivity on large foldable/tablet screens.
+  return Math.max(0.0038, Math.min(0.0062, 520 / Math.max(size.w, size.h) * 0.006));
+}
 if(gameArea){
   gameArea.addEventListener("pointerdown", e=>{
     if(isOverlayOpen()) return;
+    if(e.target && (e.target.closest(".fireBtn") || e.target.closest(".pad") || e.target.closest(".soundToggle"))) return;
     e.preventDefault();
     gameLookDrag.active = true;
     gameLookDrag.x = e.clientX;
     gameLookDrag.y = e.clientY;
+    gameLookDrag.pointerId = e.pointerId;
     try{ gameArea.setPointerCapture?.(e.pointerId); }catch(err){}
-  });
+  }, {passive:false});
+
   gameArea.addEventListener("pointermove", e=>{
     if(!gameLookDrag.active) return;
+    if(gameLookDrag.pointerId !== null && e.pointerId !== gameLookDrag.pointerId) return;
     e.preventDefault();
 
     const dx = e.clientX - gameLookDrag.x;
@@ -3540,16 +3670,21 @@ if(gameArea){
     gameLookDrag.x = e.clientX;
     gameLookDrag.y = e.clientY;
 
-    // Drag finger left/right to turn view.
-    yaw -= dx * 0.006;
+    const s = dragSensitivity();
+    yaw -= dx * s;
 
     // Natural mobile camera:
     // drag finger upward -> look upward; drag finger downward -> look downward.
-    pitch += dy * 0.006;
+    pitch += dy * s;
     pitch = Math.max(-1.45, Math.min(1.35, pitch));
-  });
+  }, {passive:false});
+
   ["pointerup","pointercancel","pointerleave"].forEach(type=>{
-    gameArea.addEventListener(type, ()=>{ gameLookDrag.active = false; });
+    gameArea.addEventListener(type, e=>{
+      if(gameLookDrag.pointerId !== null && e.pointerId !== undefined && e.pointerId !== gameLookDrag.pointerId) return;
+      gameLookDrag.active = false;
+      gameLookDrag.pointerId = null;
+    }, {passive:false});
   });
 }
 
@@ -3565,20 +3700,10 @@ window.addEventListener("error", (e)=>{
 });
 
 
-function updateViewportUnit(){
-  const h = (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight;
-  document.documentElement.style.setProperty("--vh", (h * 0.01) + "px");
-}
-updateViewportUnit();
-window.addEventListener("resize", updateViewportUnit);
-if(window.visualViewport){
-  window.visualViewport.addEventListener("resize", updateViewportUnit);
-  window.visualViewport.addEventListener("scroll", updateViewportUnit);
-}
-
 buildMissionList();
 loadLocalProgress();
 init3D();
+scheduleResizeGame();
 updateRescuedStrip();
 updateHUD();
 saveLocalProgress();
