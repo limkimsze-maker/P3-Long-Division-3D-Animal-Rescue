@@ -835,6 +835,132 @@
     .coverStartPanel{margin-top:6px;}
   }
 
+
+  /* ===== World map + horse travel overlay ===== */
+  .travelOverlay{
+    position:fixed;
+    inset:0;
+    z-index:10010;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(10,40,24,.62);
+    backdrop-filter:blur(3px);
+    padding:16px;
+  }
+  .travelOverlay.show{display:flex;}
+  .travelCard{
+    width:min(620px,94vw);
+    background:linear-gradient(180deg,#fffaf0,#f5ffe8);
+    border:3px solid #9bd18b;
+    border-radius:28px;
+    box-shadow:0 22px 70px rgba(0,0,0,.32);
+    padding:20px;
+    text-align:center;
+    color:#12345a;
+  }
+  .travelTitle{
+    margin:0 0 8px;
+    font-size:clamp(26px,4vw,42px);
+    font-weight:1000;
+    color:#14532d;
+  }
+  .travelScene{
+    height:130px;
+    margin:8px auto 12px;
+    border-radius:22px;
+    overflow:hidden;
+    position:relative;
+    background:linear-gradient(180deg,#bdefff 0%,#dff9e8 54%,#80c970 55%,#4f9b4a 100%);
+    border:2px solid #c5e8b6;
+  }
+  .travelForest{position:absolute;left:0;right:0;bottom:42px;height:46px;background:
+    radial-gradient(circle at 6% 70%,#2fbf71 0 18px,transparent 19px),
+    radial-gradient(circle at 18% 45%,#1f9d55 0 22px,transparent 23px),
+    radial-gradient(circle at 35% 70%,#2fbf71 0 20px,transparent 21px),
+    radial-gradient(circle at 56% 45%,#16803a 0 24px,transparent 25px),
+    radial-gradient(circle at 74% 70%,#2fbf71 0 22px,transparent 23px),
+    radial-gradient(circle at 92% 45%,#1f9d55 0 24px,transparent 25px);
+  }
+  .travelMap{
+    position:absolute;
+    left:18px;
+    top:18px;
+    width:78px;
+    height:58px;
+    background:#ffe9a6;
+    border:3px solid #b9822e;
+    border-radius:10px;
+    transform:rotate(-8deg);
+    box-shadow:0 6px 12px rgba(0,0,0,.18);
+  }
+  .travelMap:before{
+    content:"";
+    position:absolute;
+    inset:10px;
+    border:3px dashed #7c4a12;
+    border-left:0;
+    border-bottom:0;
+    border-radius:50%;
+  }
+  .travelMap:after{
+    content:"X";
+    position:absolute;
+    right:12px;
+    bottom:6px;
+    color:#ef4444;
+    font-weight:1000;
+    font-size:22px;
+  }
+  .travelHorse{
+    position:absolute;
+    left:42%;
+    bottom:26px;
+    font-size:58px;
+    filter:drop-shadow(0 5px 4px rgba(0,0,0,.25));
+    animation:horseRide .9s ease-in-out infinite;
+  }
+  .travelRanger{
+    position:absolute;
+    left:49%;
+    bottom:70px;
+    font-size:34px;
+    transform:translateX(-50%);
+    animation:rangerBounce .9s ease-in-out infinite;
+  }
+  @keyframes horseRide{
+    0%,100%{transform:translateY(0) translateX(-10px);}
+    50%{transform:translateY(-6px) translateX(10px);}
+  }
+  @keyframes rangerBounce{
+    0%,100%{transform:translateX(-50%) translateY(0);}
+    50%{transform:translateX(-50%) translateY(-5px);}
+  }
+  .travelMsg{
+    margin:0;
+    font-size:18px;
+    line-height:1.35;
+    color:#40556f;
+    font-weight:900;
+  }
+  .travelProgress{
+    margin:14px auto 0;
+    width:min(360px,80vw);
+    height:14px;
+    border-radius:999px;
+    background:#dff0d8;
+    overflow:hidden;
+    border:1px solid #b7d7a8;
+  }
+  .travelProgress span{
+    display:block;
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,#22c55e,#84cc16);
+    animation:travelFill 1.5s ease-out forwards;
+  }
+  @keyframes travelFill{to{width:100%;}}
+
 </style>
 </head>
 <body>
@@ -911,7 +1037,7 @@
         <summary>How to Play</summary>
         <div class="howBody">
           <ul class="howList">
-            <li>Move the centre cross onto an animal, then press <b>RESCUE</b>.</li>
+            <li>Move the centre cross onto an animal, then press <b>RESCUE</b>. After each world, the animals give the ranger a map to the next forest.</li>
             <li>Complete the long-division algorithm to save the animal.</li>
             <li>Use the keypad to fill in the highlighted boxes.</li>
             <li>Your progress is saved on this device.</li>
@@ -952,6 +1078,21 @@
       <button id="exitMissionBtn">Exit Mission</button>
     </div>
     <iframe id="algoFrame" title="Long Division Algorithm"></iframe>
+  </div>
+</div>
+
+
+<div class="travelOverlay" id="travelOverlay" aria-live="polite">
+  <div class="travelCard">
+    <h2 class="travelTitle">New Map Found!</h2>
+    <div class="travelScene" aria-hidden="true">
+      <div class="travelForest"></div>
+      <div class="travelMap"></div>
+      <div class="travelHorse">🐎</div>
+      <div class="travelRanger">🧑‍🌾</div>
+    </div>
+    <p class="travelMsg" id="travelMsg">The rescued animals pass the ranger a map. Ride the horse to the next forest world!</p>
+    <div class="travelProgress"><span></span></div>
   </div>
 </div>
 
@@ -1046,7 +1187,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531ak";
+const ASSET_VERSION = "20260531al";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -2717,6 +2858,8 @@ const animalNames = ["Bunny","Panda","Otter","Koala","Deer","Fox","Penguin","Kit
 
 let allMissions = [], currentWorldIndex = 0, score = 0, health = 3, activeMission = null, completedMissionIds = new Set();
 let scene, camera, renderer, clock, yaw = 0, pitch = -0.08, keys = {}, animals = [], raycaster = new THREE.Raycaster(), particles = [], mouseLocked = false, playerHeight = 1.7;
+let worldRoot = null;
+let worldBounds = {x:38, zMin:-40, zMax:12};
 let aimNdc = new THREE.Vector2(0, 0); // always centre of the screen
 let lookDrag = {active:false, x:0, y:0};
 let audioCtx = null;
@@ -3251,100 +3394,209 @@ function init3D(){
   animate();
 }
 
-function createWorld(){
-  // Bigger stage arena. Each world shows all animals for that world.
-  const groundMat = new THREE.MeshLambertMaterial({color:0xeafff4});
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(90,70), groundMat);
-  ground.rotation.x = -Math.PI/2;
-  ground.position.z = -18;
-  ground.receiveShadow = true;
-  scene.add(ground);
 
-  // Wide paths for exploration.
-  const pathMat = new THREE.MeshLambertMaterial({color:0xb7f3ff});
-  const mainPath = new THREE.Mesh(new THREE.BoxGeometry(70,.05,2.6), pathMat);
-  mainPath.position.set(0,.07,-4);
-  mainPath.receiveShadow = true;
-  scene.add(mainPath);
-
-  const crossPath = new THREE.Mesh(new THREE.BoxGeometry(2.6,.05,42), pathMat);
-  crossPath.position.set(0,.08,-20);
-  crossPath.receiveShadow = true;
-  scene.add(crossPath);
-
-  // Soft central world plaza.
-  const plaza = new THREE.Mesh(
-    new THREE.CylinderGeometry(9.5,9.5,.08,48),
-    new THREE.MeshLambertMaterial({color:0xf7fff7})
-  );
-  plaza.position.set(0,.06,-15);
-  plaza.receiveShadow = true;
-  scene.add(plaza);
-
-  // Outer decorative fence.
-  const fenceMat = new THREE.MeshLambertMaterial({color:0xb98750});
-  for(let x=-38; x<=38; x+=3){
-    const back = new THREE.Mesh(new THREE.BoxGeometry(.28,1.0,.28), fenceMat);
-    back.position.set(x,.5,-50);
-    scene.add(back);
-    const front = new THREE.Mesh(new THREE.BoxGeometry(.28,1.0,.28), fenceMat);
-    front.position.set(x,.5,12);
-    scene.add(front);
+function getWorldScale(){
+  // The playable forest expands after each world.
+  return 1 + currentWorldIndex * 0.18;
+}
+function getWorldBounds(){
+  const s = getWorldScale();
+  return {
+    x: Math.round(34 * s),
+    zMin: Math.round(-38 * s - currentWorldIndex * 3),
+    zMax: 12
+  };
+}
+function disposeWorldRoot(){
+  if(!worldRoot) return;
+  scene.remove(worldRoot);
+  worldRoot.traverse(obj=>{
+    if(obj.geometry) obj.geometry.dispose?.();
+    if(obj.material){
+      if(Array.isArray(obj.material)) obj.material.forEach(m=>m.dispose?.());
+      else obj.material.dispose?.();
+    }
+  });
+  worldRoot = null;
+}
+function rebuildWorldForCurrentStage(){
+  disposeWorldRoot();
+  createWorld();
+  createMissionPods();
+  updateHUD();
+  scheduleResizeGame?.();
+}
+function showTravelToNextWorld(nextWorldIndex, done){
+  const overlay = document.getElementById("travelOverlay");
+  const msg = document.getElementById("travelMsg");
+  if(msg){
+    msg.textContent = "The rescued animals pass the ranger a map. Ride the horse quickly to " + WORLDS[nextWorldIndex].name + "!";
   }
-  for(let z=-48; z<=10; z+=3){
-    [-40,40].forEach(x=>{
-      const post = new THREE.Mesh(new THREE.BoxGeometry(.28,1.0,.28), fenceMat);
-      post.position.set(x,.5,z);
-      scene.add(post);
+  if(overlay){
+    overlay.classList.add("show");
+    overlay.querySelector(".travelProgress span")?.getAnimations?.().forEach(a=>a.cancel());
+    const bar = overlay.querySelector(".travelProgress span");
+    if(bar){
+      bar.style.animation = "none";
+      void bar.offsetWidth;
+      bar.style.animation = "";
+    }
+  }
+  playTada();
+  setTimeout(()=>{
+    if(overlay) overlay.classList.remove("show");
+    if(typeof done === "function") done();
+  }, 1550);
+}
+
+function createWorld(){
+  // Expanding forest world. World 1 starts smaller; each completed world opens a larger forest map.
+  worldRoot = new THREE.Group();
+  worldRoot.name = "ExpandingForestWorld";
+  scene.add(worldRoot);
+
+  const scale = getWorldScale();
+  worldBounds = getWorldBounds();
+
+  scene.background = new THREE.Color(0xbfead0);
+  scene.fog = new THREE.Fog(0xbfead0, 45 * scale, 120 * scale);
+
+  const groundW = worldBounds.x * 2 + 8;
+  const groundD = Math.abs(worldBounds.zMin) + worldBounds.zMax + 10;
+
+  const groundMat = new THREE.MeshLambertMaterial({color:0x6fbf6a});
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(groundW, groundD), groundMat);
+  ground.rotation.x = -Math.PI/2;
+  ground.position.z = (worldBounds.zMin + worldBounds.zMax) / 2;
+  ground.receiveShadow = true;
+  worldRoot.add(ground);
+
+  // Darker forest floor patches to reduce the white look.
+  const patchMats = [
+    new THREE.MeshLambertMaterial({color:0x4f9b4a, transparent:true, opacity:.68}),
+    new THREE.MeshLambertMaterial({color:0x7ab85f, transparent:true, opacity:.62}),
+    new THREE.MeshLambertMaterial({color:0x3f7f3a, transparent:true, opacity:.36})
+  ];
+  for(let i=0;i<22 + currentWorldIndex*6;i++){
+    const mat = patchMats[i % patchMats.length];
+    const patch = new THREE.Mesh(
+      new THREE.CircleGeometry(2.8 + Math.random()*4.2, 18),
+      mat
+    );
+    patch.rotation.x = -Math.PI/2;
+    patch.position.set(
+      (Math.random()*2-1) * (worldBounds.x - 3),
+      .025,
+      worldBounds.zMax - 4 - Math.random() * (Math.abs(worldBounds.zMin) - 3)
+    );
+    patch.scale.z = .55 + Math.random()*.55;
+    worldRoot.add(patch);
+  }
+
+  // Curved-looking forest path: short tan stones from start to mission area.
+  const pathMat = new THREE.MeshLambertMaterial({color:0xb9965d});
+  for(let i=0;i<28 + currentWorldIndex*5;i++){
+    const t = i / (27 + currentWorldIndex*5);
+    const z = worldBounds.zMax - 2 - t * (Math.abs(worldBounds.zMin) - 8);
+    const x = Math.sin(t * Math.PI * 2.2) * (2.8 + currentWorldIndex*.6);
+    const stone = new THREE.Mesh(new THREE.BoxGeometry(2.9, .055, 1.25), pathMat);
+    stone.position.set(x, .08, z);
+    stone.rotation.y = Math.sin(t*5) * .25;
+    stone.receiveShadow = true;
+    worldRoot.add(stone);
+  }
+
+  // A low bright stream/path border to guide pupils.
+  const streamMat = new THREE.MeshBasicMaterial({color:0x9cecf0, transparent:true, opacity:.55});
+  const stream = new THREE.Mesh(new THREE.BoxGeometry(Math.min(groundW-10, 62*scale), .035, .45), streamMat);
+  stream.position.set(0, .09, worldBounds.zMax - 11);
+  worldRoot.add(stream);
+
+  // Boundary fence: prevents pupils visually and mechanically going out of world.
+  const fenceMat = new THREE.MeshLambertMaterial({color:0x8a5a2b});
+  const postGap = 3.2;
+  for(let x=-worldBounds.x; x<=worldBounds.x; x+=postGap){
+    [worldBounds.zMin, worldBounds.zMax].forEach(z=>{
+      const post = new THREE.Mesh(new THREE.BoxGeometry(.32,1.25,.32), fenceMat);
+      post.position.set(x,.62,z);
+      post.castShadow = true;
+      worldRoot.add(post);
+    });
+  }
+  for(let z=worldBounds.zMin; z<=worldBounds.zMax; z+=postGap){
+    [-worldBounds.x, worldBounds.x].forEach(x=>{
+      const post = new THREE.Mesh(new THREE.BoxGeometry(.32,1.25,.32), fenceMat);
+      post.position.set(x,.62,z);
+      post.castShadow = true;
+      worldRoot.add(post);
     });
   }
 
-  // Trees around the edges, not blocking mission animals.
-  const treePositions = [
-    [-35,-44],[-25,-48],[-12,-46],[12,-46],[25,-48],[35,-44],
-    [-36,-30],[36,-30],[-38,-12],[38,-12],[-34,5],[34,5],
-    [-22,8],[22,8]
-  ];
-  treePositions.forEach(([x,z])=>makeTree(x,z));
-
-  // Flowers near the front and side.
-  const flowerColors = [0xff6fae,0xffd166,0x8d5cf6,0x60a5fa,0xffffff];
-  for(let i=0;i<42;i++){
-    const side = i % 2 === 0 ? -1 : 1;
-    const x = side * (8 + Math.random()*24);
-    const z = -2 - Math.random()*28;
-    const stem = new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.28,6), new THREE.MeshLambertMaterial({color:0x238a4b}));
-    stem.position.set(x,.14,z);
-    scene.add(stem);
-    const bloom = new THREE.Mesh(new THREE.SphereGeometry(.12,8,6), new THREE.MeshBasicMaterial({color:flowerColors[i%flowerColors.length]}));
-    bloom.position.set(x,.33,z);
-    scene.add(bloom);
+  // Forest trees: denser at edges, fewer in the centre so animals remain visible.
+  const treeCount = 34 + currentWorldIndex * 12;
+  for(let i=0;i<treeCount;i++){
+    const edge = Math.random();
+    let x,z;
+    if(edge < .45){
+      x = (Math.random()<.5 ? -1 : 1) * (worldBounds.x - 2 - Math.random()*7);
+      z = worldBounds.zMin + 4 + Math.random() * (worldBounds.zMax - worldBounds.zMin - 8);
+    }else if(edge < .75){
+      x = (Math.random()*2-1) * (worldBounds.x - 4);
+      z = worldBounds.zMin + 2 + Math.random()*10;
+    }else{
+      x = (Math.random()*2-1) * (worldBounds.x - 8);
+      z = worldBounds.zMax - 6 - Math.random()*7;
+    }
+    // keep centre play area clearer
+    if(Math.abs(x) < 8 && z > worldBounds.zMin + 12 && z < worldBounds.zMax - 8) x += x < 0 ? -8 : 8;
+    makeTree(x,z, worldRoot);
   }
 
-  // Lamps for atmosphere.
-  [[-18,-8],[18,-8],[-18,-30],[18,-30],[0,-42]].forEach(([x,z])=>makeLamp(x,z));
-}
+  // Flowers and bushes for a richer forest.
+  const flowerColors = [0xff6fae,0xffd166,0x8d5cf6,0x60a5fa,0xffffff];
+  for(let i=0;i<50 + currentWorldIndex*10;i++){
+    const x = (Math.random()*2-1) * (worldBounds.x - 4);
+    const z = worldBounds.zMax - 4 - Math.random() * (Math.abs(worldBounds.zMin) - 4);
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.28,6), new THREE.MeshLambertMaterial({color:0x238a4b}));
+    stem.position.set(x,.14,z);
+    worldRoot.add(stem);
+    const bloom = new THREE.Mesh(new THREE.SphereGeometry(.12,8,6), new THREE.MeshBasicMaterial({color:flowerColors[i%flowerColors.length]}));
+    bloom.position.set(x,.33,z);
+    worldRoot.add(bloom);
+  }
 
-function makeTree(x,z){
-  const trunk = new THREE.Mesh(new THREE.BoxGeometry(.8,2.4,.8), new THREE.MeshLambertMaterial({color:0x9a5a26}));
+  // Lamps/markers near the current rescue area.
+  [[-10,-10],[10,-10],[-12,-24],[12,-24],[0,Math.max(worldBounds.zMin+10,-34)]].forEach(([x,z])=>makeLamp(x,z, worldRoot));
+
+  // Start camera inside the world, never outside.
+  camera.position.set(0, playerHeight, Math.min(8, worldBounds.zMax - 3));
+  yaw = 0;
+  pitch = -0.08;
+}
+function makeTree(x,z,parent=scene){
+  const trunk = new THREE.Mesh(new THREE.BoxGeometry(.8,2.4,.8), new THREE.MeshLambertMaterial({color:0x7a4a23}));
   trunk.position.set(x,1.2,z);
   trunk.castShadow = true;
-  scene.add(trunk);
-  const top = new THREE.Mesh(new THREE.SphereGeometry(2.1,12,8), new THREE.MeshLambertMaterial({color:0x2fbc67}));
+  parent.add(trunk);
+  const top = new THREE.Mesh(new THREE.SphereGeometry(2.1,12,8), new THREE.MeshLambertMaterial({color:0x1f9d55}));
   top.position.set(x,3.1,z);
   top.castShadow = true;
-  scene.add(top);
+  parent.add(top);
+  const top2 = new THREE.Mesh(new THREE.SphereGeometry(1.55,12,8), new THREE.MeshLambertMaterial({color:0x2fbf71}));
+  top2.position.set(x+.6,4.1,z-.2);
+  top2.castShadow = true;
+  parent.add(top2);
 }
-function makeLamp(x,z){
+function makeLamp(x,z,parent=scene){
   const pole = new THREE.Mesh(new THREE.BoxGeometry(.35,5,.35), new THREE.MeshLambertMaterial({color:0x20334d}));
   pole.position.set(x,2.5,z);
-  scene.add(pole);
-  const bulb = new THREE.Mesh(new THREE.SphereGeometry(.8,12,8), new THREE.MeshBasicMaterial({color:0xfff28a}));
-  bulb.position.set(x,5.2,z);
-  scene.add(bulb);
-  const light = new THREE.PointLight(0xfff1a5, .45, 18);
-  light.position.set(x,5.2,z);
-  scene.add(light);
+  parent.add(pole);
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(.75,12,8), new THREE.MeshBasicMaterial({color:0xfff28a}));
+  bulb.position.set(x,5.1,z);
+  parent.add(bulb);
+  const light = new THREE.PointLight(0xfff1a5, .55, 16);
+  light.position.set(x,5.1,z);
+  parent.add(light);
 }
 function makeSign(text, color){
   const group = new THREE.Group();
@@ -3818,14 +4070,16 @@ function onAlgorithmComplete(){
     if (worldJustCompleted) {
       showRangerStageComplete(completedWorldIndex, () => {
         if (currentWorldIndex < WORLDS.length - 1) {
-          currentWorldIndex++;
-          saveLocalProgress();
-          createMissionPods();
-          updateHUD();
-          const next = getActiveMissionForWorld();
-          document.getElementById("bottomTip").innerHTML =
-            "<b>" + WORLDS[currentWorldIndex].name + " unlocked!</b><span class='sub'>Next rescue: " +
-            (next ? ("Save the " + niceAnimalName(getAnimalFileForMission(next)) + ": " + next.dividend + " ÷ " + next.divisor) : "") + "</span>";
+          const nextWorldIndex = currentWorldIndex + 1;
+          showTravelToNextWorld(nextWorldIndex, () => {
+            currentWorldIndex = nextWorldIndex;
+            saveLocalProgress();
+            rebuildWorldForCurrentStage();
+            const next = getActiveMissionForWorld();
+            document.getElementById("bottomTip").innerHTML =
+              "<b>" + WORLDS[currentWorldIndex].name + " unlocked! The map has expanded.</b><span class='sub'>Ride quickly to rescue: " +
+              (next ? (niceAnimalName(getAnimalFileForMission(next)) + " — " + next.dividend + " ÷ " + next.divisor) : "") + "</span>";
+          });
         } else {
           saveLocalProgress();
           document.getElementById("winScreen").style.display = "flex";
@@ -3871,7 +4125,8 @@ function onKeyDown(e){
   if(e.code === "Escape") document.exitPointerLock?.();
 }
 function updateCamera(dt){
-  const speed = keys.ShiftLeft ? 9 : 6;
+  // Ranger rides faster after finding the map to the next world.
+  const speed = (keys.ShiftLeft ? 11 : 7.5) + currentWorldIndex * 0.35;
   const forward = new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
   const right = new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
   let move = new THREE.Vector3();
@@ -3882,8 +4137,9 @@ function updateCamera(dt){
   if(move.lengthSq()>0) move.normalize();
   camera.position.addScaledVector(move, speed*dt);
   camera.position.y = playerHeight;
-  camera.position.x = Math.max(-84, Math.min(84, camera.position.x));
-  camera.position.z = Math.max(-84, Math.min(84, camera.position.z));
+  // Keep the ranger inside the current forest boundary.
+  camera.position.x = Math.max(-worldBounds.x + 2, Math.min(worldBounds.x - 2, camera.position.x));
+  camera.position.z = Math.max(worldBounds.zMin + 2, Math.min(worldBounds.zMax - 2, camera.position.z));
   camera.rotation.order = "YXZ";
   camera.rotation.y = yaw;
   camera.rotation.x = pitch;
@@ -4287,7 +4543,7 @@ document.getElementById("restartBtn").onclick = ()=>{
   score=0; health=3;
   document.getElementById("winScreen").style.display = "none";
   updateRescuedStrip();
-  createMissionPods();
+  rebuildWorldForCurrentStage();
   runDeviceCalibration(()=>updateHUD());
 };
 document.querySelectorAll(".pad button[data-key]").forEach(btn=>{
