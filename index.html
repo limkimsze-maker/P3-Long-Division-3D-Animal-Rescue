@@ -979,7 +979,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531safe2";
+const ASSET_VERSION = "20260531af";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -1757,6 +1757,97 @@ const algorithmTemplate = `
       font-size:13px !important;
     }
   }
+
+  /* ===== Compact action area: remove repeated instruction and fit buttons ===== */
+  .algoActionNote.pupilNote{
+    display:none !important;
+  }
+  .numPadHelp{
+    font-size:10px !important;
+    line-height:1 !important;
+    margin:0 0 3px !important;
+    color:#60738c !important;
+  }
+  .algoActionPanel{
+    padding:5px 8px 7px !important;
+    margin-top:5px !important;
+    border-radius:14px !important;
+  }
+  .fixedNumPad,
+  .numPad.fixedNumPad{
+    gap:3px !important;
+    margin:2px 0 4px !important;
+    padding:1px 0 2px !important;
+  }
+  .fixedNumPad button,
+  .numPad.fixedNumPad button{
+    height:28px !important;
+    min-height:28px !important;
+    font-size:14px !important;
+    border-radius:8px !important;
+    padding:1px 0 !important;
+  }
+  .fixedNumPad .utility,
+  .fixedNumPad .danger{
+    font-size:12px !important;
+  }
+  .algoActionBtns{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) 70px !important;
+    gap:6px !important;
+    align-items:center !important;
+    margin:4px 0 0 !important;
+  }
+  .btn.prominent,
+  .algoActionBtns #btnCheck{
+    width:100% !important;
+    min-height:38px !important;
+    padding:7px 10px !important;
+    border-radius:13px !important;
+    font-size:16px !important;
+    line-height:1.05 !important;
+    box-shadow:0 4px 0 rgba(21,128,61,.45), 0 8px 12px rgba(0,0,0,.08) !important;
+  }
+  .algoActionBtns #btnHint{
+    width:70px !important;
+    min-width:0 !important;
+    min-height:38px !important;
+    padding:7px 6px !important;
+    border-radius:13px !important;
+    font-size:14px !important;
+    line-height:1.05 !important;
+    box-shadow:0 4px 0 rgba(180,83,9,.25), 0 8px 12px rgba(0,0,0,.06) !important;
+  }
+  @media(max-width:760px){
+    .numPadHelp{display:none !important;}
+    .algoActionPanel{
+      padding:4px 7px 6px !important;
+      margin-top:4px !important;
+    }
+    .fixedNumPad button,
+    .numPad.fixedNumPad button{
+      height:27px !important;
+      min-height:27px !important;
+      font-size:13px !important;
+    }
+    .algoActionBtns{
+      grid-template-columns:minmax(0,1fr) 58px !important;
+      gap:5px !important;
+      margin-top:4px !important;
+    }
+    .btn.prominent,
+    .algoActionBtns #btnCheck{
+      min-height:34px !important;
+      padding:6px 8px !important;
+      font-size:15px !important;
+    }
+    .algoActionBtns #btnHint{
+      width:58px !important;
+      min-height:34px !important;
+      padding:6px 4px !important;
+      font-size:13px !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -1801,8 +1892,7 @@ const algorithmTemplate = `
         <div class="algoWrap"><div class="algoFit" id="algoFit"></div></div>
         <div class="answerLine" id="answerLine">Answer: —</div>
         <div class="algoActionPanel">
-          <div class="algoActionNote pupilNote">Fill in the highlighted spaces, then press <b>Check Step</b>.</div>
-          <div class="numPadHelp">Tap a box, then tap a number.</div>
+          <div class="numPadHelp">Tap box → number</div>
           <div class="numPad compactNumPad fixedNumPad" id="numPad" aria-label="Number keypad">
             <button type="button" data-num="1">1</button>
             <button type="button" data-num="2">2</button>
