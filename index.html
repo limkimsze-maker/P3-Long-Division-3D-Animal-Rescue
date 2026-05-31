@@ -961,6 +961,52 @@
   }
   @keyframes travelFill{to{width:100%;}}
 
+
+  /* ===== Uploaded picture reward overlay for world completion ===== */
+  .rewardImageBox{
+    width:100%;
+    border-radius:22px;
+    overflow:hidden;
+    border:3px solid #d7eef7;
+    box-shadow:0 14px 34px rgba(15,42,74,.18);
+    background:#eefbff;
+    margin:10px auto 14px;
+  }
+  .rewardImageBox img{
+    display:block;
+    width:100%;
+    height:auto;
+    max-height:58vh;
+    object-fit:contain;
+    background:#eefbff;
+  }
+  .rewardMissing{
+    display:none;
+    padding:28px 16px;
+    background:linear-gradient(180deg,#f0fff4,#e0f7ff);
+    color:#12345a;
+    font-weight:1000;
+    font-size:18px;
+    border-radius:18px;
+  }
+  .rangerCard.pictureRewardCard{
+    width:min(860px,96vw);
+    padding:18px;
+  }
+  .pictureRewardCard .rangerTitle{
+    font-size:clamp(26px,4vw,42px);
+    margin-bottom:6px;
+  }
+  .pictureRewardCard .rangerMsg{
+    font-size:clamp(16px,2.4vw,22px);
+    margin-bottom:10px;
+  }
+  @media(max-width:760px){
+    .rangerCard.pictureRewardCard{padding:12px;border-radius:22px;}
+    .rewardImageBox{border-radius:16px;margin:8px auto 10px;}
+    .rewardImageBox img{max-height:50vh;}
+  }
+
 </style>
 </head>
 <body>
@@ -1041,6 +1087,7 @@
             <li>Complete the long-division algorithm to save the animal.</li>
             <li>Use the keypad to fill in the highlighted boxes.</li>
             <li>Your progress is saved on this device.</li>
+            <li>World completion pictures use these filenames: <b>world1_complete.png</b> to <b>world7_complete.png</b>.</li>
           </ul>
           <div class="resetInfoNote">
             <b>Need to restart from World 1?</b> Open <b>How to Play</b> and hold the <b>Reset Progress</b> button for 2 seconds.
@@ -1117,26 +1164,18 @@
 </div>
 
 <div class="rangerOverlay" id="rangerOverlay">
-  <div class="rangerCard">
-    <div class="rangerRow">
-      <div class="rangerArt">
-        <div class="rangerFace">
-          <div class="rangerHat"></div>
-          <div class="rangerHead"></div>
-          <div class="rangerEye left"></div>
-          <div class="rangerEye right"></div>
-          <div class="rangerSmile"></div>
-          <div class="rangerBody"></div>
-          <div class="rangerBadge"></div>
-        </div>
-      </div>
-      <div>
-        <h2 class="rangerTitle" id="rangerTitle">World Complete!</h2>
-        <p class="rangerMsg" id="rangerMsg">Great effort, Division Ranger!</p>
-        <div class="rangerAnimals" id="rangerAnimals"></div>
-        <button class="rangerBtn" id="rangerContinueBtn">Continue</button>
+  <div class="rangerCard pictureRewardCard">
+    <h2 class="rangerTitle" id="rangerTitle">World Complete!</h2>
+    <p class="rangerMsg" id="rangerMsg">Great effort, Division Ranger!</p>
+    <div class="rewardImageBox">
+      <img id="worldRewardImage" src="" alt="World completion reward picture">
+      <div class="rewardMissing" id="rewardMissing">
+        Reward picture not found yet.<br>
+        Please upload or rename the picture as shown in How to Play.
       </div>
     </div>
+    <div class="rangerAnimals" id="rangerAnimals"></div>
+    <button class="rangerBtn" id="rangerContinueBtn">Continue</button>
   </div>
 </div>
 
@@ -1183,11 +1222,36 @@ window.animalPngFiles = [
 // Short alias used by the game. Also placed on window for safety.
 var animalPngFiles = window.animalPngFiles;
 
+// ===== World-completion reward pictures =====
+// Upload these 6 PNG files into the same GitHub folder as index.html.
+// One picture will be shown after completing each world from World 1 to World 7.
+// Rename your uploaded pictures to these filenames for the smoothest setup.
+const WORLD_COMPLETION_IMAGES = [
+  "world1_complete.png",
+  "world2_complete.png",
+  "world3_complete.png",
+  "world4_complete.png",
+  "world5_complete.png",
+  "world6_complete.png",
+  "world7_complete.png"
+];
+
+const WORLD_COMPLETION_SPEECHES = [
+  "Great job, Division Ranger! You rescued the first animals and built your division courage.",
+  "Keep going! Your careful steps are helping more animals return safely to the forest.",
+  "Stay calm and think carefully. You can solve tricky division missions one step at a time.",
+  "Every rescued animal means you are learning more. Your long-division power is growing!",
+  "Do not give up. Brave Rangers always check their work and try again.",
+  "Fantastic work! You are almost at the final ranger challenge. Keep going!",
+  "Hooray! You are a great Long Division Ranger. All animals are safe because of your effort!"
+];
+
+
 window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531am";
+const ASSET_VERSION = "20260531ao";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -4004,37 +4068,53 @@ function showRangerStageComplete(worldIndex, onContinue){
   const msg = document.getElementById("rangerMsg");
   const animalsBox = document.getElementById("rangerAnimals");
   const btn = document.getElementById("rangerContinueBtn");
+  const img = document.getElementById("worldRewardImage");
+  const missing = document.getElementById("rewardMissing");
 
-  if(!overlay || !title || !msg || !animalsBox || !btn){
+  if(!overlay || !title || !msg || !btn){
     alert((WORLDS[worldIndex]?.name || "World") + " Complete! Great job, Division Ranger!");
     if(onContinue) onContinue();
     return;
   }
 
   const world = WORLDS[worldIndex];
-  const completed = getWorldCompletedMissions(worldIndex);
   title.textContent = `${world.name} Complete!`;
+  msg.textContent = WORLD_COMPLETION_SPEECHES[worldIndex] || "Great effort, Division Ranger! Keep going.";
 
-  const speeches = [
-    "Fantastic start, Division Ranger! You rescued the animals by using careful division facts.",
-    "Excellent work! You kept your steps neat and showed strong long-division focus.",
-    "Brilliant thinking! When the first digit was too small, you stayed calm and found the right move.",
-    "Great stamina! Regrouping is tough, but you pushed through step by step.",
-    "Amazing effort! You handled zeroes like a careful Division Ranger.",
-    "Well done! Remainders did not stop you from completing the rescue.",
-    "Outstanding mastery! You are ready for any long-division mission."
-  ];
-  msg.textContent = speeches[worldIndex] || "Great effort, Division Ranger! Keep going.";
+  // Show selected uploaded picture for World 1 to World 6.
+  // World 7 uses world7_complete.png before the final completion screen.
+  if(img){
+    const file = WORLD_COMPLETION_IMAGES[worldIndex];
+    img.style.display = "block";
+    img.alt = `${world.name} completion reward picture`;
+    img.src = file ? ("./" + file + "?v=" + ASSET_VERSION) : "";
+    img.onerror = () => {
+      img.style.display = "none";
+      if(missing){
+        missing.style.display = "block";
+        missing.innerHTML =
+          "Reward picture missing for " + world.name + ".<br>" +
+          "Please upload/rename it as <b>" + (file || "world_complete.png") + "</b>.";
+      }
+    };
+    img.onload = () => {
+      img.style.display = "block";
+      if(missing) missing.style.display = "none";
+    };
+  }
 
-  animalsBox.innerHTML = "";
-  completed.forEach(m=>{
-    const file = getAnimalFileForMission(m);
-    const img = document.createElement("img");
-    img.src = "./" + file + "?v=" + (typeof ASSET_VERSION !== "undefined" ? ASSET_VERSION : "20260531a");
-    img.alt = niceAnimalName(file);
-    img.title = img.alt;
-    animalsBox.appendChild(img);
-  });
+  if(animalsBox){
+    animalsBox.innerHTML = "";
+    const completed = getWorldCompletedMissions(worldIndex);
+    completed.forEach(m=>{
+      const file = getAnimalFileForMission(m);
+      const small = document.createElement("img");
+      small.src = "./" + file + "?v=" + ASSET_VERSION;
+      small.alt = niceAnimalName(file);
+      small.title = small.alt;
+      animalsBox.appendChild(small);
+    });
+  }
 
   overlay.style.display = "flex";
   overlay.classList.add("show");
@@ -4048,6 +4128,7 @@ function showRangerStageComplete(worldIndex, onContinue){
   playTada();
   burstConfetti(120);
 }
+
 
 function onAlgorithmComplete(){
   if (!activeMission) return;
