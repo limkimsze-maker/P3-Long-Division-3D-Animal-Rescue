@@ -1217,6 +1217,48 @@ function createMissionPods(){
   pitch = -0.08;
 }
 
+
+function roundRectSafe(ctx, x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+  if(fill) ctx.fill();
+  if(stroke) ctx.stroke();
+}
+
+function makeFloatingLabel(text){
+  text = String(text || "").replace(/\\n/g, "\n");
+  const canvas = document.createElement("canvas");
+  canvas.width = 760;
+  canvas.height = 220;
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "rgba(8,24,48,.88)";
+  roundRectSafe(ctx, 16, 16, 728, 188, 24, true, false);
+
+  ctx.strokeStyle = "rgba(255,255,255,.75)";
+  ctx.lineWidth = 5;
+  roundRectSafe(ctx, 16, 16, 728, 188, 24, false, true);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 32px Comic Sans MS, Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  const lines = text.split("\n").slice(0, 2);
+  lines.forEach((line, i) => ctx.fillText(line, 380, 64 + i * 48));
+
+  const tex = new THREE.CanvasTexture(canvas);
+  return new THREE.Mesh(
+    new THREE.PlaneGeometry(4.2, 1.2),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true })
+  );
+}
+
 function makeAnimalPod(m, x, z, localIndex=0){
   const group = new THREE.Group();
   group.position.set(x,0,z);
@@ -1518,7 +1560,7 @@ lookZone.addEventListener("pointerdown", e=>{
   lookDrag.active = true;
   lookDrag.x = e.clientX;
   lookDrag.y = e.clientY;
-  try { try { try { lookZone.setPointerCapture?.(e.pointerId); } catch(err) {} } catch(err) { /* mobile browser may reject pointer capture */ } } catch(err) { /* Some mobile browsers throw here; drag-look still works. */ }
+  try { try { try { try { lookZone.setPointerCapture?.(e.pointerId); } catch(err) {} } catch(err) {} } catch(err) { /* mobile browser may reject pointer capture */ } } catch(err) { /* Some mobile browsers throw here; drag-look still works. */ }
 });
 lookZone.addEventListener("pointermove", e=>{
   if(!lookDrag.active) return;
