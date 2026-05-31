@@ -562,6 +562,62 @@
     #game{height:calc(var(--vh) * 100);}
   }
 
+
+  /* ===== Foldable/mobile calibration overlay ===== */
+  .calibrationOverlay{
+    position:fixed;
+    inset:0;
+    z-index:10050;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(8,24,48,.72);
+    color:white;
+    padding:18px;
+    text-align:center;
+  }
+  .calibrationOverlay.show{display:flex;}
+  .calibrationCard{
+    width:min(420px,92vw);
+    background:rgba(255,255,255,.96);
+    color:#0f2a4a;
+    border-radius:24px;
+    padding:22px 18px;
+    box-shadow:0 22px 55px rgba(0,0,0,.28);
+    border:3px solid #bdefff;
+  }
+  .calibrationTitle{
+    font-size:26px;
+    font-weight:1000;
+    margin:0 0 8px;
+  }
+  .calibrationText{
+    font-size:15px;
+    line-height:1.3;
+    color:#40556f;
+    font-weight:800;
+    margin:0 0 14px;
+  }
+  .calibrationDots{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    margin-top:8px;
+  }
+  .calibrationDots span{
+    width:12px;
+    height:12px;
+    border-radius:999px;
+    background:#22c55e;
+    animation:calibPulse .8s ease-in-out infinite;
+  }
+  .calibrationDots span:nth-child(2){animation-delay:.15s;}
+  .calibrationDots span:nth-child(3){animation-delay:.3s;}
+  @keyframes calibPulse{
+    0%,100%{transform:scale(.65); opacity:.45;}
+    50%{transform:scale(1); opacity:1;}
+  }
+
 </style>
 </head>
 <body>
@@ -634,6 +690,15 @@
     </div>
     <p class="lead" style="font-size:14px;margin-top:8px;"><b>Your progress is saved on this device.</b></p>
     <button class="btn" id="startBtn">Start / Continue</button>
+  </div>
+</div>
+
+
+<div class="calibrationOverlay" id="calibrationOverlay" aria-live="polite">
+  <div class="calibrationCard">
+    <div class="calibrationTitle">Preparing Screen...</div>
+    <p class="calibrationText">Please wait a moment while the game adjusts to your device.</p>
+    <div class="calibrationDots"><span></span><span></span><span></span></div>
   </div>
 </div>
 
@@ -737,7 +802,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531z";
+const ASSET_VERSION = "20260531aa";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -2546,6 +2611,47 @@ function scheduleResizeGame(){
   setTimeout(()=>resizeGameRenderer(), 650);
 }
 
+
+function showCalibrationOverlay(show){
+  const overlay = document.getElementById("calibrationOverlay");
+  if(!overlay) return;
+  overlay.classList.toggle("show", !!show);
+}
+
+function runDeviceCalibration(done){
+  showCalibrationOverlay(true);
+
+  // Force repeated layout/canvas checks. This is especially useful for foldables
+  // where the inner display sometimes reports its final size only after interaction.
+  const timings = [0, 80, 180, 320, 520, 800, 1150, 1500];
+  timings.forEach(t=>{
+    setTimeout(()=>{
+      try{
+        updateViewportUnit();
+        resizeGameRenderer();
+        resetCrosshairToCentre();
+      }catch(e){}
+    }, t);
+  });
+
+  // Tiny camera nudge + reset helps some mobile browsers redraw the WebGL canvas.
+  setTimeout(()=>{
+    try{
+      camera.updateProjectionMatrix();
+      renderer.render(scene, camera);
+    }catch(e){}
+  }, 360);
+
+  setTimeout(()=>{
+    showCalibrationOverlay(false);
+    try{
+      scheduleResizeGame();
+      resetCrosshairToCentre();
+    }catch(e){}
+    if(typeof done === "function") done();
+  }, 1650);
+}
+
 function init3D(){
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xdff8ff);
@@ -2578,6 +2684,7 @@ function init3D(){
   window.addEventListener("resize", onResize);
   window.addEventListener("orientationchange", scheduleResizeGame);
   window.addEventListener("pageshow", scheduleResizeGame);
+  window.addEventListener("focus", scheduleResizeGame);
   document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) scheduleResizeGame(); });
   if(window.visualViewport){
     window.visualViewport.addEventListener("resize", scheduleResizeGame);
@@ -3073,7 +3180,10 @@ function openMission(mission){
 function closeMission(){
   document.getElementById("missionPanel").style.display = "none";
   document.getElementById("algoFrame").srcdoc = "";
+  // Returning from iframe can change viewport on some phones/foldables.
   scheduleResizeGame();
+  setTimeout(scheduleResizeGame, 220);
+  setTimeout(resetCrosshairToCentre, 240);
 }
 
 
@@ -3578,10 +3688,12 @@ updateSoundButtons();
 document.getElementById("startBtn").onclick = ()=>{
   ensureAudio();
   document.getElementById("startScreen").style.display = "none";
-  scheduleResizeGame();
-  // Pointer lock is optional; mobile browsers often do not allow it.
-  try{ renderer.domElement.requestPointerLock?.(); }catch(e){}
-  updateHUD();
+
+  runDeviceCalibration(()=>{
+    // Pointer lock is optional; mobile browsers often do not allow it.
+    try{ renderer.domElement.requestPointerLock?.(); }catch(e){}
+    updateHUD();
+  });
 };
 document.getElementById("exitMissionBtn").onclick = closeMission;
 document.getElementById("restartBtn").onclick = ()=>{
@@ -3592,7 +3704,7 @@ document.getElementById("restartBtn").onclick = ()=>{
   document.getElementById("winScreen").style.display = "none";
   updateRescuedStrip();
   createMissionPods();
-  updateHUD();
+  runDeviceCalibration(()=>updateHUD());
 };
 document.querySelectorAll(".pad button[data-key]").forEach(btn=>{
   const code = btn.dataset.key;
