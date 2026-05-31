@@ -59,7 +59,36 @@
     box-shadow:0 10px 25px rgba(0,0,0,.18);
   }
   .bottomTip .sub{display:block; margin-top:3px; font-size:12px; opacity:.85; font-weight:normal}
-  #centerDot{position:fixed; left:50%; top:50%; width:14px; height:14px; margin-left:-7px; margin-top:-7px; border-radius:50%; z-index:4; pointer-events:none; border:2px solid white; box-shadow:0 0 8px #1a355f; background:rgba(255,255,255,.3)}
+  #centerDot{
+    position:fixed;
+    left:50%;
+    top:50%;
+    width:34px;
+    height:34px;
+    margin-left:-17px;
+    margin-top:-17px;
+    z-index:4;
+    pointer-events:none;
+    background:transparent;
+    filter:drop-shadow(0 0 5px rgba(15,42,74,.9));
+  }
+  #centerDot::before,
+  #centerDot::after{
+    content:"";
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    background:#ffffff;
+    border-radius:999px;
+    box-shadow:0 0 0 2px rgba(15,42,74,.65);
+  }
+  #centerDot::before{width:30px;height:4px;}
+  #centerDot::after{width:4px;height:30px;}
+  #centerDot.fingerAim{
+    left:var(--aimX,50%);
+    top:var(--aimY,50%);
+  }
   .screen{
     position:fixed; inset:0; z-index:20; display:flex; align-items:center; justify-content:center;
     background:linear-gradient(180deg, rgba(215,250,255,.95), rgba(255,244,211,.96)); padding:18px;
@@ -502,6 +531,10 @@
     }
   }
 
+
+  /* Finger aiming replaces the old blue up/down tilt buttons. */
+  .tiltStack{display:none !important;}
+
 </style>
 </head>
 <body>
@@ -540,7 +573,7 @@
 <div class="topRight" style="display:none;"></div>
 
 <div class="bottomTip" id="bottomTip">
-  Move near an animal, then press RESCUE.
+  Touch an animal to aim the cross, then press RESCUE.
   <span class="sub">Complete the division mission to save the animal.</span>
 </div>
 
@@ -551,10 +584,7 @@
     <button class="empty"></button><button data-key="ArrowDown">Back</button><button class="empty"></button>
   </div>
   <div class="lookZone" id="lookZone" aria-label="Drag here to look around"></div>
-  <div class="tiltStack">
-    <button id="tiltUpBtn" aria-label="Look up">▲</button>
-    <button id="tiltDownBtn" aria-label="Look down">▼</button>
-  </div>
+  <div class="tiltStack" aria-hidden="true"></div>
   <button class="fireBtn" id="fireBtn">RESCUE</button>
 </div>
 
@@ -680,7 +710,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531w";
+const ASSET_VERSION = "20260531x";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -2165,6 +2195,8 @@ const animalNames = ["Bunny","Panda","Otter","Koala","Deer","Fox","Penguin","Kit
 
 let allMissions = [], currentWorldIndex = 0, score = 0, health = 3, activeMission = null, completedMissionIds = new Set();
 let scene, camera, renderer, clock, yaw = 0, pitch = -0.08, keys = {}, animals = [], raycaster = new THREE.Raycaster(), particles = [], mouseLocked = false, playerHeight = 1.7;
+let aimNdc = new THREE.Vector2(0, 0);
+let aimScreen = {x: window.innerWidth / 2, y: window.innerHeight / 2};
 let lookDrag = {active:false, x:0, y:0};
 let audioCtx = null;
 
@@ -2429,6 +2461,31 @@ function getMissionNumberInWorld(mission){
   return idx >= 0 ? idx + 1 : 1;
 }
 
+
+function updateCrosshairFromFinger(clientX, clientY){
+  const w = window.innerWidth || 1;
+  const h = (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : (window.innerHeight || 1);
+
+  aimScreen.x = Math.max(0, Math.min(w, clientX));
+  aimScreen.y = Math.max(0, Math.min(h, clientY));
+
+  aimNdc.x = (aimScreen.x / w) * 2 - 1;
+  aimNdc.y = -(aimScreen.y / h) * 2 + 1;
+
+  const dot = document.getElementById("centerDot");
+  if(dot){
+    dot.classList.add("fingerAim");
+    dot.style.setProperty("--aimX", aimScreen.x + "px");
+    dot.style.setProperty("--aimY", aimScreen.y + "px");
+  }
+}
+
+function resetCrosshairToCentre(){
+  const w = window.innerWidth || 1;
+  const h = (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : (window.innerHeight || 1);
+  updateCrosshairFromFinger(w/2, h/2);
+}
+
 function init3D(){
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xdff8ff);
@@ -2453,6 +2510,7 @@ function init3D(){
   sun.castShadow = true;
   scene.add(sun);
 
+  resetCrosshairToCentre();
   createWorld();
   createMissionPods();
 
@@ -3121,7 +3179,7 @@ function checkNearPods(){
   if(nearest && dist < 5.0){
     document.getElementById("bottomTip").innerHTML = 'Press tap RESCUE to start: <b>' + nearest.mission.dividend + ' ÷ ' + nearest.mission.divisor + '</b><span class="sub">' + nearest.mission.focus + '</span>';
   }else{
-    document.getElementById("bottomTip").innerHTML = 'Move near an animal, then press RESCUE.<span class="sub">Complete the division mission to save it.</span>';
+    document.getElementById("bottomTip").innerHTML = 'Touch an animal to aim the cross, then press RESCUE.<span class="sub">Complete the division mission to save it.</span>';
   }
 }
 
@@ -3260,7 +3318,7 @@ function fireRescueBeam(){
   showScreenWeb();
   playWebSound();
 
-  raycaster.setFromCamera({x:0,y:0}, camera);
+  raycaster.setFromCamera(aimNdc, camera);
   const podMeshes = animals.filter(p=>!p.completed).map(p=>p.cage);
   const hits = raycaster.intersectObjects(podMeshes, false);
 
@@ -3442,8 +3500,10 @@ document.querySelectorAll(".pad button[data-key]").forEach(btn=>{
   btn.addEventListener("pointerleave", ()=>{keys[code]=false;});
 });
 document.getElementById("fireBtn").addEventListener("pointerdown", e=>{ e.preventDefault(); fireRescueBeam(); });
-document.getElementById("tiltUpBtn").addEventListener("pointerdown", e=>{ e.preventDefault(); pitch = Math.min(1.35, pitch + 0.22); });
-document.getElementById("tiltDownBtn").addEventListener("pointerdown", e=>{ e.preventDefault(); pitch = Math.max(-1.45, pitch - 0.22); });
+const tiltUpButton = document.getElementById("tiltUpBtn");
+const tiltDownButton = document.getElementById("tiltDownBtn");
+if(tiltUpButton) tiltUpButton.addEventListener("pointerdown", e=>{ e.preventDefault(); pitch = Math.min(1.35, pitch + 0.22); });
+if(tiltDownButton) tiltDownButton.addEventListener("pointerdown", e=>{ e.preventDefault(); pitch = Math.max(-1.45, pitch - 0.22); });
 
 // Mobile/tablet drag-look: drag on the right side of the screen to look left/right/up/down.
 // This fixes the problem where pointer lock does not tilt well inside mobile browsers.
@@ -3453,27 +3513,22 @@ lookZone.addEventListener("pointerdown", e=>{
   lookDrag.active = true;
   lookDrag.x = e.clientX;
   lookDrag.y = e.clientY;
-  try { try { try { try { lookZone.setPointerCapture?.(e.pointerId); } catch(err) {} } catch(err) {} } catch(err) { /* mobile browser may reject pointer capture */ } } catch(err) { /* Some mobile browsers throw here; drag-look still works. */ }
+  updateCrosshairFromFinger(e.clientX, e.clientY);
+  try { lookZone.setPointerCapture?.(e.pointerId); } catch(err) {}
 });
 lookZone.addEventListener("pointermove", e=>{
   if(!lookDrag.active) return;
   e.preventDefault();
-  const dx = e.clientX - lookDrag.x;
-  const dy = e.clientY - lookDrag.y;
   lookDrag.x = e.clientX;
   lookDrag.y = e.clientY;
-  yaw -= dx * 0.006;
-  // Finger up should look up; finger down should look down.
-  pitch += dy * 0.006;
-  pitch = Math.max(-1.45, Math.min(1.35, pitch));
+  updateCrosshairFromFinger(e.clientX, e.clientY);
 });
 ["pointerup","pointercancel","pointerleave"].forEach(type=>{
   lookZone.addEventListener(type, ()=>{ lookDrag.active = false; });
 });
 
-
-// Touch-drag anywhere on the 3D game area to move the crosshair.
-// This does not cast the web; only the RESCUE button casts the web.
+// Touch anywhere on the 3D game area to move the crosshair.
+// The cross follows the finger. It does not cast the web.
 const gameArea = document.getElementById("game");
 let gameLookDrag = {active:false, x:0, y:0};
 function isOverlayOpen(){
@@ -3488,25 +3543,21 @@ if(gameArea){
     gameLookDrag.active = true;
     gameLookDrag.x = e.clientX;
     gameLookDrag.y = e.clientY;
+    updateCrosshairFromFinger(e.clientX, e.clientY);
     try{ gameArea.setPointerCapture?.(e.pointerId); }catch(err){}
   });
   gameArea.addEventListener("pointermove", e=>{
     if(!gameLookDrag.active) return;
     e.preventDefault();
-    const dx = e.clientX - gameLookDrag.x;
-    const dy = e.clientY - gameLookDrag.y;
     gameLookDrag.x = e.clientX;
     gameLookDrag.y = e.clientY;
-
-    yaw -= dx * 0.006;
-    // Finger up should look up; finger down should look down.
-    pitch += dy * 0.006;
-    pitch = Math.max(-1.45, Math.min(1.35, pitch));
+    updateCrosshairFromFinger(e.clientX, e.clientY);
   });
   ["pointerup","pointercancel","pointerleave"].forEach(type=>{
     gameArea.addEventListener(type, ()=>{ gameLookDrag.active = false; });
   });
 }
+
 
 
 initModelLoader();
