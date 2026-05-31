@@ -339,12 +339,150 @@
     100%{opacity:0; transform:translate(-50%,-50%) scale(2.7) rotate(18deg);}
   }
 
+
+  /* ===== Mobile compatibility: iOS Safari, Android Chrome, Samsung A-series ===== */
+  :root{ --vh:1vh; --safeTop:env(safe-area-inset-top,0px); --safeBottom:env(safe-area-inset-bottom,0px); }
+  html,body,#game{height:calc(var(--vh) * 100);}
+  body{overscroll-behavior:none; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent;}
+  canvas{touch-action:none;}
+
+  .soundToggle{
+    position:fixed;
+    top:calc(10px + var(--safeTop));
+    right:calc(10px + env(safe-area-inset-right,0px));
+    z-index:10020;
+    border:0;
+    border-radius:999px;
+    padding:10px 13px;
+    background:rgba(8,24,48,.82);
+    color:white;
+    font-family:inherit;
+    font-weight:bold;
+    font-size:14px;
+    box-shadow:0 4px 0 rgba(0,0,0,.22),0 8px 18px rgba(0,0,0,.18);
+    pointer-events:auto;
+  }
+  .soundToggle.off{background:rgba(90,90,100,.82);}
+
+  @media(max-width:760px){
+    .hud{
+      top:calc(8px + var(--safeTop));
+      left:8px;
+      right:8px;
+      width:auto;
+      min-width:0;
+      max-height:132px;
+      padding:8px 10px;
+      border-radius:13px;
+    }
+    .hud h1{font-size:13px; margin-bottom:5px;}
+    .hud .row{font-size:14px;}
+    .hud .world{font-size:12px; line-height:1.2;}
+    .hud .small{display:none;}
+    .rescuedStrip{max-height:30px; gap:4px; margin-top:5px;}
+    .rescuedIcon{width:23px; height:23px; border-radius:7px;}
+    .soundToggle{
+      top:calc(148px + var(--safeTop));
+      right:8px;
+      font-size:12px;
+      padding:8px 10px;
+    }
+    .bottomTip{
+      bottom:calc(8px + var(--safeBottom));
+      width:calc(100vw - 18px);
+      font-size:12px;
+      padding:8px 10px;
+      border-radius:14px;
+    }
+    .bottomTip .sub{font-size:11px;}
+    .pad{
+      left:8px;
+      bottom:calc(70px + var(--safeBottom));
+      transform:scale(.78);
+      transform-origin:bottom left;
+    }
+    .fireBtn{
+      right:10px;
+      bottom:calc(88px + var(--safeBottom));
+      width:82px;
+      height:82px;
+      font-size:16px;
+    }
+    .tiltStack{
+      right:102px;
+      bottom:calc(88px + var(--safeBottom));
+      gap:6px;
+    }
+    .tiltStack button{width:48px; height:48px; border-radius:14px;}
+    .lookZone{width:48vw;}
+    .card{
+      width:96vw;
+      max-height:calc(var(--vh) * 92);
+      padding:18px;
+      border-radius:22px;
+    }
+    .title{font-size:clamp(25px,7vw,38px);}
+    .lead{font-size:16px;}
+    .worldGrid{grid-template-columns:1fr; gap:8px;}
+    .worldCard{padding:10px; font-size:14px;}
+    .missionFrameWrap{
+      width:100vw;
+      height:calc(var(--vh) * 100);
+      border-radius:0;
+    }
+    .missionBar{
+      top:calc(8px + var(--safeTop));
+      right:8px;
+    }
+    .missionBar button{padding:9px 11px; font-size:13px;}
+    .screenWeb{width:135px !important; height:135px !important;}
+  }
+
+  @media(max-width:760px) and (orientation:landscape){
+    .hud{
+      right:auto;
+      width:43vw;
+      max-height:108px;
+    }
+    .soundToggle{
+      top:calc(10px + var(--safeTop));
+      right:8px;
+    }
+    .bottomTip{
+      left:50%;
+      width:56vw;
+      bottom:calc(6px + var(--safeBottom));
+      font-size:12px;
+    }
+    .pad{
+      transform:scale(.64);
+      bottom:calc(44px + var(--safeBottom));
+    }
+    .fireBtn{
+      width:74px;
+      height:74px;
+      bottom:calc(50px + var(--safeBottom));
+    }
+    .tiltStack{
+      right:95px;
+      bottom:calc(50px + var(--safeBottom));
+    }
+    .tiltStack button{width:44px; height:44px;}
+  }
+
+  @media(min-width:761px) and (max-width:1024px){
+    .hud{max-width:calc(100vw - 170px);}
+    .soundToggle{right:14px;}
+    .bottomTip{bottom:calc(14px + var(--safeBottom));}
+  }
+
 </style>
 </head>
 <body>
 <div id="game"></div>
 <div id="runtimeErrorBox" style="display:none;position:fixed;left:10px;right:10px;bottom:80px;z-index:99;background:#fff1f2;color:#7f1d1d;border:2px solid #ef4444;border-radius:14px;padding:10px;font-weight:bold;font-family:Arial,sans-serif;"></div>
 <div id="centerDot"></div>
+<button class="soundToggle" id="soundToggle" type="button" aria-label="Toggle sound">🔊 Sound On</button>
 
 
 <div class="screenWeb" id="screenWeb" aria-hidden="true">
@@ -518,7 +656,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531k";
+const ASSET_VERSION = "20260531m";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -717,9 +855,184 @@ const algorithmTemplate = `
     100%{opacity:0; transform:translate(-50%,-50%) scale(2.7) rotate(18deg);}
   }
 
+
+  /* ===== Mobile compatibility: iOS Safari, Android Chrome, Samsung A-series ===== */
+  :root{ --vh:1vh; --safeTop:env(safe-area-inset-top,0px); --safeBottom:env(safe-area-inset-bottom,0px); }
+  html,body,#game{height:calc(var(--vh) * 100);}
+  body{overscroll-behavior:none; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent;}
+  canvas{touch-action:none;}
+
+  .soundToggle{
+    position:fixed;
+    top:calc(10px + var(--safeTop));
+    right:calc(10px + env(safe-area-inset-right,0px));
+    z-index:10020;
+    border:0;
+    border-radius:999px;
+    padding:10px 13px;
+    background:rgba(8,24,48,.82);
+    color:white;
+    font-family:inherit;
+    font-weight:bold;
+    font-size:14px;
+    box-shadow:0 4px 0 rgba(0,0,0,.22),0 8px 18px rgba(0,0,0,.18);
+    pointer-events:auto;
+  }
+  .soundToggle.off{background:rgba(90,90,100,.82);}
+
+  @media(max-width:760px){
+    .hud{
+      top:calc(8px + var(--safeTop));
+      left:8px;
+      right:8px;
+      width:auto;
+      min-width:0;
+      max-height:132px;
+      padding:8px 10px;
+      border-radius:13px;
+    }
+    .hud h1{font-size:13px; margin-bottom:5px;}
+    .hud .row{font-size:14px;}
+    .hud .world{font-size:12px; line-height:1.2;}
+    .hud .small{display:none;}
+    .rescuedStrip{max-height:30px; gap:4px; margin-top:5px;}
+    .rescuedIcon{width:23px; height:23px; border-radius:7px;}
+    .soundToggle{
+      top:calc(148px + var(--safeTop));
+      right:8px;
+      font-size:12px;
+      padding:8px 10px;
+    }
+    .bottomTip{
+      bottom:calc(8px + var(--safeBottom));
+      width:calc(100vw - 18px);
+      font-size:12px;
+      padding:8px 10px;
+      border-radius:14px;
+    }
+    .bottomTip .sub{font-size:11px;}
+    .pad{
+      left:8px;
+      bottom:calc(70px + var(--safeBottom));
+      transform:scale(.78);
+      transform-origin:bottom left;
+    }
+    .fireBtn{
+      right:10px;
+      bottom:calc(88px + var(--safeBottom));
+      width:82px;
+      height:82px;
+      font-size:16px;
+    }
+    .tiltStack{
+      right:102px;
+      bottom:calc(88px + var(--safeBottom));
+      gap:6px;
+    }
+    .tiltStack button{width:48px; height:48px; border-radius:14px;}
+    .lookZone{width:48vw;}
+    .card{
+      width:96vw;
+      max-height:calc(var(--vh) * 92);
+      padding:18px;
+      border-radius:22px;
+    }
+    .title{font-size:clamp(25px,7vw,38px);}
+    .lead{font-size:16px;}
+    .worldGrid{grid-template-columns:1fr; gap:8px;}
+    .worldCard{padding:10px; font-size:14px;}
+    .missionFrameWrap{
+      width:100vw;
+      height:calc(var(--vh) * 100);
+      border-radius:0;
+    }
+    .missionBar{
+      top:calc(8px + var(--safeTop));
+      right:8px;
+    }
+    .missionBar button{padding:9px 11px; font-size:13px;}
+    .screenWeb{width:135px !important; height:135px !important;}
+  }
+
+  @media(max-width:760px) and (orientation:landscape){
+    .hud{
+      right:auto;
+      width:43vw;
+      max-height:108px;
+    }
+    .soundToggle{
+      top:calc(10px + var(--safeTop));
+      right:8px;
+    }
+    .bottomTip{
+      left:50%;
+      width:56vw;
+      bottom:calc(6px + var(--safeBottom));
+      font-size:12px;
+    }
+    .pad{
+      transform:scale(.64);
+      bottom:calc(44px + var(--safeBottom));
+    }
+    .fireBtn{
+      width:74px;
+      height:74px;
+      bottom:calc(50px + var(--safeBottom));
+    }
+    .tiltStack{
+      right:95px;
+      bottom:calc(50px + var(--safeBottom));
+    }
+    .tiltStack button{width:44px; height:44px;}
+  }
+
+  @media(min-width:761px) and (max-width:1024px){
+    .hud{max-width:calc(100vw - 170px);}
+    .soundToggle{right:14px;}
+    .bottomTip{bottom:calc(14px + var(--safeBottom));}
+  }
+
+
+  .algoSoundToggle{
+    position:fixed;
+    top:10px;
+    left:10px;
+    z-index:9999;
+    border:0;
+    border-radius:999px;
+    padding:8px 11px;
+    background:rgba(15,42,74,.88);
+    color:#fff;
+    font-weight:1000;
+    font-size:13px;
+    box-shadow:0 4px 10px rgba(0,0,0,.18);
+  }
+  .algoSoundToggle.off{background:rgba(90,90,100,.86);}
+  @media(max-width:760px){
+    .app{padding:8px 8px 12px;}
+    .topbar{padding:10px; border-radius:18px;}
+    .brand .title{font-size:28px;}
+    .brand .sub{font-size:11px;}
+    .exprPill{padding:8px 9px;}
+    .exprPill .big{font-size:24px;}
+    .exprAns{min-width:76px; height:34px; font-size:20px;}
+    .livePanel{padding:12px;}
+    .liveHead{display:block;}
+    .liveHead h2{font-size:24px;}
+    .liveHead p{font-size:12px;}
+    .stepBadge{display:inline-block; margin-top:8px; font-size:12px; padding:7px 9px;}
+    .railCard{padding:12px;}
+    .railCard h3{font-size:24px;}
+    .algoActionPanel{padding:10px;}
+    .btn.prominent{font-size:18px; padding:13px 17px;}
+    .stepTitle{font-size:30px;}
+    .stepText{font-size:15px;}
+    .algoSoundToggle{top:8px; left:8px; font-size:12px; padding:7px 9px;}
+  }
 </style>
 </head>
 <body>
+<button class="algoSoundToggle" id="algoSoundToggle" type="button">🔊 Sound On</button>
 <div class="app">
   <div class="topbar">
     <div class="brand">
@@ -811,7 +1124,7 @@ const algorithmTemplate = `
 
   function beep(freq=440,dur=.1,type="sine",gain=.12){
     const ctx = ensureAudio();
-    if(!ctx) return;
+    if(!ctx || !isSoundOn()) return;
     try{
       const o = ctx.createOscillator();
       const g = ctx.createGain();
@@ -830,6 +1143,28 @@ const algorithmTemplate = `
   function sendSoundToParent(type){
     try{ parent.postMessage({type}, "*"); }catch(e){}
   }
+
+  let localSoundOn = true;
+  function isSoundOn(){
+    try{
+      if(parent && typeof parent.getSoundEnabled === "function") return parent.getSoundEnabled();
+    }catch(e){}
+    return localSoundOn;
+  }
+  function syncAlgoSoundButton(){
+    const b = document.getElementById("algoSoundToggle");
+    if(!b) return;
+    const on = isSoundOn();
+    b.textContent = on ? "🔊 Sound On" : "🔇 Sound Off";
+    b.classList.toggle("off", !on);
+  }
+  window.addEventListener("message", (e)=>{
+    if(e.data && e.data.type === "soundState"){
+      localSoundOn = !!e.data.soundOn;
+      syncAlgoSoundButton();
+    }
+  });
+  setTimeout(syncAlgoSoundButton, 0);
 
   function playWrong(){
     sendSoundToParent("playWrong");
@@ -1228,6 +1563,13 @@ const algorithmTemplate = `
     enableInputs(); updateUI(); requestAnimationFrame(fitAll);
   }
 
+  const algoSoundButton = document.getElementById("algoSoundToggle");
+  if(algoSoundButton){
+    algoSoundButton.addEventListener("click", ()=>{
+      try{ parent.postMessage({type:"toggleSound"}, "*"); }catch(e){ localSoundOn = !localSoundOn; syncAlgoSoundButton(); }
+    });
+  }
+
   ui.btnCheck.addEventListener('click', doStep);
   ui.btnHint.addEventListener('click', ()=>{
     if (finished){ showFeedback('ok','Completed.'); return; }
@@ -1259,6 +1601,35 @@ let allMissions = [], currentWorldIndex = 0, score = 0, health = 3, activeMissio
 let scene, camera, renderer, clock, yaw = 0, pitch = -0.08, keys = {}, animals = [], raycaster = new THREE.Raycaster(), particles = [], mouseLocked = false, playerHeight = 1.7;
 let lookDrag = {active:false, x:0, y:0};
 let audioCtx = null;
+let soundEnabled = localStorage.getItem("animalRescueSound") !== "off";
+window.getSoundEnabled = function(){ return soundEnabled; };
+
+function updateSoundButtons(){
+  const label = soundEnabled ? "🔊 Sound On" : "🔇 Sound Off";
+  document.querySelectorAll("#soundToggle").forEach(btn=>{
+    btn.textContent = label;
+    btn.classList.toggle("off", !soundEnabled);
+    btn.setAttribute("aria-pressed", String(soundEnabled));
+  });
+  try{
+    const frame = document.getElementById("algoFrame");
+    if(frame && frame.contentWindow){
+      frame.contentWindow.postMessage({type:"soundState", soundOn:soundEnabled}, "*");
+    }
+  }catch(e){}
+}
+
+function setSoundEnabled(on){
+  soundEnabled = !!on;
+  localStorage.setItem("animalRescueSound", soundEnabled ? "on" : "off");
+  updateSoundButtons();
+}
+
+function toggleSound(){
+  setSoundEnabled(!soundEnabled);
+  if(soundEnabled) safePlayTone(660,.06,"sine",.06);
+}
+
 
 // Uploaded animal model files in your GitHub repository root.
 // IMPORTANT: GitHub filenames are case-sensitive. These must match exactly.
@@ -1451,11 +1822,11 @@ function init3D(){
   scene.background = new THREE.Color(0xdff8ff);
   scene.fog = new THREE.Fog(0xdff8ff, 55, 150);
 
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth/((window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight), 0.1, 1000);
   camera.position.set(0, playerHeight, 18);
 
   renderer = new THREE.WebGLRenderer({antialias:true});
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(window.innerWidth, (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight);
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
   renderer.setClearColor(0xdff8ff, 1);
@@ -1948,8 +2319,10 @@ function openMission(mission){
   const srcdoc = algorithmTemplate
     .replace(/__DIVIDEND__/g, String(mission.dividend))
     .replace(/__DIVISOR__/g, String(mission.divisor));
-  document.getElementById("algoFrame").srcdoc = srcdoc;
+  const frame = document.getElementById("algoFrame");
+  frame.srcdoc = srcdoc;
   document.getElementById("missionPanel").style.display = "flex";
+  setTimeout(()=>{ try{ frame.contentWindow.postMessage({type:"soundState", soundOn:soundEnabled}, "*"); }catch(e){} }, 250);
 }
 
 function closeMission(){
@@ -2086,6 +2459,7 @@ window.addEventListener("message", (e)=>{
   if (e.data.type === "playCorrect") playCorrect();
   if (e.data.type === "playWrong") playWrong();
   if (e.data.type === "playTada") playTada();
+  if (e.data.type === "toggleSound") toggleSound();
 });
 
 function rescueAnimalVisual(missionId){
@@ -2163,6 +2537,7 @@ function showScreenWeb(){
 
 
 function playWebSound(){
+  if(!soundEnabled) return;
   try{
     const Ctx = window.AudioContext || window.webkitAudioContext;
     const ctx = audioCtx || (Ctx ? new Ctx() : null);
@@ -2346,9 +2721,12 @@ function updateSparkles(dt){
   }
 }
 function onResize(){
-  camera.aspect = window.innerWidth/window.innerHeight;
+  updateViewportUnit();
+  const w = window.innerWidth;
+  const h = (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight;
+  camera.aspect = w / h;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(w, h);
 }
 
 function ensureAudio(){
@@ -2360,6 +2738,7 @@ function ensureAudio(){
 }
 
 function safePlayTone(freq=440, duration=.1, type="sine", gain=.12){
+  if(!soundEnabled) return;
   const ctx = ensureAudio();
   if(!ctx) return;
   try{
@@ -2379,6 +2758,7 @@ function safePlayTone(freq=440, duration=.1, type="sine", gain=.12){
 
 const parentSoundCache = {};
 function playMp3OrTone(file, fallback){
+  if(!soundEnabled) return;
   try{
     if(!parentSoundCache[file]){
       parentSoundCache[file] = new Audio("./" + file);
@@ -2412,6 +2792,17 @@ function playTada(){
     setTimeout(()=>safePlayTone(784,.16,"sine",.10),220);
   });
 }
+
+const globalSoundBtn = document.getElementById("soundToggle");
+if(globalSoundBtn){
+  globalSoundBtn.addEventListener("click", (e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    ensureAudio();
+    toggleSound();
+  });
+}
+updateSoundButtons();
 
 document.getElementById("startBtn").onclick = ()=>{
   ensureAudio();
@@ -2472,6 +2863,18 @@ window.addEventListener("error", (e)=>{
     box.textContent = "Game script error: " + (e.message || "Unknown error");
   }
 });
+
+
+function updateViewportUnit(){
+  const h = (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight;
+  document.documentElement.style.setProperty("--vh", (h * 0.01) + "px");
+}
+updateViewportUnit();
+window.addEventListener("resize", updateViewportUnit);
+if(window.visualViewport){
+  window.visualViewport.addEventListener("resize", updateViewportUnit);
+  window.visualViewport.addEventListener("scroll", updateViewportUnit);
+}
 
 buildMissionList();
 init3D();
