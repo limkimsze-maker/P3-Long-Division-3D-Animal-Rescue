@@ -1087,7 +1087,7 @@
             <li>Complete the long-division algorithm to save the animal.</li>
             <li>Use the keypad to fill in the highlighted boxes.</li>
             <li>Your progress is saved on this device.</li>
-            <li>World completion pictures use these filenames: <b>world1_complete.png</b> to <b>world7_complete.png</b>.</li>
+            <li>World completion pictures use these filenames: <b>world1_complete.png</b>, <b>world2_complete.png</b>, <b>world3_compete.png</b>, <b>world4_compete.png</b>, <b>world5_complete.png</b>, <b>world6_complete.png</b>, <b>world7_complete.png</b>.</li>
           </ul>
           <div class="resetInfoNote">
             <b>Need to restart from World 1?</b> Open <b>How to Play</b> and hold the <b>Reset Progress</b> button for 2 seconds.
@@ -1229,8 +1229,8 @@ var animalPngFiles = window.animalPngFiles;
 const WORLD_COMPLETION_IMAGES = [
   "world1_complete.png",
   "world2_complete.png",
-  "world3_complete.png",
-  "world4_complete.png",
+  "world3_compete.png",
+  "world4_compete.png",
   "world5_complete.png",
   "world6_complete.png",
   "world7_complete.png"
@@ -1251,7 +1251,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531ao";
+const ASSET_VERSION = "20260531aq";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -4062,6 +4062,60 @@ function getWorldCompletedMissions(worldIndex){
   return allMissions.filter(m => m.worldIndex === worldIndex && completedMissionIds.has(m.id));
 }
 
+
+function setRewardImageWithFallback(img, missing, file, worldName){
+  if(!img || !file) return;
+
+  const basePages = "https://limkimsze-maker.github.io/P3-Long-Division-3D-Animal-Rescue/";
+  const rawBase = "https://raw.githubusercontent.com/limkimsze-maker/P3-Long-Division-3D-Animal-Rescue/main/";
+  const version = (typeof ASSET_VERSION !== "undefined" ? ASSET_VERSION : Date.now());
+
+  const candidates = [
+    "./" + file + "?v=" + version,
+    file + "?v=" + version,
+    basePages + file + "?v=" + version,
+    rawBase + file + "?v=" + version
+  ];
+
+  let attempt = 0;
+
+  function tryNext(){
+    if(attempt >= candidates.length){
+      // One delayed retry because GitHub Pages sometimes takes a short while
+      // after a file rename/upload even though the repo page already shows it.
+      setTimeout(()=>{
+        if(attempt < candidates.length + 1){
+          attempt++;
+          img.src = basePages + file + "?retry=" + Date.now();
+        }else{
+          img.style.display = "none";
+          if(missing){
+            missing.style.display = "block";
+            missing.innerHTML =
+              "Reward picture could not load for " + worldName + ".<br>" +
+              "The filename looks correct: <b>" + file + "</b>.<br>" +
+              "The HTML is now using the filename configured for this world. If it still does not show, wait a minute for GitHub Pages to refresh, then reopen with a new ?v= number.";
+          }
+        }
+      }, 1200);
+      return;
+    }
+
+    img.style.display = "block";
+    if(missing) missing.style.display = "none";
+    img.src = candidates[attempt++];
+  }
+
+  img.onload = () => {
+    img.style.display = "block";
+    if(missing) missing.style.display = "none";
+  };
+  img.onerror = tryNext;
+
+  tryNext();
+}
+
+
 function showRangerStageComplete(worldIndex, onContinue){
   const overlay = document.getElementById("rangerOverlay");
   const title = document.getElementById("rangerTitle");
@@ -4081,26 +4135,12 @@ function showRangerStageComplete(worldIndex, onContinue){
   title.textContent = `${world.name} Complete!`;
   msg.textContent = WORLD_COMPLETION_SPEECHES[worldIndex] || "Great effort, Division Ranger! Keep going.";
 
-  // Show selected uploaded picture for World 1 to World 6.
-  // World 7 uses world7_complete.png before the final completion screen.
+  // Show selected uploaded picture for each world.
+  // The loader tries several paths because GitHub Pages may lag after rename/upload.
   if(img){
     const file = WORLD_COMPLETION_IMAGES[worldIndex];
-    img.style.display = "block";
     img.alt = `${world.name} completion reward picture`;
-    img.src = file ? ("./" + file + "?v=" + ASSET_VERSION) : "";
-    img.onerror = () => {
-      img.style.display = "none";
-      if(missing){
-        missing.style.display = "block";
-        missing.innerHTML =
-          "Reward picture missing for " + world.name + ".<br>" +
-          "Please upload/rename it as <b>" + (file || "world_complete.png") + "</b>.";
-      }
-    };
-    img.onload = () => {
-      img.style.display = "block";
-      if(missing) missing.style.display = "none";
-    };
+    setRewardImageWithFallback(img, missing, file, world.name);
   }
 
   if(animalsBox){
