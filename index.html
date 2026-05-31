@@ -518,7 +518,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531j";
+const ASSET_VERSION = "20260531k";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -1709,61 +1709,42 @@ function makeMissingAnimalCard(fileName){
   const emoji = emojiMap[key] || "🐾";
 
   const canvas = document.createElement("canvas");
-  canvas.width = 768;
-  canvas.height = 768;
+  canvas.width = 640;
+  canvas.height = 640;
   const ctx = canvas.getContext("2d");
 
-  ctx.fillStyle = "#fffdf5";
-  roundRectSafe(ctx, 36, 36, 696, 696, 64, true, false);
+  ctx.fillStyle = "rgba(255,255,255,.92)";
+  roundRectSafe(ctx, 34, 34, 572, 572, 54, true, false);
   ctx.strokeStyle = "#22c55e";
-  ctx.lineWidth = 18;
-  roundRectSafe(ctx, 36, 36, 696, 696, 64, false, true);
+  ctx.lineWidth = 14;
+  roundRectSafe(ctx, 34, 34, 572, 572, 54, false, true);
 
-  ctx.font = "270px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif";
+  ctx.font = "230px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(emoji, 384, 310);
+  ctx.fillText(emoji, 320, 260);
 
   ctx.fillStyle = "#0f2a4a";
-  ctx.font = "bold 72px Comic Sans MS, Arial";
-  ctx.fillText(name, 384, 570);
-
-  ctx.font = "30px Arial";
-  ctx.fillStyle = "#60738c";
-  ctx.fillText("Animal rescue card", 384, 635);
+  ctx.font = "bold 62px Comic Sans MS, Arial";
+  ctx.fillText(name, 320, 500);
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.needsUpdate = true;
-  return new THREE.Mesh(
-    new THREE.PlaneGeometry(4.1, 4.1),
-    new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide })
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.9, 3.9),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthWrite:false })
   );
+  mesh.renderOrder = 20;
+  return mesh;
 }
 
 function loadAnimalPng(fileName, group){
   const holder = new THREE.Group();
   holder.name = "PNG_ANIMAL_" + fileName;
-  holder.position.set(0, 2.75, 0);
+  holder.position.set(0, 3.0, 0);
   group.add(holder);
 
-  function makeFrame(width, height){
-    const back = new THREE.Mesh(
-      new THREE.PlaneGeometry(width + .55, height + .55),
-      new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:.55, side:THREE.DoubleSide })
-    );
-    back.position.z = -0.05;
-    holder.add(back);
-
-    const rim = new THREE.Mesh(
-      new THREE.PlaneGeometry(width + .70, height + .70),
-      new THREE.MeshBasicMaterial({ color:0x12345a, transparent:true, opacity:.18, side:THREE.DoubleSide })
-    );
-    rim.position.z = -0.08;
-    holder.add(rim);
-  }
-
   function faceCamera(){
-    // Billboard direction: always face the player camera.
     const worldPos = new THREE.Vector3();
     holder.getWorldPosition(worldPos);
     holder.lookAt(camera.position.x, worldPos.y, camera.position.z);
@@ -1780,31 +1761,34 @@ function loadAnimalPng(fileName, group){
     const h = image.height || 1;
     const aspect = w / h;
 
-    // Bigger, reliable animal size for mobile.
-    const height = 4.4;
-    const width = Math.max(2.6, Math.min(4.9, height * aspect));
-
-    makeFrame(width, height);
+    // Large, clean stand-up animal. No grey overlay frame.
+    const height = 4.6;
+    const width = Math.max(2.6, Math.min(5.0, height * aspect));
 
     const mat = new THREE.MeshBasicMaterial({
       map: tex,
       transparent: true,
       side: THREE.DoubleSide,
-      alphaTest: 0.01
+      alphaTest: 0.01,
+      depthWrite: false,
+      depthTest: true
     });
 
     const plane = new THREE.Mesh(new THREE.PlaneGeometry(width, height), mat);
-    plane.position.set(0, 0, 0.02);
-    plane.name = "animal_png_plane";
+    plane.position.set(0, 0, 0.08);
+    plane.renderOrder = 20;
+    plane.name = "animal_png_clean_billboard";
     holder.add(plane);
 
-    // Extra sprite backup. If the plane angle is odd, sprite still faces camera.
-    const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent:true, opacity:.98 });
-    const sprite = new THREE.Sprite(spriteMat);
-    sprite.scale.set(width * .92, height * .92, 1);
-    sprite.position.set(0, 0, .10);
-    sprite.name = "animal_png_sprite_backup";
-    holder.add(sprite);
+    // Small glowing base ring only; does not cover the animal.
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(1.65, .045, 8, 48),
+      new THREE.MeshBasicMaterial({ color: 0x9ffcff, transparent:true, opacity:.75, depthWrite:false })
+    );
+    ring.rotation.x = Math.PI / 2;
+    ring.position.set(0, -2.2, 0);
+    ring.renderOrder = 5;
+    holder.add(ring);
 
     faceCamera();
   }
@@ -1812,7 +1796,12 @@ function loadAnimalPng(fileName, group){
   function addFallback(){
     holder.clear();
     const fallback = makeMissingAnimalCard(fileName);
-    fallback.position.set(0,0,0);
+    fallback.position.set(0,0,0.08);
+    fallback.renderOrder = 20;
+    if(fallback.material){
+      fallback.material.depthWrite = false;
+      fallback.material.depthTest = true;
+    }
     holder.add(fallback);
     faceCamera();
   }
@@ -1822,7 +1811,7 @@ function loadAnimalPng(fileName, group){
     return holder;
   }
 
-  const version = (typeof ASSET_VERSION !== "undefined" ? ASSET_VERSION : "20260531j");
+  const version = (typeof ASSET_VERSION !== "undefined" ? ASSET_VERSION : "20260531k");
   const urls = [
     "./" + fileName + "?v=" + version,
     "./" + fileName,
@@ -1882,7 +1871,7 @@ function makeAnimalPod(m, x, z, localIndex=0){
 
   const cage = new THREE.Mesh(
     new THREE.SphereGeometry(3.05,24,14),
-    new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.10})
+    new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.045, depthWrite:false})
   );
   cage.position.y=2.55;
   group.add(cage);
@@ -1895,7 +1884,7 @@ function makeAnimalPod(m, x, z, localIndex=0){
   const totalInWorld = getCurrentWorldMissions().length;
   const label = makeFloatingLabel(`${shownName}\nMission ${missionNo}/${totalInWorld}: ${m.dividend} ÷ ${m.divisor}`);
   // Put label lower and slightly forward so it does not cover the animal.
-  label.position.set(0,-.05,4.45);
+  label.position.set(0,-.35,4.65);
   label.rotation.x = -0.12;
   group.add(label);
 
@@ -2323,7 +2312,7 @@ function animate(){
       p.cage.position.y = 2.0 + Math.sin(performance.now()/500 + i)*.08;
       if(p.animal){
         p.animal.lookAt(camera.position.x, p.animal.position.y + p.group.position.y, camera.position.z);
-        p.animal.position.y = 2.25 + Math.sin(performance.now()/420 + i)*.08;
+        p.animal.position.y = 3.0 + Math.sin(performance.now()/420 + i)*.08;
       }
     }else{
       p.group.rotation.y += dt*1.2;
