@@ -979,7 +979,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531ag";
+const ASSET_VERSION = "20260531ah";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -2094,13 +2094,12 @@ const algorithmTemplate = `
   setTimeout(syncAlgoSoundButton, 0);
 
   function playWrong(){
-    // Correct/wrong sounds intentionally disabled.
-    // Do not beep; visual feedback remains.
+    // Wrong-answer sound restored by request.
+    try{ parent.postMessage({type:"playWrong"}, "*"); }catch(e){}
   }
 
   function playCorrect(){
-    // Correct/wrong sounds intentionally disabled.
-    // Do not beep; visual feedback remains.
+    // Correct sound remains disabled. Visual feedback only.
   }
 
   function playTada(){
@@ -4126,13 +4125,13 @@ function playMp3OrTone(file, fallback){
 }
 
 function playWrong(){
-  // Correct/wrong sounds intentionally disabled to reduce annoyance.
-  // Keep visual feedback only.
+  // Wrong-answer sound restored by request.
+  if(!soundEnabled) return;
+  playMp3OrTone("wrong.mp3", ()=>safePlayTone(180,.14,"sawtooth"));
 }
 
 function playCorrect(){
-  // Correct/wrong sounds intentionally disabled to reduce annoyance.
-  // Keep visual feedback/confetti only.
+  // Correct sound remains disabled. Visual feedback/confetti only.
 }
 
 function playTada(){
