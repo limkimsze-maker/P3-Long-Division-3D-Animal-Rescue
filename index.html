@@ -1181,6 +1181,42 @@ function createMissionPods(){
   pitch = -0.08;
 }
 
+
+
+function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+  if(fill) ctx.fill();
+  if(stroke) ctx.stroke();
+}
+
+function makeFloatingLabel(text){
+  const canvas = document.createElement("canvas");
+  canvas.width = 768;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "rgba(8,24,48,.78)";
+  roundRect(ctx, 16, 16, 736, 224, 28, true, false);
+  ctx.strokeStyle = "rgba(255,255,255,.65)";
+  ctx.lineWidth = 5;
+  roundRect(ctx, 16, 16, 736, 224, 28, false, true);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 34px Comic Sans MS, Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  text.split("\n").forEach((line,i)=>ctx.fillText(line,384,72+i*52));
+  const tex = new THREE.CanvasTexture(canvas);
+  return new THREE.Mesh(
+    new THREE.PlaneGeometry(5.8,1.9),
+    new THREE.MeshBasicMaterial({map:tex, transparent:true})
+  );
+}
+
 function makeAnimalPod(m, x, z){
   const group = new THREE.Group();
   group.position.set(x,0,z);
@@ -1332,7 +1368,7 @@ function checkNearPods(){
   if(nearest && dist < 5.0){
     document.getElementById("bottomTip").innerHTML = 'Press Click/F or tap RESCUE to start: <b>' + nearest.mission.dividend + ' ÷ ' + nearest.mission.divisor + '</b><span class="sub">' + nearest.mission.focus + '</span>';
   }else{
-    document.getElementById("bottomTip").innerHTML = 'Walk to a glowing animal rescue pod.<span class="sub">Complete the exact algorithm board to save each animal.</span>';
+    document.getElementById("bottomTip").innerHTML = 'World 1 starts small: rescue only these 3 animals first.<span class="sub">After this, the world will expand gradually.</span>';
   }
 }
 function fireRescueBeam(){
