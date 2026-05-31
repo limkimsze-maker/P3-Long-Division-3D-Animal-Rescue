@@ -656,7 +656,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531n";
+const ASSET_VERSION = "20260531q";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -1110,6 +1110,70 @@ const algorithmTemplate = `
       padding:10px 12px;
     }
   }
+
+  /* ===== In-app numerical keypad: prevents mobile keyboard from taking space ===== */
+  .numPad{
+    margin:10px auto 8px;
+    max-width:420px;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+  }
+  .numPad button{
+    border:1px solid #d8e4f2;
+    border-radius:16px;
+    padding:13px 8px;
+    font-family:inherit;
+    font-size:22px;
+    font-weight:1000;
+    background:#ffffff;
+    color:#0f2a4a;
+    box-shadow:0 4px 0 rgba(15,42,74,.12);
+    touch-action:manipulation;
+  }
+  .numPad button:active{
+    transform:translateY(2px);
+    box-shadow:0 2px 0 rgba(15,42,74,.12);
+  }
+  .numPad .danger{
+    background:#fff1f2;
+    border-color:#fecdd3;
+    color:#9f1239;
+  }
+  .numPad .utility{
+    background:#eef4ff;
+    border-color:#cfe0ff;
+    color:#1f4f9c;
+  }
+  .numPadHelp{
+    text-align:center;
+    font-size:12px;
+    font-weight:900;
+    color:#60738c;
+    margin:2px 0 6px;
+  }
+  .activeDigitInput{
+    outline:4px solid rgba(59,130,246,.42) !important;
+    outline-offset:3px !important;
+    border-color:#2563eb !important;
+    background:#eff6ff !important;
+  }
+  @media(max-width:760px){
+    .numPad{
+      max-width:100%;
+      gap:6px;
+      margin:8px 0;
+    }
+    .numPad button{
+      padding:12px 6px;
+      font-size:20px;
+      border-radius:14px;
+    }
+    .numPadHelp{
+      font-size:11px;
+      margin-bottom:4px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -1157,6 +1221,21 @@ const algorithmTemplate = `
         <div class="answerLine" id="answerLine">Answer: —</div>
         <div class="algoActionPanel">
           <div class="algoActionNote pupilNote"><b>Pupils:</b> Fill in the <b>red-boxed spaces</b> in the algorithm first, then press <b>Check Step</b>.</div>
+          <div class="numPadHelp">Tap a box in the algorithm, then use this keypad.</div>
+          <div class="numPad" id="numPad" aria-label="Number keypad">
+            <button type="button" data-num="1">1</button>
+            <button type="button" data-num="2">2</button>
+            <button type="button" data-num="3">3</button>
+            <button type="button" data-num="4">4</button>
+            <button type="button" data-num="5">5</button>
+            <button type="button" data-num="6">6</button>
+            <button type="button" data-num="7">7</button>
+            <button type="button" data-num="8">8</button>
+            <button type="button" data-num="9">9</button>
+            <button type="button" class="utility" data-action="backspace">⌫ Backspace</button>
+            <button type="button" data-num="0">0</button>
+            <button type="button" class="danger" data-action="delete">Delete</button>
+          </div>
           <div class="algoActionBtns">
             <button class="btn green prominent" id="btnCheck">✔ Check Step</button>
             <button class="btn gold" id="btnHint">Hint</button>
@@ -1252,14 +1331,13 @@ const algorithmTemplate = `
   setTimeout(syncAlgoSoundButton, 0);
 
   function playWrong(){
-    sendSoundToParent("playWrong");
-    beep(180,.14,"sawtooth",.10);
+    // Correct/wrong sounds intentionally disabled.
+    // Do not beep; visual feedback remains.
   }
 
   function playCorrect(){
-    sendSoundToParent("playCorrect");
-    beep(660,.08,"sine",.10);
-    setTimeout(()=>beep(880,.09,"sine",.10),80);
+    // Correct/wrong sounds intentionally disabled.
+    // Do not beep; visual feedback remains.
   }
 
   function playTada(){
@@ -1419,7 +1497,7 @@ const algorithmTemplate = `
   function buildAlgorithm(){
     const cols = placeKeys.length, d = digitsOf(q.dividend), hasRem = (q.dividend % q.divisor) !== 0;
     plan = computePlan();
-    const mkIn = (id, cls='wIn') => '<input class="'+cls+'" id="'+id+'" inputmode="numeric" maxlength="1" />';
+    const mkIn = (id, cls='wIn') => '<input class="'+cls+'" id="'+id+'" inputmode="none" maxlength="1" readonly />';
     const blankCell = (p2) => '<div class="algoCell '+placeClass(p2)+' blank"></div>';
     const cellWith = (p2, html) => '<div class="algoCell '+placeClass(p2)+'">'+html+'</div>';
 
@@ -1466,8 +1544,8 @@ const algorithmTemplate = `
 
           <div class="algoRow quot" style="--cols:\${cols}; --remW:\${remW}px;">
             <div class="algoCell blank"></div>
-            \${placeKeys.map(pk=>\`<div class="algoCell blank"><input class="qIn" id="q_\${pk}" inputmode="numeric" maxlength="1" /></div>\`).join('')}
-            <div class="algoCell remCell"><div class="remWrap"><span class="remTag">R</span><input class="wIn" id="remBox" inputmode="numeric" maxlength="1"/></div></div>
+            \${placeKeys.map(pk=>\`<div class="algoCell blank"><input class="qIn" id="q_\${pk}" inputmode="none" maxlength="1" readonly /></div>\`).join('')}
+            <div class="algoCell remCell"><div class="remWrap"><span class="remTag">R</span><input class="wIn" id="remBox" inputmode="none" maxlength="1" readonly/></div></div>
           </div>
 
           <div class="algoRow divd" style="--cols:\${cols}; --remW:\${remW}px;">
@@ -1480,7 +1558,7 @@ const algorithmTemplate = `
 
           <div class="algoRow remFinal" style="--cols:\${cols}; --remW:\${remW}px;">
             <div class="algoCell blank"></div>
-            \${placeKeys.map((pk)=>{ const last = placeKeys[placeKeys.length-1]; return (pk===last) ? \`<div class="algoCell \${placeClass(pk)}"><input class="wIn" id="remFinal" inputmode="numeric" maxlength="1"/></div>\` : \`<div class="algoCell \${placeClass(pk)} blank"></div>\`; }).join('')}
+            \${placeKeys.map((pk)=>{ const last = placeKeys[placeKeys.length-1]; return (pk===last) ? \`<div class="algoCell \${placeClass(pk)}"><input class="wIn" id="remFinal" inputmode="none" maxlength="1" readonly/></div>\` : \`<div class="algoCell \${placeClass(pk)} blank"></div>\`; }).join('')}
             \${hasRem ? '<div class="algoCell remCell blank"></div>' : ''}
           </div>
         </div>
@@ -1510,6 +1588,11 @@ const algorithmTemplate = `
   function disableStepInputs(pk){
     const targets = [ els.qInputs?.[pk], ...Object.values(els.prodInputs?.[pk] || {}), ...Object.values(els.nextInputs?.[pk] || {}), ];
     targets.forEach(el=>{ if(el) el.disabled = true; });
+    if(activeDigitInput && activeDigitInput.disabled){
+      activeDigitInput.classList.remove("activeDigitInput");
+      activeDigitInput = null;
+      setTimeout(()=>ensureActiveInput(), 30);
+    }
   }
 
   function updateHighlights(){
@@ -1578,6 +1661,7 @@ const algorithmTemplate = `
     });
     if (els.remInput) els.remInput.disabled = finished;
     if (els.remFinal) els.remFinal.disabled = finished;
+    setTimeout(()=>setupNumericKeypad(), 20);
   }
 
   let busy = false;
@@ -1686,6 +1770,101 @@ const algorithmTemplate = `
   if(savedHideMat === "1") setMatHidden(true);
   else if(savedHideMat === "0") setMatHidden(false);
   else if(isSmallScreen()) setMatHidden(true);
+
+
+  let activeDigitInput = null;
+
+  function setActiveDigitInput(input){
+    if(!input || input.disabled) return;
+    if(activeDigitInput) activeDigitInput.classList.remove("activeDigitInput");
+    activeDigitInput = input;
+    activeDigitInput.classList.add("activeDigitInput");
+    try{ activeDigitInput.focus({preventScroll:true}); }catch(e){}
+  }
+
+  function getAllDigitInputs(){
+    return Array.from(document.querySelectorAll(".qIn,.wIn")).filter(inp => !inp.disabled);
+  }
+
+  function moveToNextInput(){
+    const inputs = getAllDigitInputs();
+    if(!inputs.length) return;
+    const idx = inputs.indexOf(activeDigitInput);
+    const next = inputs[Math.min(inputs.length - 1, idx + 1)] || inputs[0];
+    setActiveDigitInput(next);
+  }
+
+  function ensureActiveInput(){
+    if(activeDigitInput && !activeDigitInput.disabled) return activeDigitInput;
+    const inputs = getAllDigitInputs();
+    if(inputs.length) setActiveDigitInput(inputs[0]);
+    return activeDigitInput;
+  }
+
+  function setInputValue(input, value){
+    if(!input || input.disabled) return;
+    input.value = String(value).replace(/\D/g,"").slice(-1);
+    input.dispatchEvent(new Event("input", {bubbles:true}));
+  }
+
+  function keypadDigit(digit){
+    const input = ensureActiveInput();
+    if(!input) return;
+    setInputValue(input, digit);
+    moveToNextInput();
+  }
+
+  function keypadBackspace(){
+    const input = ensureActiveInput();
+    if(!input) return;
+    if(input.value){
+      input.value = "";
+      input.dispatchEvent(new Event("input", {bubbles:true}));
+      return;
+    }
+    const inputs = getAllDigitInputs();
+    const idx = inputs.indexOf(input);
+    const prev = inputs[Math.max(0, idx - 1)] || input;
+    setActiveDigitInput(prev);
+    if(prev){
+      prev.value = "";
+      prev.dispatchEvent(new Event("input", {bubbles:true}));
+    }
+  }
+
+  function keypadDelete(){
+    const input = ensureActiveInput();
+    if(!input) return;
+    input.value = "";
+    input.dispatchEvent(new Event("input", {bubbles:true}));
+  }
+
+  function setupNumericKeypad(){
+    document.querySelectorAll(".qIn,.wIn").forEach(inp=>{
+      inp.setAttribute("readonly","readonly");
+      inp.setAttribute("inputmode","none");
+      inp.addEventListener("pointerdown", e=>{
+        e.preventDefault();
+        setActiveDigitInput(inp);
+      });
+      inp.addEventListener("focus", ()=>setActiveDigitInput(inp));
+    });
+
+    const pad = document.getElementById("numPad");
+    if(pad && !pad.dataset.ready){
+      pad.dataset.ready = "1";
+      pad.addEventListener("pointerdown", e=>{
+        const btn = e.target.closest("button");
+        if(!btn) return;
+        e.preventDefault();
+        if(btn.dataset.num !== undefined) keypadDigit(btn.dataset.num);
+        else if(btn.dataset.action === "backspace") keypadBackspace();
+        else if(btn.dataset.action === "delete") keypadDelete();
+      });
+    }
+
+    setTimeout(()=>ensureActiveInput(), 50);
+  }
 
   ui.btnCheck.addEventListener('click', doStep);
   ui.btnHint.addEventListener('click', ()=>{
@@ -2892,14 +3071,13 @@ function playMp3OrTone(file, fallback){
 }
 
 function playWrong(){
-  playMp3OrTone("wrong.mp3", ()=>safePlayTone(180,.14,"sawtooth",.11));
+  // Correct/wrong sounds intentionally disabled to reduce annoyance.
+  // Keep visual feedback only.
 }
 
 function playCorrect(){
-  playMp3OrTone("correct.mp3", ()=>{
-    safePlayTone(660,.08,"sine",.10);
-    setTimeout(()=>safePlayTone(880,.09,"sine",.10),80);
-  });
+  // Correct/wrong sounds intentionally disabled to reduce annoyance.
+  // Keep visual feedback/confetti only.
 }
 
 function playTada(){
