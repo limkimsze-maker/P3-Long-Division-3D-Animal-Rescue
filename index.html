@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>3D Animal Rescue Division Mission — Exact Algorithm Version</title>
+<title>Long Division Ranger: Animal Rescue</title>
 <style>
   :root{
     --navy:#12345a; --sky:#dff6ff; --mint:#dff9e8; --cream:#fff3d4; --pink:#ff6fae;
@@ -666,13 +666,102 @@
     z-index:10025 !important;
   }
 
+
+
+  /* ===== UI refresh requested ===== */
+  .controlRefreshBtn{display:none !important;}
+
+  .soundToggle{
+    left:50% !important;
+    right:auto !important;
+    transform:translateX(-50%);
+    top:calc(10px + var(--safeTop));
+    z-index:10030;
+    min-width:138px;
+    text-align:center;
+  }
+  @media(max-width:760px){
+    .soundToggle{
+      top:calc(8px + var(--safeTop));
+      left:50% !important;
+      right:auto !important;
+      transform:translateX(-50%);
+      font-size:12px;
+      min-width:126px;
+      padding:8px 12px;
+    }
+  }
+
+  .startHero{
+    display:grid;
+    grid-template-columns: minmax(250px, 320px) 1fr;
+    gap:18px;
+    align-items:center;
+    margin:16px 0 18px;
+    padding:16px;
+    border-radius:24px;
+    background:linear-gradient(180deg,#eefbff,#fff8ea);
+    border:2px solid #d7eef7;
+  }
+  .heroArt{
+    min-height:250px;
+    border-radius:24px;
+    background:linear-gradient(180deg,#dff7ff,#f3fff7);
+    border:2px solid #cbe8f5;
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .heroGround{
+    position:absolute; left:0; right:0; bottom:0; height:28%;
+    background:linear-gradient(180deg,#dff8ff,#dff7e8);
+  }
+  .heroAnimals{position:absolute; inset:auto 10px 16px 10px; display:flex; justify-content:space-between; align-items:flex-end; z-index:1;}
+  .heroAnimal{
+    width:52px; height:52px; border-radius:16px; background:#fff; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 6px 14px rgba(0,0,0,.12); font-size:28px; border:2px solid #dfefff;
+  }
+  .heroAnimal.tall{height:70px; width:56px; font-size:30px;}
+  .rangerPlaceholder{
+    position:relative; z-index:2; width:160px; height:200px; margin-bottom:30px;
+  }
+  .rangerPlaceholder .hatTop{position:absolute; left:42px; top:6px; width:78px; height:40px; background:#2f8f4e; border-radius:18px 18px 8px 8px; box-shadow:0 12px 0 #1f6f3b;}
+  .rangerPlaceholder .hatBrim{position:absolute; left:20px; top:44px; width:122px; height:16px; background:#1f6f3b; border-radius:999px;}
+  .rangerPlaceholder .head{position:absolute; left:44px; top:54px; width:74px; height:76px; background:#ffd7ad; border:3px solid #b97a56; border-radius:40px;}
+  .rangerPlaceholder .eye{position:absolute; top:84px; width:9px; height:9px; background:#12345a; border-radius:50%;}
+  .rangerPlaceholder .eye.left{left:64px;} .rangerPlaceholder .eye.right{left:90px;}
+  .rangerPlaceholder .smile{position:absolute; left:69px; top:102px; width:25px; height:12px; border-bottom:4px solid #8a3f2a; border-radius:0 0 20px 20px;}
+  .rangerPlaceholder .body{position:absolute; left:40px; top:128px; width:82px; height:62px; background:#41b66f; border:3px solid #1f6f3b; border-radius:20px 20px 12px 12px;}
+  .rangerPlaceholder .badge{position:absolute; left:72px; top:145px; width:18px; height:18px; background:#ffd166; clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 56%,79% 91%,50% 70%,21% 91%,32% 56%,2% 35%,39% 35%);}
+  .heroCopy h2{margin:0 0 8px; font-size:clamp(26px,4vw,42px); color:#0d315d;}
+  .heroCopy p{margin:0 0 10px; font-size:17px; line-height:1.42; color:#445d7a;}
+  .heroBadge{display:inline-block; background:#eaf7ee; color:#166534; border:1px solid #bfe7c8; font-weight:1000; border-radius:999px; padding:7px 12px; margin-bottom:10px;}
+  .startActions{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:8px;}
+  .startBtnBig{font-size:22px !important; padding:16px 28px !important; min-width:220px;}
+  .howToPlay details, .howToPlay{margin-top:8px;}
+  .howToPlay details{border:2px solid #d7e9f7; border-radius:18px; background:#f8fcff; padding:0; overflow:hidden;}
+  .howToPlay summary{cursor:pointer; list-style:none; padding:14px 16px; font-size:18px; font-weight:1000; color:#12345a; background:#eef7ff;}
+  .howToPlay summary::-webkit-details-marker{display:none;}
+  .howToPlay .howBody{padding:14px;}
+  .howToPlay .howList{margin:0 0 12px 18px; color:#445d7a; line-height:1.45;}
+
+  @media(max-width:760px){
+    .startHero{grid-template-columns:1fr; padding:14px; gap:12px;}
+    .heroArt{min-height:220px;}
+    .heroCopy p{font-size:15px;}
+    .startActions{justify-content:center;}
+    .startBtnBig{width:100%;}
+  }
+
 </style>
 </head>
 <body>
 <div id="game"></div>
 <div id="runtimeErrorBox" style="display:none;position:fixed;left:10px;right:10px;bottom:80px;z-index:99;background:#fff1f2;color:#7f1d1d;border:2px solid #ef4444;border-radius:14px;padding:10px;font-weight:bold;font-family:Arial,sans-serif;"></div>
 <div id="centerDot"></div>
-<button class="controlRefreshBtn" id="controlRefreshBtn" type="button">Wake Screen</button>
+<button class="controlRefreshBtn" id="controlRefreshBtn" type="button" aria-hidden="true"></button>
 <button class="soundToggle" id="soundToggle" type="button" aria-label="Toggle sound">🔊 Sound On</button>
 
 
@@ -695,7 +784,7 @@
 
 
 <div class="hud">
-  <h1>ANIMAL RESCUE DIVISION MISSION</h1>
+  <h1>LONG DIVISION RANGER</h1>
   <div class="row"><span>Score: <span id="scoreText">0/30</span></span><span>Health: <span id="healthText">♥♥♥</span></span></div>
   <div class="world" id="worldText">World 1: Division Facts</div>
   <div class="rescuedStrip" id="rescuedStrip" aria-label="Rescued animals"></div>
@@ -724,24 +813,63 @@
 
 <div class="screen" id="startScreen">
   <div class="card">
-    <h1 class="title">3D Animal Rescue Division Mission</h1>
-    <p class="lead">
-      Rescue the animals by completing guided long-division missions. Finish each world to unlock the next one.
-    </p>
-    <div class="worldGrid">
-      <div class="worldCard"><b>World 1:</b> Division Facts<br>8 ÷ 2 = 4</div>
-      <div class="worldCard"><b>World 2:</b> No Regrouping<br>86 ÷ 2, 864 ÷ 2</div>
-      <div class="worldCard"><b>World 3:</b> Start Carefully<br>48 ÷ 6, 304 ÷ 7</div>
-      <div class="worldCard"><b>World 4:</b> Regrouping<br>2-digit and 3-digit regrouping</div>
-      <div class="worldCard"><b>World 5:</b> Zero in the Answer<br>204, 210 style answers</div>
-      <div class="worldCard"><b>World 6:</b> Remainders<br>1-digit, 2-digit, 3-digit remainders</div>
-      <div class="worldCard"><b>World 7:</b> Final Challenge<br>Mixed long division</div>
+    <h1 class="title">Long Division Ranger: Animal Rescue</h1>
+    <p class="lead">Help the Ranger rescue animals by solving long-division missions. Clear each world to unlock the next adventure.</p>
+
+    <div class="startHero">
+      <div class="heroArt" aria-hidden="true">
+        <div class="heroGround"></div>
+        <div class="heroAnimals">
+          <div class="heroAnimal">🐻</div>
+          <div class="heroAnimal tall">🦒</div>
+          <div class="heroAnimal">🐥</div>
+          <div class="heroAnimal">🐘</div>
+        </div>
+        <div class="rangerPlaceholder">
+          <div class="hatTop"></div>
+          <div class="hatBrim"></div>
+          <div class="head"></div>
+          <div class="eye left"></div>
+          <div class="eye right"></div>
+          <div class="smile"></div>
+          <div class="body"></div>
+          <div class="badge"></div>
+        </div>
+      </div>
+      <div class="heroCopy">
+        <div class="heroBadge">7 worlds • 30 rescue missions</div>
+        <h2>Become a Long Division Ranger!</h2>
+        <p>Move around the world, aim at an animal, press <b>RESCUE</b>, then solve the long-division mission to save it.</p>
+        <div class="startActions">
+          <button class="btn startBtnBig" id="startBtn">Start Adventure</button>
+        </div>
+      </div>
     </div>
-    <p class="lead" style="font-size:14px;margin-top:8px;"><b>Your progress is saved on this device.</b></p>
-    <button class="btn" id="startBtn">Start / Continue</button>
+
+    <div class="howToPlay">
+      <details>
+        <summary>How to Play</summary>
+        <div class="howBody">
+          <ul class="howList">
+            <li>Move the centre cross onto an animal, then press <b>RESCUE</b>.</li>
+            <li>Complete the long-division algorithm to save the animal.</li>
+            <li>Use the keypad to fill in the highlighted boxes.</li>
+            <li>Your progress is saved on this device.</li>
+          </ul>
+          <div class="worldGrid">
+            <div class="worldCard"><b>World 1:</b> Division Facts<br>8 ÷ 2, 9 ÷ 3, 6 ÷ 2</div>
+            <div class="worldCard"><b>World 2:</b> Clean Division<br>86 ÷ 2, 69 ÷ 3, 864 ÷ 2</div>
+            <div class="worldCard"><b>World 3:</b> Start Carefully<br>48 ÷ 6, 304 ÷ 7</div>
+            <div class="worldCard"><b>World 4:</b> Regrouping<br>2-digit and 3-digit regrouping</div>
+            <div class="worldCard"><b>World 5:</b> Zero in the Answer<br>204, 210 style answers</div>
+            <div class="worldCard"><b>World 6:</b> Remainders<br>1-digit, 2-digit, 3-digit remainders</div>
+            <div class="worldCard"><b>World 7:</b> Final Challenge<br>Mixed long division</div>
+          </div>
+        </div>
+      </details>
+    </div>
   </div>
 </div>
-
 
 <div class="calibrationOverlay" id="calibrationOverlay" aria-live="polite">
   <div class="calibrationCard">
@@ -1635,11 +1763,10 @@ const algorithmTemplate = `
 <div class="app">
   <div class="topbar">
     <div class="brand">
-      <div class="title">Division</div>
-      <div class="sub">Long Division Mission</div>
+      <div class="title">Long Division Ranger</div>
+      <div class="sub">Animal Rescue Mission</div>
     </div>
     <div class="topActions">
-      <button class="btn matToggle" id="btnMatToggle" type="button">👁️ Hide Place Value Mat</button>
       <div class="exprPill">
         <div class="big"><span id="pillDividend">246</span> ÷ <span id="pillDivisor">2</span> =</div>
         <div class="exprAns" id="pillAns">?</div>
@@ -1653,7 +1780,7 @@ const algorithmTemplate = `
         <div class="liveHead">
           <div>
             <h2 id="questionTitle">Divide 246 by 2.</h2>
-            <p id="questionSub">Fill in the highlighted spaces, then press Check Step.</p>
+            <p id="questionSub">Fill in the highlighted spaces and press Check Step.</p>
           </div>
           <div class="stepBadge" id="progressBadge">Step 0 of 3</div>
         </div>
@@ -1668,7 +1795,7 @@ const algorithmTemplate = `
         <div class="matToggleRow">
           <button class="btn matToggle" id="btnMatToggle2" type="button">👁️ Hide Place Value Mat</button>
         </div>
-        <div class="smallMuted" style="margin:-2px 0 10px">
+        <div class="smallMuted" style="margin:8px 0 10px">
           Fill in the highlighted spaces, then press <b>Check Step</b>.
         </div>
         <div class="algoWrap"><div class="algoFit" id="algoFit"></div></div>
