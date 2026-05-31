@@ -979,7 +979,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531af";
+const ASSET_VERSION = "20260531ag";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -1848,6 +1848,101 @@ const algorithmTemplate = `
       font-size:13px !important;
     }
   }
+
+  /* ===== Put Check Step beside STEP prompt ===== */
+  .stepBoxWithActions{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) auto !important;
+    gap:10px !important;
+    align-items:center !important;
+  }
+  .stepTextBlock{
+    min-width:0;
+  }
+  .stepActions{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    justify-content:flex-end;
+    flex-wrap:nowrap;
+  }
+  .stepCheckBtn{
+    min-width:145px !important;
+    width:auto !important;
+    min-height:42px !important;
+    padding:8px 14px !important;
+    border-radius:14px !important;
+    font-size:16px !important;
+    line-height:1.05 !important;
+  }
+  .stepHintBtn{
+    min-width:64px !important;
+    width:64px !important;
+    min-height:42px !important;
+    padding:8px 8px !important;
+    border-radius:14px !important;
+    font-size:14px !important;
+    line-height:1.05 !important;
+  }
+  .algoActionPanel{
+    padding:5px 8px 6px !important;
+    margin-top:4px !important;
+  }
+  .algoActionBtns{
+    display:none !important;
+  }
+
+  @media(max-width:760px){
+    .stepBoxWithActions{
+      grid-template-columns:minmax(0,1fr) auto !important;
+      gap:6px !important;
+      padding:7px 8px !important;
+    }
+    .stepTitle{
+      font-size:20px !important;
+      margin-bottom:2px !important;
+    }
+    .stepText{
+      font-size:12px !important;
+      line-height:1.05 !important;
+    }
+    .stepActions{
+      gap:4px;
+    }
+    .stepCheckBtn{
+      min-width:105px !important;
+      min-height:34px !important;
+      padding:6px 8px !important;
+      border-radius:12px !important;
+      font-size:13px !important;
+      white-space:nowrap;
+    }
+    .stepHintBtn{
+      min-width:46px !important;
+      width:46px !important;
+      min-height:34px !important;
+      padding:6px 4px !important;
+      border-radius:12px !important;
+      font-size:12px !important;
+      white-space:nowrap;
+    }
+  }
+
+  @media(max-width:390px){
+    .stepCheckBtn{
+      min-width:94px !important;
+      font-size:12px !important;
+      padding:5px 6px !important;
+    }
+    .stepHintBtn{
+      width:42px !important;
+      min-width:42px !important;
+      font-size:11px !important;
+    }
+    .stepText{
+      font-size:11px !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -1907,16 +2002,19 @@ const algorithmTemplate = `
             <button type="button" class="utility" data-action="backspace">⌫</button>
             <button type="button" class="danger" data-action="delete">Del</button>
           </div>
-          <div class="algoActionBtns">
-            <button class="btn green prominent" id="btnCheck">✔ Check Step</button>
-            <button class="btn gold" id="btnHint">Hint</button>
-          </div>
+
         </div>
       </div>
       <div class="card railCard">
-        <div class="stepBox">
-          <div class="stepTitle" id="stepTitle">STEP 1</div>
-          <p class="stepText" id="stepText">Divide the hundreds by 2.</p>
+        <div class="stepBox stepBoxWithActions">
+          <div class="stepTextBlock">
+            <div class="stepTitle" id="stepTitle">STEP 1</div>
+            <p class="stepText" id="stepText">Divide the hundreds by 2.</p>
+          </div>
+          <div class="stepActions">
+            <button class="btn green prominent stepCheckBtn" id="btnCheck">✔ Check Step</button>
+            <button class="btn gold stepHintBtn" id="btnHint">Hint</button>
+          </div>
         </div>
       </div>
       <div class="card railCard">
