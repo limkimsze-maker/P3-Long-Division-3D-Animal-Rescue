@@ -1087,7 +1087,7 @@
             <li>Complete the long-division algorithm to save the animal.</li>
             <li>Use the keypad to fill in the highlighted boxes.</li>
             <li>Your progress is saved on this device.</li>
-            <li>World completion pictures use these exact filenames: <b>world1_complete.png</b>, <b>world2_complete.png</b>, <b>world3_compete.png</b>, <b>world4_compete.png</b>, <b>world5_complete.png</b>, <b>world6_complete.png</b>, <b>world7_complete.png</b>.</li>
+            <li>World completion pictures use the latest uploaded file names automatically for World 1 to World 7.</li>
           </ul>
           <div class="resetInfoNote">
             <b>Need to restart from World 1?</b> Open <b>How to Play</b> and hold the <b>Reset Progress</b> button for 2 seconds.
@@ -1227,13 +1227,13 @@ var animalPngFiles = window.animalPngFiles;
 // One picture will be shown after completing each world from World 1 to World 7.
 // Rename your uploaded pictures to these filenames for the smoothest setup.
 const WORLD_COMPLETION_IMAGES = [
-  "world1_complete.png",
-  "world2_complete.png",
-  "world3_compete.png",
-  "world4_compete.png",
-  "world5_complete.png",
-  "world6_complete.png",
-  "world7_complete.png"
+  "file_000000003b1c7207b4df57e3015896dc.png",
+  "file_0000000082787207b9f49cefd1f7201f.png",
+  "file_0000000096b47209b8253a45fced8ad2.png",
+  "file_00000000b5447207abe50f92fe2ad39a.png",
+  "file_00000000d04c7206b427f441c65cdcf8.png",
+  "file_00000000dafc720784bf64c9f9ad42d2.png",
+  "file_00000000f26c72078b96d75797680a28.png"
 ];
 
 const WORLD_COMPLETION_SPEECHES = [
@@ -1251,7 +1251,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260531as";
+const ASSET_VERSION = "20260531at";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -4086,7 +4086,7 @@ function setRewardImageWithFallback(img, missing, file, worldName){
         missing.style.display = "block";
         missing.innerHTML =
           "Reward picture could not load for " + worldName + ".<br>" +
-          "This HTML is looking for <b>" + file + "</b> in the same GitHub folder as index.html.<br>" +
+          "This HTML is looking for the latest uploaded file <b>" + file + "</b> in the same GitHub folder as index.html.<br>" +
           "If it was just renamed/uploaded, reopen the game with a new ?v= number.";
       }
       return;
