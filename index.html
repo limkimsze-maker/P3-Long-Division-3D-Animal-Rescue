@@ -1293,76 +1293,6 @@
 
 
 
-
-
-  /* ===== Non-blocking top utility buttons =====
-     Keep Sound/Main Page outside the HUD so they do not cover score, world text or icons. */
-  .topUtilityBar{
-    position:fixed;
-    left:12px;
-    top:var(--topControlsTop, 176px);
-    z-index:10060;
-    display:flex;
-    align-items:center;
-    gap:8px;
-    pointer-events:auto;
-    max-width:calc(100vw - 24px);
-    isolation:isolate;
-    transform:translateZ(0);
-  }
-  .topUtilityBar .soundToggle,
-  .topUtilityBar .mainPageBtn{
-    position:static !important;
-    left:auto !important;
-    right:auto !important;
-    top:auto !important;
-    bottom:auto !important;
-    transform:none !important;
-    min-width:0 !important;
-    border:0;
-    border-radius:999px;
-    padding:9px 13px;
-    background:rgba(8,24,48,.84);
-    color:white;
-    font-family:inherit;
-    font-weight:1000;
-    font-size:14px;
-    line-height:1;
-    box-shadow:0 4px 0 rgba(0,0,0,.22),0 8px 18px rgba(0,0,0,.18);
-    pointer-events:auto !important;
-    touch-action:manipulation;
-    white-space:nowrap;
-  }
-  .topUtilityBar .mainPageBtn{
-    background:rgba(15,42,74,.86);
-  }
-  .topUtilityBar .soundToggle.off{
-    background:rgba(90,90,100,.86);
-  }
-  @media(max-width:760px){
-    .topUtilityBar{
-      left:10px;
-      right:10px;
-      top:var(--topControlsTop, calc(218px + var(--safeTop)));
-      justify-content:flex-start;
-      gap:8px;
-      flex-wrap:nowrap;
-      overflow:visible;
-    }
-    .topUtilityBar .soundToggle,
-    .topUtilityBar .mainPageBtn{
-      font-size:12px;
-      padding:8px 11px;
-      min-height:34px;
-    }
-  }
-  @media(max-width:380px){
-    .topUtilityBar .soundToggle,
-    .topUtilityBar .mainPageBtn{
-      font-size:11px;
-      padding:7px 8px;
-    }
-  }
 </style>
   <script src="https://cdn.counter.dev/script.js" data-id="825e93b6-ce99-40ef-8bcc-125f13297433" data-utcoffset="8"></script>
 </head>
@@ -1371,10 +1301,7 @@
 <div id="runtimeErrorBox" style="display:none;position:fixed;left:10px;right:10px;bottom:80px;z-index:99;background:#fff1f2;color:#7f1d1d;border:2px solid #ef4444;border-radius:14px;padding:10px;font-weight:bold;font-family:Arial,sans-serif;"></div>
 <div id="centerDot"></div>
 <button class="controlRefreshBtn" id="controlRefreshBtn" type="button" aria-hidden="true"></button>
-<div class="topUtilityBar" id="topUtilityBar" aria-label="Game menu controls">
-  <button class="mainPageBtn" id="mainPageBtn" type="button" aria-label="Go back to main page">🏠 Main Page</button>
-  <button class="soundToggle" id="soundToggle" type="button" aria-label="Toggle sound">🔊 Sound On</button>
-</div>
+<button class="soundToggle" id="soundToggle" type="button" aria-label="Toggle sound">🔊 Sound On</button>
 
 
 <div class="screenWeb" id="screenWeb" aria-hidden="true">
@@ -4643,7 +4570,6 @@ function updateHUD(){
   }else{
     document.getElementById("worldText").textContent = "All worlds completed!";
   }
-  try{ setTimeout(positionTopUtilityBar, 0); }catch(e){}
 }
 
 
@@ -5528,111 +5454,12 @@ function setupResetProgressButton(){
 }
 
 
-
-
-function getHudVisualBottom(){
-  const hud = document.querySelector(".hud");
-  if(!hud) return 0;
-  let bottom = hud.getBoundingClientRect().bottom;
-  // On mobile the HUD uses max-height/overflow. Some icon rows load after first layout,
-  // so measure the visible child elements too before placing the top buttons.
-  hud.querySelectorAll("h1,.row,.world,.rescuedStrip,.small").forEach(el=>{
-    if(!el) return;
-    const style = getComputedStyle(el);
-    if(style.display === "none" || style.visibility === "hidden") return;
-    const r = el.getBoundingClientRect();
-    if(Number.isFinite(r.bottom)) bottom = Math.max(bottom, r.bottom);
-  });
-  return bottom;
-}
-
-function positionTopUtilityBar(){
-  const hud = document.querySelector(".hud");
-  const bar = document.getElementById("topUtilityBar");
-  if(!hud || !bar) return;
-  const start = document.getElementById("startScreen");
-  const startVisible = start && getComputedStyle(start).display !== "none";
-  bar.style.display = startVisible ? "none" : "flex";
-  if(startVisible) return;
-
-  const vv = window.visualViewport;
-  const safeTop = vv && Number.isFinite(vv.offsetTop) ? vv.offsetTop : 0;
-  const viewportH = vv && Number.isFinite(vv.height) ? vv.height : window.innerHeight;
-  const hudBottom = getHudVisualBottom();
-
-  // Keep a clear gap below the HUD/header so the buttons are never half-hidden.
-  let gap = window.matchMedia && window.matchMedia("(max-width:760px)").matches ? 14 : 10;
-  let top = Math.ceil(Math.max(hudBottom + gap, safeTop + gap));
-
-  // Avoid pushing the buttons behind the bottom control area on very short screens.
-  const barH = bar.offsetHeight || 38;
-  const bottomReserve = window.matchMedia && window.matchMedia("(max-width:760px)").matches ? 260 : 80;
-  const maxTop = Math.max(safeTop + gap, safeTop + viewportH - barH - bottomReserve);
-  top = Math.min(top, maxTop);
-
-  document.documentElement.style.setProperty("--topControlsTop", top + "px");
-  bar.style.top = top + "px";
-}
-
-function refreshTopUtilityBarSoon(){
-  requestAnimationFrame(positionTopUtilityBar);
-  [60, 160, 360, 800, 1400].forEach(t=>setTimeout(positionTopUtilityBar, t));
-}
-
-function showMainPageFromGame(){
-  try{ document.exitPointerLock?.(); }catch(e){}
-  try{ if(typeof closeMission === "function") closeMission(); }catch(e){}
-  try{ if(typeof closeGatekeeperChallenge === "function") closeGatekeeperChallenge(); }catch(e){}
-  const start = document.getElementById("startScreen");
-  const win = document.getElementById("winScreen");
-  if(win) win.style.display = "none";
-  if(start) start.style.display = "flex";
-  refreshTopUtilityBarSoon();
-  setTimeout(()=>{ try{ resetCrosshairToCentre(); }catch(e){} }, 80);
-}
-
-const mainPageBtn = document.getElementById("mainPageBtn");
-if(mainPageBtn && !mainPageBtn.dataset.ready){
-  mainPageBtn.dataset.ready = "1";
-  mainPageBtn.addEventListener("click", (e)=>{
-    e.preventDefault();
-    e.stopPropagation();
-    showMainPageFromGame();
-  }, {passive:false});
-}
-
-window.addEventListener("resize", refreshTopUtilityBarSoon);
-window.addEventListener("orientationchange", refreshTopUtilityBarSoon);
-window.addEventListener("pageshow", refreshTopUtilityBarSoon);
-window.addEventListener("load", refreshTopUtilityBarSoon);
-if(window.visualViewport){
-  window.visualViewport.addEventListener("resize", refreshTopUtilityBarSoon);
-  window.visualViewport.addEventListener("scroll", refreshTopUtilityBarSoon);
-}
-try{
-  const hud = document.querySelector(".hud");
-  const strip = document.getElementById("rescuedStrip");
-  if(window.ResizeObserver && hud){
-    const topBarResizeObserver = new ResizeObserver(refreshTopUtilityBarSoon);
-    topBarResizeObserver.observe(hud);
-    if(strip) topBarResizeObserver.observe(strip);
-  }
-  if(window.MutationObserver && hud){
-    const topBarMutationObserver = new MutationObserver(refreshTopUtilityBarSoon);
-    topBarMutationObserver.observe(hud, {childList:true, subtree:true, attributes:true, characterData:true});
-  }
-}catch(e){}
-refreshTopUtilityBarSoon();
-setTimeout(positionTopUtilityBar, 350);
-setTimeout(positionTopUtilityBar, 1000);
-
 document.getElementById("startBtn").onclick = ()=>{
   ensureAudio();
   document.getElementById("startScreen").style.display = "none";
   showCalibrationOverlay(false);
   fullWakeSequence();
   updateHUD();
-  setTimeout(positionTopUtilityBar, 80);
 };
 document.getElementById("exitMissionBtn").onclick = closeMission;
 document.getElementById("restartBtn").onclick = ()=>{
@@ -5785,8 +5612,6 @@ function shouldIgnoreAimTarget(target){
     target.closest(".aimPad") ||
     target.closest(".pad") ||
     target.closest(".soundToggle") ||
-    target.closest(".mainPageBtn") ||
-    target.closest(".topUtilityBar") ||
     target.closest(".controlRefreshBtn") ||
     target.closest(".missionBar") ||
     target.closest("#gatekeeperPanel") ||
