@@ -1252,6 +1252,51 @@
   /* Mouse-look cursor feedback */
   #game canvas{cursor:grab;}
   body.mouseLooking #game canvas{cursor:grabbing;}
+
+
+  /* ===== Always-available Back to Main Page button ===== */
+  .mainPageBtn{
+    position:fixed;
+    top:calc(10px + var(--safeTop));
+    left:calc(10px + env(safe-area-inset-left,0px));
+    z-index:10045;
+    border:0;
+    border-radius:999px;
+    padding:10px 14px;
+    background:rgba(8,24,48,.86);
+    color:white;
+    font-family:inherit;
+    font-weight:1000;
+    font-size:14px;
+    box-shadow:0 4px 0 rgba(0,0,0,.22),0 8px 18px rgba(0,0,0,.18);
+    cursor:pointer;
+    pointer-events:auto;
+    touch-action:manipulation;
+  }
+  .mainPageBtn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.22),0 5px 12px rgba(0,0,0,.16);}
+  .mainPageBtn.hidden{display:none !important;}
+  .coverResetNotice{
+    max-width:760px;
+    margin:10px auto 0;
+    padding:10px 12px;
+    border-radius:16px;
+    background:#fff7ed;
+    border:1px solid #fed7aa;
+    color:#7c2d12;
+    font-size:14px;
+    font-weight:900;
+    line-height:1.3;
+    text-align:center;
+  }
+  @media(max-width:760px){
+    .mainPageBtn{
+      top:calc(50px + var(--safeTop));
+      left:8px;
+      font-size:12px;
+      padding:8px 11px;
+    }
+    .coverResetNotice{font-size:12px;padding:8px 10px;margin-top:8px;}
+  }
 </style>
   <script src="https://cdn.counter.dev/script.js" data-id="825e93b6-ce99-40ef-8bcc-125f13297433" data-utcoffset="8"></script>
 </head>
@@ -1261,6 +1306,7 @@
 <div id="centerDot"></div>
 <button class="controlRefreshBtn" id="controlRefreshBtn" type="button" aria-hidden="true"></button>
 <button class="soundToggle" id="soundToggle" type="button" aria-label="Toggle sound">🔊 Sound On</button>
+<button class="mainPageBtn hidden" id="mainPageBtn" type="button" aria-label="Go back to main page">🏠 Main Page</button>
 
 
 <div class="screenWeb" id="screenWeb" aria-hidden="true">
@@ -1323,6 +1369,9 @@
       Use the SCREEN arrows beside <b>RESCUE</b> to turn the view and train the centre crossfire on an animal. Then press <b>RESCUE</b> to save it.
       Your progress is saved on this device.
     </p>
+    <div class="coverResetNotice">
+      To reset your progress, open <b>How to Play</b> below and hold the <b>Reset Progress</b> button for 2 seconds.
+    </div>
 
     <div class="coverStartPanel">
       <button class="btn startBtnBig" id="startBtn">Start Adventure</button>
@@ -1338,10 +1387,11 @@
             <li>Complete the long-division algorithm to save the animal.</li>
             <li>Use the keypad to fill in the highlighted boxes.</li>
             <li>Your progress is saved on this device.</li>
+            <li>To reset your progress, stay on this main page, open <b>How to Play</b>, and hold the <b>Reset Progress</b> button for 2 seconds.</li>
             <li>World completion pictures use the latest uploaded file names automatically for World 1 to World 7.</li>
           </ul>
           <div class="resetInfoNote">
-            <b>Need to restart from World 1?</b> Open <b>How to Play</b> and hold the <b>Reset Progress</b> button for 2 seconds.
+            <b>Need to restart from World 1?</b> You are now in <b>How to Play</b>. Hold the <b>Reset Progress</b> button below for 2 seconds. This is the only reset button.
           </div>
           <div class="worldGrid">
             <div class="worldCard"><b>World 1:</b> Division Facts<br>8 ÷ 2, 9 ÷ 3, 6 ÷ 2</div>
@@ -2633,19 +2683,15 @@ const algorithmTemplate = `
   setTimeout(syncAlgoSoundButton, 0);
 
   function playWrong(){
-    // Wrong-answer sound restored by request.
-    try{ parent.postMessage({type:"playWrong"}, "*"); }catch(e){}
+    // wrong.mp3 disabled by request. Visual feedback only.
   }
 
   function playCorrect(){
-    // Correct sound remains disabled. Visual feedback only.
+    // correct.mp3 disabled by request. Visual feedback only.
   }
 
   function playTada(){
-    sendSoundToParent("playTada");
-    beep(523,.1,"sine",.10);
-    setTimeout(()=>beep(659,.1,"sine",.10),110);
-    setTimeout(()=>beep(784,.16,"sine",.10),220);
+    // tada.mp3 is reserved for world completion only, not individual mission completion.
   }
 
   function playWebSound(){
@@ -3825,7 +3871,7 @@ function showTravelToNextWorld(nextWorldIndex, done){
       bar.style.animation = "";
     }
   }
-  playTada();
+  // No tada here: tada.mp3 should play only when the world-completion reward appears.
   setTimeout(()=>{
     if(overlay) overlay.classList.remove("show");
     if(typeof done === "function") done();
@@ -4736,7 +4782,7 @@ function onAlgorithmComplete(){
         } else {
           saveLocalProgress();
           document.getElementById("winScreen").style.display = "flex";
-          playTada();
+          // No extra tada here; final world completion already played the softer tada.
           burstConfetti(180);
         }
       });
@@ -4758,7 +4804,8 @@ window.addEventListener("message", (e)=>{
   if (e.data.type === "algorithmComplete") onAlgorithmComplete();
   if (e.data.type === "playCorrect") playCorrect();
   if (e.data.type === "playWrong") playWrong();
-  if (e.data.type === "playTada") playTada();
+  // Ignore iframe playTada messages so tada.mp3 is heard only on world completion.
+  if (e.data.type === "playTada") return;
   if (e.data.type === "toggleSound") toggleSound();
 });
 
@@ -5096,7 +5143,7 @@ function safePlayTone(freq=440, duration=.1, type="sine", gain=.12){
 }
 
 const parentSoundCache = {};
-function playMp3OrTone(file, fallback){
+function playMp3OrTone(file, fallback, volume=1){
   if(!soundEnabled) return;
   try{
     if(!parentSoundCache[file]){
@@ -5106,6 +5153,7 @@ function playMp3OrTone(file, fallback){
     const a = parentSoundCache[file];
     a.pause();
     a.currentTime = 0;
+    a.volume = Math.max(0, Math.min(1, volume));
     const p = a.play();
     if(p && p.catch) p.catch(()=>fallback && fallback());
   }catch(e){
@@ -5114,21 +5162,20 @@ function playMp3OrTone(file, fallback){
 }
 
 function playWrong(){
-  // Wrong-answer sound restored by request.
-  if(!soundEnabled) return;
-  playMp3OrTone("wrong.mp3", ()=>safePlayTone(180,.14,"sawtooth"));
+  // wrong.mp3 disabled by request. Visual feedback only.
 }
 
 function playCorrect(){
-  // Correct sound remains disabled. Visual feedback/confetti only.
+  // correct.mp3 disabled by request. Visual feedback/confetti only.
 }
 
 function playTada(){
+  // Softer tada: half volume. Called only for world-completion reward screens.
   playMp3OrTone("tada.mp3", ()=>{
-    safePlayTone(523,.1,"sine",.10);
-    setTimeout(()=>safePlayTone(659,.1,"sine",.10),110);
-    setTimeout(()=>safePlayTone(784,.16,"sine",.10),220);
-  });
+    safePlayTone(523,.1,"sine",.05);
+    setTimeout(()=>safePlayTone(659,.1,"sine",.05),110);
+    setTimeout(()=>safePlayTone(784,.16,"sine",.05),220);
+  }, 0.5);
 }
 
 const globalSoundBtn = document.getElementById("soundToggle");
@@ -5194,13 +5241,69 @@ function setupResetProgressButton(){
 }
 
 
-document.getElementById("startBtn").onclick = ()=>{
+function updateMainPageButtonVisibility(){
+  const btn = document.getElementById("mainPageBtn");
+  const start = document.getElementById("startScreen");
+  if(!btn || !start) return;
+  const onMainPage = getComputedStyle(start).display !== "none";
+  btn.classList.toggle("hidden", onMainPage);
+}
+
+function goToMainPage(){
+  try{ endAimDrag?.(); }catch(e){}
+  try{ document.exitPointerLock?.(); }catch(e){}
+
+  const missionPanel = document.getElementById("missionPanel");
+  const frame = document.getElementById("algoFrame");
+  if(missionPanel) missionPanel.style.display = "none";
+  if(frame) frame.srcdoc = "";
+  activeMission = null;
+
+  const gate = document.getElementById("gatekeeperPanel");
+  if(gate){
+    gate.classList.remove("show");
+    gate.style.display = "none";
+  }
+  activeGatekeeperMission = null;
+  gatekeeperFacts = [];
+  gatekeeperIndex = 0;
+  gatekeeperBusy = false;
+
+  const ranger = document.getElementById("rangerOverlay");
+  if(ranger){ ranger.classList.remove("show"); ranger.style.display = "none"; }
+  const travel = document.getElementById("travelOverlay");
+  if(travel){ travel.classList.remove("show"); travel.style.display = "none"; }
+  const win = document.getElementById("winScreen");
+  if(win) win.style.display = "none";
+  showCalibrationOverlay(false);
+
+  const start = document.getElementById("startScreen");
+  if(start) start.style.display = "flex";
+  updateHUD();
+  updateMainPageButtonVisibility();
+  scheduleResizeGame();
+  setTimeout(resetCrosshairToCentre, 120);
+}
+
+function startAdventureFromMainPage(){
   ensureAudio();
   document.getElementById("startScreen").style.display = "none";
   showCalibrationOverlay(false);
+  updateMainPageButtonVisibility();
   fullWakeSequence();
   updateHUD();
-};
+}
+
+document.getElementById("startBtn").onclick = startAdventureFromMainPage;
+const mainPageBtn = document.getElementById("mainPageBtn");
+if(mainPageBtn){
+  mainPageBtn.addEventListener("click", (e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    goToMainPage();
+  });
+}
+updateMainPageButtonVisibility();
 document.getElementById("exitMissionBtn").onclick = closeMission;
 document.getElementById("restartBtn").onclick = ()=>{
   clearLocalProgress();
@@ -5328,6 +5431,7 @@ function shouldIgnoreAimTarget(target){
     target.closest(".pad") ||
     target.closest(".soundToggle") ||
     target.closest(".controlRefreshBtn") ||
+    target.closest(".mainPageBtn") ||
     target.closest(".missionBar") ||
     target.closest("#gatekeeperPanel") ||
     target.closest("#missionPanel") ||
