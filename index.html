@@ -1363,41 +1363,6 @@
       padding:7px 8px;
     }
   }
-
-
-  /* ===== Fold 6 inner-screen fix: stop browser Download/Share/Print long-press menu on game controls ===== */
-  #mobileControls,
-  #mobileControls *,
-  #game,
-  #game canvas,
-  button,
-  img{
-    -webkit-touch-callout:none !important;
-    -webkit-user-select:none !important;
-    user-select:none !important;
-    -webkit-user-drag:none !important;
-    user-drag:none !important;
-    -webkit-tap-highlight-color:transparent !important;
-  }
-  #mobileControls,
-  #mobileControls button,
-  .pad,
-  .pad button,
-  .aimPad,
-  .aimPad button,
-  .fireBtn,
-  #lookZone{
-    touch-action:none !important;
-    -ms-touch-action:none !important;
-  }
-  #mobileControls button,
-  .aimPad button,
-  .pad button,
-  .fireBtn{
-    -webkit-appearance:none;
-    appearance:none;
-    outline:none;
-  }
 </style>
   <script src="https://cdn.counter.dev/script.js" data-id="825e93b6-ce99-40ef-8bcc-125f13297433" data-utcoffset="8"></script>
 </head>
@@ -5955,52 +5920,6 @@ if(refreshBtn){
 }
 
 
-
-
-// ===== Fold 6 inner-screen fix: block browser Download/Share/Print long-press menu on controls =====
-(function installFold6ControlMenuFix(){
-  const CONTROL_SELECTOR = '#mobileControls, #mobileControls *, .aimPad, .aimPad *, .pad, .pad *, .fireBtn, #fireBtn, #lookZone, #game canvas';
-
-  function isGameControlTarget(target){
-    return !!(target && target.closest && target.closest(CONTROL_SELECTOR));
-  }
-
-  function blockControlBrowserMenu(e){
-    if(!isGameControlTarget(e.target)) return;
-    e.preventDefault();
-    e.stopPropagation();
-    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
-    return false;
-  }
-
-  ['contextmenu','selectstart','dragstart','beforecopy','copy'].forEach(type=>{
-    document.addEventListener(type, blockControlBrowserMenu, {capture:true, passive:false});
-    window.addEventListener(type, blockControlBrowserMenu, {capture:true, passive:false});
-  });
-
-  // On Samsung Fold inner screen, a long hold on overlay buttons can still open the browser action sheet.
-  // Prevent the default touch action at capture phase, but do not stop propagation so the existing
-  // pointerdown/touchstart handlers for movement, looking and RESCUE still run.
-  ['touchstart','touchmove','touchend','touchcancel'].forEach(type=>{
-    document.addEventListener(type, e=>{
-      if(!isGameControlTarget(e.target)) return;
-      e.preventDefault();
-    }, {capture:true, passive:false});
-  });
-
-  // Defensive: stop image/canvas/button drag behaviour and long-press save menus.
-  function markNoDrag(){
-    document.querySelectorAll('#mobileControls button, #mobileControls img, #game canvas, img').forEach(el=>{
-      try{ el.setAttribute('draggable','false'); }catch(err){}
-      try{ el.style.webkitUserDrag = 'none'; }catch(err){}
-      try{ el.style.webkitTouchCallout = 'none'; }catch(err){}
-      try{ el.style.userSelect = 'none'; }catch(err){}
-    });
-  }
-  markNoDrag();
-  window.addEventListener('load', markNoDrag, {once:true});
-  setTimeout(markNoDrag, 300);
-})();
 
 initModelLoader();
 window.addEventListener("error", (e)=>{
