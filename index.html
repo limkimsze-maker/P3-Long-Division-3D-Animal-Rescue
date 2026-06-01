@@ -1103,7 +1103,7 @@
 
 
 
-  /* ===== Phase 1: Cute Gatekeeper Multiplication Warm-up ===== */
+  /* ===== Phase 1 restored: Cute Gatekeeper Multiplication Warm-up ===== */
   #gatekeeperPanel{
     position:fixed;
     inset:0;
@@ -1141,10 +1141,7 @@
     font-weight:1000;
     cursor:pointer;
   }
-  .gatekeeperHeader{
-    padding-right:100px;
-    margin-bottom:12px;
-  }
+  .gatekeeperHeader{padding-right:100px;margin-bottom:12px;}
   .gatekeeperKicker{
     display:inline-block;
     padding:6px 10px;
@@ -1196,19 +1193,8 @@
     object-fit:contain;
     filter:drop-shadow(0 12px 14px rgba(15,42,74,.22));
   }
-  .gatekeeperName{
-    font-size:24px;
-    font-weight:1000;
-    color:#0f2a4a;
-    margin-bottom:5px;
-  }
-  .gatekeeperLine{
-    font-size:15px;
-    font-weight:800;
-    color:#4b607a;
-    line-height:1.28;
-    margin-bottom:10px;
-  }
+  .gatekeeperName{font-size:24px;font-weight:1000;color:#0f2a4a;margin-bottom:5px;}
+  .gatekeeperLine{font-size:15px;font-weight:800;color:#4b607a;line-height:1.28;margin-bottom:10px;}
   .gatekeeperFactBox{
     border-radius:22px;
     background:#fff;
@@ -1224,19 +1210,8 @@
     color:#12345a;
     margin:6px 0 12px;
   }
-  .gatekeeperWhy{
-    margin:0 0 12px;
-    text-align:center;
-    color:#475569;
-    font-size:14px;
-    font-weight:800;
-    line-height:1.25;
-  }
-  .gatekeeperAnswers{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:10px;
-  }
+  .gatekeeperWhy{margin:0 0 12px;text-align:center;color:#475569;font-size:14px;font-weight:800;line-height:1.25;}
+  .gatekeeperAnswers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
   .gatekeeperAnswerBtn{
     border:0;
     border-radius:18px;
@@ -1253,26 +1228,9 @@
   .gatekeeperAnswerBtn:active{transform:translateY(3px);box-shadow:0 4px 0 #1d4ed8,0 8px 14px rgba(37,99,235,.18);}
   .gatekeeperAnswerBtn.correct{background:linear-gradient(180deg,#4ade80,#16a34a);box-shadow:0 7px 0 #15803d;}
   .gatekeeperAnswerBtn.wrong{background:linear-gradient(180deg,#fb7185,#e11d48);box-shadow:0 7px 0 #be123c;}
-  .gatekeeperFeedback{
-    min-height:30px;
-    margin-top:10px;
-    font-size:15px;
-    font-weight:1000;
-    text-align:center;
-    color:#14532d;
-  }
-  .gatekeeperDots{
-    display:flex;
-    justify-content:center;
-    gap:7px;
-    margin-top:12px;
-  }
-  .gatekeeperDot{
-    width:12px;
-    height:12px;
-    border-radius:999px;
-    background:#cbd5e1;
-  }
+  .gatekeeperFeedback{min-height:30px;margin-top:10px;font-size:15px;font-weight:1000;text-align:center;color:#14532d;}
+  .gatekeeperDots{display:flex;justify-content:center;gap:7px;margin-top:12px;}
+  .gatekeeperDot{width:12px;height:12px;border-radius:999px;background:#cbd5e1;}
   .gatekeeperDot.done{background:#22c55e;}
   .gatekeeperDot.active{background:#2563eb;box-shadow:0 0 0 5px rgba(37,99,235,.14);}
   @media(max-width:760px){
@@ -1291,8 +1249,54 @@
     .gatekeeperWhy{font-size:12px;}
   }
 
+  /* Mouse-look cursor feedback */
+  #game canvas{cursor:grab;}
+  body.mouseLooking #game canvas{cursor:grabbing;}
 
 
+  /* ===== Always-available Back to Main Page button ===== */
+  .mainPageBtn{
+    position:fixed;
+    top:calc(10px + var(--safeTop));
+    left:calc(10px + env(safe-area-inset-left,0px));
+    z-index:10045;
+    border:0;
+    border-radius:999px;
+    padding:10px 14px;
+    background:rgba(8,24,48,.86);
+    color:white;
+    font-family:inherit;
+    font-weight:1000;
+    font-size:14px;
+    box-shadow:0 4px 0 rgba(0,0,0,.22),0 8px 18px rgba(0,0,0,.18);
+    cursor:pointer;
+    pointer-events:auto;
+    touch-action:manipulation;
+  }
+  .mainPageBtn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.22),0 5px 12px rgba(0,0,0,.16);}
+  .mainPageBtn.hidden{display:none !important;}
+  .coverResetNotice{
+    max-width:760px;
+    margin:10px auto 0;
+    padding:10px 12px;
+    border-radius:16px;
+    background:#fff7ed;
+    border:1px solid #fed7aa;
+    color:#7c2d12;
+    font-size:14px;
+    font-weight:900;
+    line-height:1.3;
+    text-align:center;
+  }
+  @media(max-width:760px){
+    .mainPageBtn{
+      top:calc(50px + var(--safeTop));
+      left:8px;
+      font-size:12px;
+      padding:8px 11px;
+    }
+    .coverResetNotice{font-size:12px;padding:8px 10px;margin-top:8px;}
+  }
 </style>
   <script src="https://cdn.counter.dev/script.js" data-id="825e93b6-ce99-40ef-8bcc-125f13297433" data-utcoffset="8"></script>
 </head>
@@ -1302,6 +1306,7 @@
 <div id="centerDot"></div>
 <button class="controlRefreshBtn" id="controlRefreshBtn" type="button" aria-hidden="true"></button>
 <button class="soundToggle" id="soundToggle" type="button" aria-label="Toggle sound">🔊 Sound On</button>
+<button class="mainPageBtn hidden" id="mainPageBtn" type="button" aria-label="Go back to main page">🏠 Main Page</button>
 
 
 <div class="screenWeb" id="screenWeb" aria-hidden="true">
@@ -1327,13 +1332,13 @@
   <div class="row"><span>Score: <span id="scoreText">0/30</span></span><span>Health: <span id="healthText">♥♥♥</span></span></div>
   <div class="world" id="worldText">World 1: Division Facts</div>
   <div class="rescuedStrip" id="rescuedStrip" aria-label="Rescued animals"></div>
-  <div class="small">Complete the division mission to save the animal.</div>
+  <div class="small">Clear the gatekeepers, then complete the division mission to save the animal.</div>
 </div>
 
 <div class="topRight" style="display:none;"></div>
 
 <div class="bottomTip" id="bottomTip">
-  The crosshair stays fixed at the centre. Use the blue SCREEN arrows beside RESCUE to look up, down, left or right until the centre crosshair points at an animal, then press RESCUE.
+  Use the SCREEN arrows beside RESCUE to train the centre crossfire on an animal, then press RESCUE.
   <span class="sub">Clear the gatekeepers, then complete the division mission to save the animal.</span>
 </div>
 
@@ -1341,7 +1346,7 @@
   <div class="pad">
     <button class="empty"></button><button data-key="KeyW">▲</button><button class="empty"></button>
     <button data-key="KeyA">◀</button><button data-key="KeyS">▼</button><button data-key="KeyD">▶</button>
-    <button class="empty"></button><button data-key="KeyS">Back</button><button class="empty"></button>
+    <button class="empty"></button><button data-key="ArrowDown">Back</button><button class="empty"></button>
   </div>
   <div class="lookZone" id="lookZone" aria-label="Drag here to look around"></div>
   <div class="aimPad" id="aimPad" aria-label="Screen control pad">
@@ -1361,9 +1366,12 @@
     </div>
 
     <p class="coverLead">
-      The crosshair stays fixed at the centre. Use the blue SCREEN arrows beside <b>RESCUE</b> to look up, down, left or right until the centre crosshair points at an animal. Then press <b>RESCUE</b> to save it.
+      Use the SCREEN arrows beside <b>RESCUE</b> to turn the view and train the centre crossfire on an animal. Then press <b>RESCUE</b> to save it.
       Your progress is saved on this device.
     </p>
+    <div class="coverResetNotice">
+      To reset your progress, open <b>How to Play</b> below and hold the <b>Reset Progress</b> button for 2 seconds.
+    </div>
 
     <div class="coverStartPanel">
       <button class="btn startBtnBig" id="startBtn">Start Adventure</button>
@@ -1374,15 +1382,16 @@
         <summary>How to Play</summary>
         <div class="howBody">
           <ul class="howList">
-            <li>The crosshair stays fixed at the centre. Use the blue SCREEN arrows beside <b>RESCUE</b> to change where the ranger looks. Use WASD or the left direction pad to move; while walking, the blue arrows also turn the ranger’s direction. After each world, the animals give the ranger a map to the next forest.</li>
-            <li>Meet the cute gatekeepers first. They will ask relevant multiplication facts that help with the long-division steps.</li>
+            <li>Use the SCREEN arrows beside <b>RESCUE</b> to train the centre crossfire on an animal, then press <b>RESCUE</b>. Use WASD or the left direction pad to move. After each world, the animals give the ranger a map to the next forest.</li>
+            <li>Meet the cute gatekeepers first. They ask relevant multiplication facts to prepare for the long-division mission.</li>
             <li>Complete the long-division algorithm to save the animal.</li>
             <li>Use the keypad to fill in the highlighted boxes.</li>
             <li>Your progress is saved on this device.</li>
+            <li>To reset your progress, stay on this main page, open <b>How to Play</b>, and hold the <b>Reset Progress</b> button for 2 seconds.</li>
             <li>World completion pictures use the latest uploaded file names automatically for World 1 to World 7.</li>
           </ul>
           <div class="resetInfoNote">
-            <b>Need to restart from World 1?</b> Open <b>How to Play</b> and hold the <b>Reset Progress</b> button for 2 seconds.
+            <b>Need to restart from World 1?</b> You are now in <b>How to Play</b>. Hold the <b>Reset Progress</b> button below for 2 seconds. This is the only reset button.
           </div>
           <div class="worldGrid">
             <div class="worldCard"><b>World 1:</b> Division Facts<br>8 ÷ 2, 9 ÷ 3, 6 ÷ 2</div>
@@ -1559,7 +1568,7 @@ window.textureLoader = window.textureLoader || new THREE.TextureLoader();
 window.textureCache = window.textureCache || {};
 var textureLoader = window.textureLoader;
 var textureCache = window.textureCache;
-const ASSET_VERSION = "20260601p2";
+const ASSET_VERSION = "20260531au";
 
 
 console.log("Animal PNG list loaded:", window.animalPngFiles && window.animalPngFiles.length, window.animalPngFiles);
@@ -1827,14 +1836,6 @@ const algorithmTemplate = `
       height:82px;
       font-size:16px;
     }
-    .aimPad{
-      right:96px;
-      bottom:calc(72px + var(--safeBottom));
-      width:118px;
-      height:118px;
-      gap:5px;
-    }
-    .aimPad button{font-size:18px; border-radius:14px;}
     .tiltStack{
       right:102px;
       bottom:calc(88px + var(--safeBottom));
@@ -1890,14 +1891,6 @@ const algorithmTemplate = `
       height:74px;
       bottom:calc(50px + var(--safeBottom));
     }
-    .aimPad{
-      right:86px;
-      bottom:calc(42px + var(--safeBottom));
-      width:104px;
-      height:104px;
-      gap:4px;
-    }
-    .aimPad button{font-size:16px; border-radius:12px;}
     .tiltStack{
       right:95px;
       bottom:calc(50px + var(--safeBottom));
@@ -2690,19 +2683,15 @@ const algorithmTemplate = `
   setTimeout(syncAlgoSoundButton, 0);
 
   function playWrong(){
-    // Wrong-answer sound restored by request.
-    try{ parent.postMessage({type:"playWrong"}, "*"); }catch(e){}
+    // wrong.mp3 disabled by request. Visual feedback only.
   }
 
   function playCorrect(){
-    // Correct sound remains disabled. Visual feedback only.
+    // correct.mp3 disabled by request. Visual feedback only.
   }
 
   function playTada(){
-    sendSoundToParent("playTada");
-    beep(523,.1,"sine",.10);
-    setTimeout(()=>beep(659,.1,"sine",.10),110);
-    setTimeout(()=>beep(784,.16,"sine",.10),220);
+    // tada.mp3 is reserved for world completion only, not individual mission completion.
   }
 
   function playWebSound(){
@@ -3247,19 +3236,18 @@ const animalNames = ["Bunny","Panda","Otter","Koala","Deer","Fox","Penguin","Kit
 let allMissions = [], currentWorldIndex = 0, score = 0, health = 3, activeMission = null, completedMissionIds = new Set();
 let scene, camera, renderer, clock, yaw = 0, pitch = -0.08, keys = {}, lookKeys = {}, animals = [], raycaster = new THREE.Raycaster(), particles = [], mouseLocked = false, playerHeight = 1.7;
 let worldRoot = null;
-let sceneryBillboards = [];
 let worldBounds = {x:38, zMin:-40, zMax:12};
 let aimNdc = new THREE.Vector2(0, 0); // crossfire/raycast stays fixed at the centre of the screen
 let lookDrag = {active:false, x:0, y:0};
 let audioCtx = null;
 
-// ===== Phase 1: Cute gatekeepers before each long-division mission =====
+// ===== Phase 1 restored: cute gatekeepers before each long-division mission =====
 let activeGatekeeperMission = null;
 let gatekeeperFacts = [];
 let gatekeeperIndex = 0;
 let gatekeeperBusy = false;
 const GATEKEEPERS = [
-  { name:"Wise Owl", file:"owl.png", line:"Think first. A good multiplication fact helps you choose the quotient digit." },
+  { name:"Wise Owl", file:"owl.png", line:"Think first. A useful multiplication fact helps you choose the quotient digit." },
   { name:"Friendly Frog", file:"frog.png", line:"Hop carefully from one place value to the next. This fact will help you regroup." },
   { name:"Cheeky Monkey", file:"monkey.png", line:"Check the product before you subtract. Strong facts make strong division." },
   { name:"Kind Panda", file:"panda.png", line:"Stay calm. This final fact gets you ready for the rescue mission." }
@@ -3588,7 +3576,7 @@ function resizeGameRenderer(){
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setSize(size.w, size.h, false);
 
-  // Keep crossfire/raycast aligned after any fold, resize or rotation.
+  // Centre aim/raycast after any fold, resize or rotation.
   resetCrosshairToCentre();
 }
 
@@ -3597,6 +3585,22 @@ function scheduleResizeGame(){
   setTimeout(()=>resizeGameRenderer(), 80);
   setTimeout(()=>resizeGameRenderer(), 280);
   setTimeout(()=>resizeGameRenderer(), 650);
+}
+
+function enterFPSMouseLook(forceMouse=false){
+  // Counter-Strike style desktop handling:
+  // click once in the 3D area to capture the mouse, then mouse movement turns the view.
+  // The crossfire stays fixed at the centre. Press Esc to release the mouse.
+  if(!renderer || !renderer.domElement) return;
+  if(typeof isOverlayOpen === "function" && isOverlayOpen()) return;
+  if(!forceMouse && isTouchLikeDevice()) return;
+  wakeFoldableControls();
+  resetCrosshairToCentre();
+  try{
+    if(document.pointerLockElement !== renderer.domElement){
+      renderer.domElement.requestPointerLock?.();
+    }
+  }catch(e){}
 }
 
 
@@ -3833,7 +3837,6 @@ function getWorldBounds(){
   };
 }
 function disposeWorldRoot(){
-  sceneryBillboards = [];
   if(!worldRoot) return;
   scene.remove(worldRoot);
   worldRoot.traverse(obj=>{
@@ -3868,204 +3871,11 @@ function showTravelToNextWorld(nextWorldIndex, done){
       bar.style.animation = "";
     }
   }
-  playTada();
+  // No tada here: tada.mp3 should play only when the world-completion reward appears.
   setTimeout(()=>{
     if(overlay) overlay.classList.remove("show");
     if(typeof done === "function") done();
   }, 4000);
-}
-
-
-/* ===== Phase 2: Lightweight Kenney PNG scenery layer =====
-   Uses the prepared PNG files in the same GitHub folder as index.html.
-   The objects are simple flat planes/billboards, so the world looks richer
-   while staying light enough for mobile devices. */
-function seededRandom(seed){
-  let t = seed >>> 0;
-  return function(){
-    t += 0x6D2B79F5;
-    let r = Math.imul(t ^ (t >>> 15), 1 | t);
-    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
-    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function makeKenneyPlane(fileName, width, height, opts={}){
-  const parent = opts.parent || worldRoot || scene;
-  const geo = new THREE.PlaneGeometry(width, height);
-  const mat = new THREE.MeshBasicMaterial({
-    color:0xffffff,
-    transparent:true,
-    opacity: opts.opacity ?? 1,
-    side:THREE.DoubleSide,
-    alphaTest: opts.alphaTest ?? 0.05,
-    depthWrite: opts.depthWrite ?? !opts.billboard
-  });
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.name = "KENNEY_" + fileName;
-  mesh.position.set(opts.x || 0, opts.y || 0, opts.z || 0);
-  mesh.rotation.set(opts.rotX || 0, opts.rotY || 0, opts.rotZ || 0);
-  mesh.renderOrder = opts.renderOrder || 0;
-  parent.add(mesh);
-
-  const version = (typeof ASSET_VERSION !== "undefined" ? ASSET_VERSION : "20260601p2");
-  const cacheKey = "kenney::" + fileName;
-  function applyTexture(tex){
-    if(!mesh.material) return;
-    if ("encoding" in tex && THREE.sRGBEncoding) tex.encoding = THREE.sRGBEncoding;
-    tex.needsUpdate = true;
-    mat.map = tex;
-    mat.needsUpdate = true;
-  }
-  if(window.textureCache && window.textureCache[cacheKey]){
-    applyTexture(window.textureCache[cacheKey]);
-  }else if(textureLoader){
-    textureLoader.load(
-      "./" + fileName + "?v=" + version,
-      (tex)=>{ window.textureCache[cacheKey] = tex; applyTexture(tex); },
-      undefined,
-      ()=>{
-        textureLoader.load("./" + fileName, (tex)=>{ window.textureCache[cacheKey] = tex; applyTexture(tex); }, undefined, ()=>{});
-      }
-    );
-  }
-  if(opts.billboard) sceneryBillboards.push(mesh);
-  return mesh;
-}
-
-function addGroundTile(parent, fileName, x, z, size=3.4, rotZ=0, opacity=1){
-  return makeKenneyPlane(fileName, size, size, {
-    parent, x, y:.115, z,
-    rotX:-Math.PI/2,
-    rotZ,
-    opacity,
-    depthWrite:true,
-    alphaTest:.02,
-    renderOrder:1
-  });
-}
-
-function addBillboard(parent, fileName, x, z, width, height, y=null){
-  return makeKenneyPlane(fileName, width, height, {
-    parent, x, y: y ?? (height/2), z,
-    billboard:true,
-    depthWrite:false,
-    renderOrder:10
-  });
-}
-
-function addWorldPathKenney(parent, rand){
-  const steps = 18 + currentWorldIndex * 2;
-  for(let i=0;i<steps;i++){
-    const t = i / Math.max(1, steps - 1);
-    const z = worldBounds.zMax - 2.2 - t * (Math.abs(worldBounds.zMin) - 8);
-    const x = Math.sin(t * Math.PI * 2.2) * (2.7 + currentWorldIndex*.55);
-    const nextT = Math.min(1, t + 1/steps);
-    const nextX = Math.sin(nextT * Math.PI * 2.2) * (2.7 + currentWorldIndex*.55);
-    const nextZ = worldBounds.zMax - 2.2 - nextT * (Math.abs(worldBounds.zMin) - 8);
-    const angle = Math.atan2(nextZ - z, nextX - x) + Math.PI/2;
-    const file = (i % 5 === 0) ? "ground_pathRocks.png" : "ground_pathTile.png";
-    addGroundTile(parent, file, x, z, 3.15, angle, .94);
-  }
-}
-
-function addWorldRiverAndBridge(parent){
-  const riverZ = worldBounds.zMax - 11;
-  const tiles = Math.max(8, Math.floor(worldBounds.x / 5));
-  for(let i=-tiles;i<=tiles;i++){
-    const x = i * 4.1;
-    if(Math.abs(x) < 3.2) continue;
-    const file = (i % 3 === 0) ? "ground_riverRocks.png" : "ground_riverStraight.png";
-    addGroundTile(parent, file, x, riverZ + Math.sin(i*.65)*.45, 4.35, Math.PI/2, .92);
-  }
-  addGroundTile(parent, "bridge_wood.png", 0, riverZ, 6.3, 0, 1);
-  addBillboard(parent, "lily_small.png", -6.4, riverZ-1.0, 1.2, 1.2, .62);
-  addBillboard(parent, "lily_large.png", 7.0, riverZ+.75, 1.55, 1.55, .78);
-}
-
-function addWorldGatesAndSigns(parent){
-  const gateZ = worldBounds.zMax - 5.5;
-  addBillboard(parent, "fence_gate.png", -4.8, gateZ, 3.9, 2.35, 1.18);
-  addBillboard(parent, "fence_gate.png", 4.8, gateZ, 3.9, 2.35, 1.18);
-
-  const worldSign = makeSign("World " + (currentWorldIndex+1) + "\n" + (WORLDS[currentWorldIndex]?.name || "Forest"), WORLDS[currentWorldIndex]?.color || 0x22c55e);
-  worldSign.position.set(0, 4.0, gateZ - 1.2);
-  worldSign.scale.set(.62,.62,.62);
-  worldSign.lookAt(camera.position.x, worldSign.position.y, camera.position.z);
-  parent.add(worldSign);
-
-  const exitZ = Math.max(worldBounds.zMin + 7.5, -32 - currentWorldIndex*2);
-  addBillboard(parent, "fence_gate.png", -3.3, exitZ, 3.7, 2.25, 1.12);
-  addBillboard(parent, "fence_gate.png", 3.3, exitZ, 3.7, 2.25, 1.12);
-}
-
-function addWorldDecorClusters(parent, rand){
-  // Decorative clusters use a small curated asset set from the prepared Kenney files.
-  const treeFiles = ["tree_default.png","tree_detailed.png","tree_pineTallA.png","tree_pineTallB.png","tree_oak.png","tree_cone.png"];
-  const bushFiles = ["plant_bush.png","plant_bushLarge.png","grass_large.png","grass_leafsLarge.png"];
-  const flowerFiles = ["flower_redA.png","flower_yellowA.png","flower_purpleA.png","mushroom_red.png","mushroom_tanGroup.png"];
-  const rockFiles = ["rock_largeA.png","rock_largeC.png","stone_smallA.png","stone_smallFlatB.png","stump_roundDetailed.png","log_stack.png"];
-
-  const treeN = Math.min(34, 16 + currentWorldIndex * 3);
-  for(let i=0;i<treeN;i++){
-    const side = rand() < .65;
-    let x = side ? (rand()<.5 ? -1 : 1) * (worldBounds.x - 5 - rand()*7) : (rand()*2-1) * (worldBounds.x - 8);
-    let z = worldBounds.zMax - 5 - rand() * (Math.abs(worldBounds.zMin) - 8);
-    if(Math.abs(x) < 7 && z > worldBounds.zMin + 11 && z < worldBounds.zMax - 8) x += x < 0 ? -9 : 9;
-    const file = treeFiles[i % treeFiles.length];
-    const h = 4.4 + rand()*2.4;
-    addBillboard(parent, file, x, z, h*.68, h, h/2);
-  }
-
-  const decorN = Math.min(70, 34 + currentWorldIndex * 6);
-  for(let i=0;i<decorN;i++){
-    const x = (rand()*2-1) * (worldBounds.x - 4);
-    const z = worldBounds.zMax - 4 - rand() * (Math.abs(worldBounds.zMin) - 5);
-    // Avoid blocking the central rescue animals.
-    if(Math.abs(x) < 6 && z < -7 && z > -25) continue;
-    let file, w, h;
-    if(i % 4 === 0){ file = bushFiles[i % bushFiles.length]; w = 1.5 + rand()*.8; h = 1.0 + rand()*.6; }
-    else if(i % 4 === 1){ file = flowerFiles[i % flowerFiles.length]; w = .75 + rand()*.45; h = .85 + rand()*.55; }
-    else { file = rockFiles[i % rockFiles.length]; w = 1.1 + rand()*.6; h = .85 + rand()*.55; }
-    addBillboard(parent, file, x, z, w, h, h/2);
-  }
-}
-
-function addWorldLandmark(parent){
-  const z = Math.max(worldBounds.zMin + 9, -32);
-  if(currentWorldIndex === 0){
-    addBillboard(parent, "tent_smallOpen.png", -14, -8, 4.2, 3.0, 1.5);
-    addBillboard(parent, "campfire_logs.png", -9.8, -7.5, 2.2, 1.6, .8);
-  }else if(currentWorldIndex === 1){
-    addBillboard(parent, "canoe.png", 12, -9, 3.5, 1.6, .8);
-    addBillboard(parent, "canoe_paddle.png", 14.3, -8.5, 1.8, 1.0, .5);
-  }else if(currentWorldIndex === 2){
-    addBillboard(parent, "cliff_cave_rock.png", -15, z, 5.6, 4.4, 2.2);
-    addBillboard(parent, "rock_tallA.png", -10.5, z+1.2, 2.2, 3.6, 1.8);
-  }else if(currentWorldIndex === 3){
-    addBillboard(parent, "crop_carrot.png", 14, -12, 1.3, 1.3, .65);
-    addBillboard(parent, "crops_cornStageD.png", 16, -12, 1.5, 2.2, 1.1);
-    addBillboard(parent, "crops_wheatStageB.png", 12, -13.5, 1.4, 1.8, .9);
-  }else if(currentWorldIndex === 4){
-    addBillboard(parent, "cliff_waterfall_rock.png", 15, z, 5.2, 5.2, 2.6);
-    addBillboard(parent, "cliff_waterfallTop_rock.png", 15, z-1.6, 4.2, 2.4, 3.9);
-  }else if(currentWorldIndex === 5){
-    addBillboard(parent, "statue_obelisk.png", 15, -13, 2.4, 5.2, 2.6);
-    addBillboard(parent, "statue_ring.png", 11.8, -13.2, 2.7, 2.7, 1.35);
-  }else{
-    addBillboard(parent, "platform_stone.png", 0, z+1.5, 4.6, 2.5, 1.25);
-    addBillboard(parent, "statue_column.png", -3.2, z, 1.8, 4.5, 2.25);
-    addBillboard(parent, "statue_columnDamaged.png", 3.2, z, 1.8, 3.8, 1.9);
-  }
-}
-
-function addKenneyWorldDecor(parent){
-  const rand = seededRandom(9000 + currentWorldIndex * 101);
-  addWorldPathKenney(parent, rand);
-  addWorldRiverAndBridge(parent);
-  addWorldGatesAndSigns(parent);
-  addWorldDecorClusters(parent, rand);
-  addWorldLandmark(parent);
 }
 
 function createWorld(){
@@ -4186,9 +3996,6 @@ function createWorld(){
 
   // Lamps/markers near the current rescue area.
   [[-10,-10],[10,-10],[-12,-24],[12,-24],[0,Math.max(worldBounds.zMin+10,-34)]].forEach(([x,z])=>makeLamp(x,z, worldRoot));
-
-  // Phase 2: add lightweight Kenney PNG scenery on top of the existing 3D world.
-  addKenneyWorldDecor(worldRoot);
 
   // Start camera inside the world, never outside.
   camera.position.set(0, playerHeight, Math.min(8, worldBounds.zMax - 3));
@@ -4606,7 +4413,7 @@ function buildRelevantGatekeeperFacts(mission){
   const facts = [];
   const stepDigits = [];
 
-  keys.forEach((pk, idx)=>{
+  keys.forEach((pk)=>{
     const currentVal = bank[pk];
     const qDigit = Math.floor(currentVal / divisor);
     const remUnits = currentVal % divisor;
@@ -4632,9 +4439,7 @@ function buildRelevantGatekeeperFacts(mission){
     }
   });
 
-  // If a short mission has fewer than 3 unique step facts, add nearby facts
-  // based on the actual quotient digits used inside the long-division steps.
-  // This avoids random facts and keeps the warm-up tied to the mission.
+  // Add nearby facts based on actual quotient digits if the mission has too few unique step facts.
   const nearby = [];
   stepDigits.forEach(k=>{
     [k - 1, k + 1, k - 2, k + 2].forEach(v=>{
@@ -4680,7 +4485,9 @@ function openGatekeeperChallenge(mission){
   gatekeeperFacts = buildRelevantGatekeeperFacts(mission);
   gatekeeperIndex = 0;
   gatekeeperBusy = false;
+  endAimDrag?.();
   document.exitPointerLock?.();
+  resetCrosshairToCentre();
   const panel = document.getElementById("gatekeeperPanel");
   if(panel){
     panel.style.display = "flex";
@@ -4975,7 +4782,7 @@ function onAlgorithmComplete(){
         } else {
           saveLocalProgress();
           document.getElementById("winScreen").style.display = "flex";
-          playTada();
+          // No extra tada here; final world completion already played the softer tada.
           burstConfetti(180);
         }
       });
@@ -4997,7 +4804,8 @@ window.addEventListener("message", (e)=>{
   if (e.data.type === "algorithmComplete") onAlgorithmComplete();
   if (e.data.type === "playCorrect") playCorrect();
   if (e.data.type === "playWrong") playWrong();
-  if (e.data.type === "playTada") playTada();
+  // Ignore iframe playTada messages so tada.mp3 is heard only on world completion.
+  if (e.data.type === "playTada") return;
   if (e.data.type === "toggleSound") toggleSound();
 });
 
@@ -5011,14 +4819,9 @@ function rescueAnimalVisual(missionId){
 }
 
 function onKeyDown(e){
-  // Desktop control: WASD moves the ranger.
-  // Looking is done by the blue SCREEN arrows beside RESCUE.
-  const moveCodes = new Set(["KeyW","KeyA","KeyS","KeyD","ShiftLeft","ShiftRight"]);
-  if(moveCodes.has(e.code)){
-    e.preventDefault();
-    keys[e.code] = true;
-    return;
-  }
+  keys[e.code] = true;
+  // Web shooting is intentionally disabled for keyboard/canvas click.
+  // Pupils must press the visible RESCUE button to cast the web.
   if(e.code === "Escape") document.exitPointerLock?.();
 }
 function updateCamera(dt){
@@ -5027,8 +4830,6 @@ function updateCamera(dt){
   const forward = new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
   const right = new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
   let move = new THREE.Vector3();
-  // WASD / left direction pad move the ranger.
-  // The blue SCREEN arrows beside RESCUE are reserved for looking/turning only.
   if(keys.KeyW || keys.ArrowUp) move.add(forward);
   if(keys.KeyS || keys.ArrowDown) move.sub(forward);
   if(keys.KeyD || keys.ArrowRight) move.add(right);
@@ -5042,7 +4843,7 @@ function updateCamera(dt){
 
   // SCREEN arrow pad beside RESCUE: only turns the view so pupils can train
   // the fixed centre crossfire on the target. It does not move the ranger.
-  const lookSpeed = 2.25;
+  const lookSpeed = 1.75;
   if(lookKeys.left) yaw += lookSpeed * dt;
   if(lookKeys.right) yaw -= lookSpeed * dt;
   if(lookKeys.up) pitch -= lookSpeed * dt;
@@ -5066,7 +4867,7 @@ function checkNearPods(){
   if(nearest && dist < 5.0){
     document.getElementById("bottomTip").innerHTML = 'Aim with SCREEN arrows, then tap RESCUE to start: <b>' + nearest.mission.dividend + ' ÷ ' + nearest.mission.divisor + '</b><span class="sub">' + nearest.mission.focus + '</span>';
   }else{
-    document.getElementById("bottomTip").innerHTML = 'The crosshair stays fixed at the centre. Use the blue SCREEN arrows beside RESCUE to look up, down, left or right until the centre crosshair points at an animal, then press RESCUE.<span class="sub">Clear the gatekeepers, then complete the division mission.</span>';
+    document.getElementById("bottomTip").innerHTML = 'Use the SCREEN arrows beside RESCUE to train the centre crossfire on an animal, then press RESCUE.<span class="sub">Clear the gatekeepers, then complete the division mission.</span>';
   }
 }
 
@@ -5221,7 +5022,7 @@ function fireRescueBeam(){
     return;
   }
 
-  // Foldable/mobile fallback: if the animal is near the crossfire on the screen,
+  // Foldable/mobile fallback: if the animal is near the centre of the screen,
   // rescue it even if the transparent cage raycast misses.
   let best = null;
   let bestScore = Infinity;
@@ -5271,11 +5072,6 @@ function animate(){
     updateCamera(dt);
     checkNearPods();
   }
-  sceneryBillboards.forEach(obj=>{
-    if(obj && obj.parent){
-      obj.lookAt(camera.position.x, obj.position.y, camera.position.z);
-    }
-  });
   animals.forEach((p,i)=>{
     p.group.rotation.y += dt * .25;
     if(!p.completed){
@@ -5347,7 +5143,7 @@ function safePlayTone(freq=440, duration=.1, type="sine", gain=.12){
 }
 
 const parentSoundCache = {};
-function playMp3OrTone(file, fallback){
+function playMp3OrTone(file, fallback, volume=1){
   if(!soundEnabled) return;
   try{
     if(!parentSoundCache[file]){
@@ -5357,6 +5153,7 @@ function playMp3OrTone(file, fallback){
     const a = parentSoundCache[file];
     a.pause();
     a.currentTime = 0;
+    a.volume = Math.max(0, Math.min(1, volume));
     const p = a.play();
     if(p && p.catch) p.catch(()=>fallback && fallback());
   }catch(e){
@@ -5365,21 +5162,20 @@ function playMp3OrTone(file, fallback){
 }
 
 function playWrong(){
-  // Wrong-answer sound restored by request.
-  if(!soundEnabled) return;
-  playMp3OrTone("wrong.mp3", ()=>safePlayTone(180,.14,"sawtooth"));
+  // wrong.mp3 disabled by request. Visual feedback only.
 }
 
 function playCorrect(){
-  // Correct sound remains disabled. Visual feedback/confetti only.
+  // correct.mp3 disabled by request. Visual feedback/confetti only.
 }
 
 function playTada(){
+  // Softer tada: half volume. Called only for world-completion reward screens.
   playMp3OrTone("tada.mp3", ()=>{
-    safePlayTone(523,.1,"sine",.10);
-    setTimeout(()=>safePlayTone(659,.1,"sine",.10),110);
-    setTimeout(()=>safePlayTone(784,.16,"sine",.10),220);
-  });
+    safePlayTone(523,.1,"sine",.05);
+    setTimeout(()=>safePlayTone(659,.1,"sine",.05),110);
+    setTimeout(()=>safePlayTone(784,.16,"sine",.05),220);
+  }, 0.5);
 }
 
 const globalSoundBtn = document.getElementById("soundToggle");
@@ -5392,15 +5188,6 @@ if(globalSoundBtn){
   });
 }
 updateSoundButtons();
-
-const gatekeeperCloseBtn = document.getElementById("gatekeeperCloseBtn");
-if(gatekeeperCloseBtn){
-  gatekeeperCloseBtn.addEventListener("click", (e)=>{
-    e.preventDefault();
-    e.stopPropagation();
-    closeGatekeeperChallenge();
-  });
-}
 
 
 function setupResetProgressButton(){
@@ -5454,13 +5241,69 @@ function setupResetProgressButton(){
 }
 
 
-document.getElementById("startBtn").onclick = ()=>{
+function updateMainPageButtonVisibility(){
+  const btn = document.getElementById("mainPageBtn");
+  const start = document.getElementById("startScreen");
+  if(!btn || !start) return;
+  const onMainPage = getComputedStyle(start).display !== "none";
+  btn.classList.toggle("hidden", onMainPage);
+}
+
+function goToMainPage(){
+  try{ endAimDrag?.(); }catch(e){}
+  try{ document.exitPointerLock?.(); }catch(e){}
+
+  const missionPanel = document.getElementById("missionPanel");
+  const frame = document.getElementById("algoFrame");
+  if(missionPanel) missionPanel.style.display = "none";
+  if(frame) frame.srcdoc = "";
+  activeMission = null;
+
+  const gate = document.getElementById("gatekeeperPanel");
+  if(gate){
+    gate.classList.remove("show");
+    gate.style.display = "none";
+  }
+  activeGatekeeperMission = null;
+  gatekeeperFacts = [];
+  gatekeeperIndex = 0;
+  gatekeeperBusy = false;
+
+  const ranger = document.getElementById("rangerOverlay");
+  if(ranger){ ranger.classList.remove("show"); ranger.style.display = "none"; }
+  const travel = document.getElementById("travelOverlay");
+  if(travel){ travel.classList.remove("show"); travel.style.display = "none"; }
+  const win = document.getElementById("winScreen");
+  if(win) win.style.display = "none";
+  showCalibrationOverlay(false);
+
+  const start = document.getElementById("startScreen");
+  if(start) start.style.display = "flex";
+  updateHUD();
+  updateMainPageButtonVisibility();
+  scheduleResizeGame();
+  setTimeout(resetCrosshairToCentre, 120);
+}
+
+function startAdventureFromMainPage(){
   ensureAudio();
   document.getElementById("startScreen").style.display = "none";
   showCalibrationOverlay(false);
+  updateMainPageButtonVisibility();
   fullWakeSequence();
   updateHUD();
-};
+}
+
+document.getElementById("startBtn").onclick = startAdventureFromMainPage;
+const mainPageBtn = document.getElementById("mainPageBtn");
+if(mainPageBtn){
+  mainPageBtn.addEventListener("click", (e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    goToMainPage();
+  });
+}
+updateMainPageButtonVisibility();
 document.getElementById("exitMissionBtn").onclick = closeMission;
 document.getElementById("restartBtn").onclick = ()=>{
   clearLocalProgress();
@@ -5479,39 +5322,20 @@ document.querySelectorAll(".pad button[data-key]").forEach(btn=>{
   btn.addEventListener("pointerleave", ()=>{keys[code]=false;});
 });
 
-// SCREEN control pad next to RESCUE.
-// Important: the white crosshair never moves on the page. These blue buttons
-// rotate the camera view behind the fixed centre crosshair, so the crosshair
-// aims up/down/left/right. Because movement uses the current camera yaw,
-// pupils can hold W / the movement pad while pressing these buttons to change direction.
-function applyScreenLookDirection(dir, amount=0.14){
-  if(dir === "left") yaw += amount;
-  if(dir === "right") yaw -= amount;
-  if(dir === "up") pitch -= amount;
-  if(dir === "down") pitch += amount;
-  pitch = Math.max(-1.45, Math.min(1.35, pitch));
-  resetCrosshairToCentre();
-  if(camera){
-    camera.rotation.order = "YXZ";
-    camera.rotation.y = yaw;
-    camera.rotation.x = pitch;
-  }
-}
-function stopScreenLookButton(btn, dir, e){
-  if(e){ e.preventDefault(); e.stopPropagation(); }
-  lookKeys[dir] = false;
-  if(btn) btn.classList.remove("active");
-}
+// SCREEN control pad next to RESCUE. These buttons turn the view only;
+// WASD / left direction pad still move the ranger.
 document.querySelectorAll(".aimPad button[data-look]").forEach(btn=>{
   const dir = btn.dataset.look;
-  const stop = (e)=>stopScreenLookButton(btn, dir, e);
+  const stop = (e)=>{
+    if(e){ e.preventDefault(); e.stopPropagation(); }
+    lookKeys[dir] = false;
+    btn.classList.remove("active");
+  };
   btn.addEventListener("pointerdown", e=>{
     e.preventDefault();
     e.stopPropagation();
     wakeFoldableControls();
     resetCrosshairToCentre();
-    // Immediate response for a quick tap, then continuous response while held.
-    applyScreenLookDirection(dir, 0.13);
     lookKeys[dir] = true;
     btn.classList.add("active");
     try{ btn.setPointerCapture?.(e.pointerId); }catch(err){}
@@ -5520,12 +5344,6 @@ document.querySelectorAll(".aimPad button[data-look]").forEach(btn=>{
   btn.addEventListener("pointercancel", stop, {passive:false});
   btn.addEventListener("pointerleave", stop, {passive:false});
   btn.addEventListener("lostpointercapture", stop, {passive:false});
-  // Fallback for browsers/previews that suppress pointer events on overlay buttons.
-  btn.addEventListener("click", e=>{
-    e.preventDefault();
-    e.stopPropagation();
-    applyScreenLookDirection(dir, 0.13);
-  }, {passive:false});
 });
 window.addEventListener("blur", ()=>{ lookKeys = {}; document.querySelectorAll(".aimPad button.active").forEach(b=>b.classList.remove("active")); });
 let rescueFireLock = false;
@@ -5613,6 +5431,7 @@ function shouldIgnoreAimTarget(target){
     target.closest(".pad") ||
     target.closest(".soundToggle") ||
     target.closest(".controlRefreshBtn") ||
+    target.closest(".mainPageBtn") ||
     target.closest(".missionBar") ||
     target.closest("#gatekeeperPanel") ||
     target.closest("#missionPanel") ||
@@ -5636,9 +5455,6 @@ function applyLookDelta(dx, dy){
 }
 
 function beginAimDrag(clientX, clientY, pointerId=null){
-  // Looking is controlled by the blue SCREEN arrows only.
-  // The crosshair remains fixed at the centre of the screen.
-  return;
   if(isOverlayOpen()) return;
   wakeFoldableControls();
   resetCrosshairToCentre();
@@ -5757,11 +5573,11 @@ window.addEventListener("error", (e)=>{
 
 
 document.addEventListener("touchstart", (e)=>{
-  if(e.target && ((e.target.closest(".fireBtn") || e.target.id === "fireBtn") || e.target.closest(".aimPad"))) return;
+  if(e.target && (e.target.closest(".fireBtn") || e.target.id === "fireBtn")) return;
   wakeFoldableControls();
 }, {passive:true});
 document.addEventListener("pointerdown", (e)=>{
-  if(e.target && ((e.target.closest(".fireBtn") || e.target.id === "fireBtn") || e.target.closest(".aimPad"))) return;
+  if(e.target && (e.target.closest(".fireBtn") || e.target.id === "fireBtn")) return;
   wakeFoldableControls();
 }, {passive:true});
 
@@ -5797,7 +5613,5 @@ updateRescuedStrip();
 updateHUD();
 saveLocalProgress();
 </script>
-
-
 </body>
-</html>
+    </html>
