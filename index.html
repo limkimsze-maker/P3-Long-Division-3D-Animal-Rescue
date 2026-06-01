@@ -119,6 +119,78 @@
     position:absolute; right:0; top:0; bottom:0; width:45vw; pointer-events:none;
     background:linear-gradient(90deg, transparent, rgba(44,123,229,.035));
   }
+
+
+  /* ===== Screen Control Pad: trains centre crossfire on target ===== */
+  .aimPad{
+    position:absolute;
+    right:122px;
+    bottom:92px;
+    width:124px;
+    height:124px;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    grid-template-rows:repeat(3,1fr);
+    gap:5px;
+    pointer-events:auto;
+    z-index:10024;
+  }
+  .aimPad button{
+    border:0;
+    border-radius:14px;
+    background:rgba(44,123,229,.86);
+    color:white;
+    font-family:inherit;
+    font-size:20px;
+    font-weight:1000;
+    box-shadow:0 4px 0 rgba(18,52,90,.38),0 8px 16px rgba(0,0,0,.16);
+    touch-action:manipulation;
+    user-select:none;
+  }
+  .aimPad button:active,
+  .aimPad button.active{
+    transform:translateY(2px);
+    box-shadow:0 2px 0 rgba(18,52,90,.38),0 5px 12px rgba(0,0,0,.14);
+    background:rgba(37,99,235,.96);
+  }
+  .aimPad .aimEmpty{opacity:0;pointer-events:none;}
+  .aimPad .aimCenter{
+    font-size:11px;
+    line-height:1.05;
+    background:rgba(8,24,48,.72);
+    color:#dff8ff;
+    box-shadow:0 4px 0 rgba(0,0,0,.22);
+    pointer-events:none;
+  }
+  @media(max-width:760px){
+    .aimPad{
+      right:98px;
+      bottom:calc(80px + var(--safeBottom));
+      width:108px;
+      height:108px;
+      gap:4px;
+    }
+    .aimPad button{font-size:18px;border-radius:13px;}
+    .aimPad .aimCenter{font-size:10px;}
+  }
+  @media(max-width:760px) and (orientation:landscape){
+    .aimPad{
+      right:88px;
+      bottom:calc(47px + var(--safeBottom));
+      width:98px;
+      height:98px;
+    }
+    .aimPad button{font-size:17px;border-radius:12px;}
+  }
+  @media(max-width:380px){
+    .aimPad{
+      right:88px;
+      width:96px;
+      height:96px;
+    }
+    .aimPad button{font-size:16px;border-radius:11px;}
+    .aimPad .aimCenter{font-size:9px;}
+  }
   .credit{position:fixed; right:8px; bottom:4px; z-index:7; font-size:11px; color:rgba(255,255,255,.86); text-shadow:0 1px 3px rgba(0,0,0,.7); pointer-events:none}
 
   /* Mission overlay */
@@ -1029,6 +1101,157 @@
     }
   }
 
+
+
+  /* ===== Phase 1 restored: Cute Gatekeeper Multiplication Warm-up ===== */
+  #gatekeeperPanel{
+    position:fixed;
+    inset:0;
+    z-index:18;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:14px;
+    background:rgba(8,24,48,.62);
+    backdrop-filter:blur(4px);
+  }
+  #gatekeeperPanel.show{display:flex;}
+  .gatekeeperCard{
+    width:min(860px,96vw);
+    max-height:94vh;
+    overflow:auto;
+    border-radius:28px;
+    background:linear-gradient(180deg,#fffdf4,#eefcf4 55%,#e7f8ff);
+    border:3px solid rgba(255,255,255,.95);
+    box-shadow:0 24px 70px rgba(0,0,0,.32);
+    color:#0f2a4a;
+    padding:18px;
+    position:relative;
+  }
+  .gatekeeperClose{
+    position:absolute;
+    top:12px;
+    right:12px;
+    border:0;
+    border-radius:999px;
+    padding:8px 12px;
+    background:rgba(15,42,74,.86);
+    color:white;
+    font-family:inherit;
+    font-weight:1000;
+    cursor:pointer;
+  }
+  .gatekeeperHeader{padding-right:100px;margin-bottom:12px;}
+  .gatekeeperKicker{
+    display:inline-block;
+    padding:6px 10px;
+    border-radius:999px;
+    background:#dcfce7;
+    color:#166534;
+    border:1px solid #bbf7d0;
+    font-weight:1000;
+    font-size:13px;
+  }
+  .gatekeeperTitle{
+    margin:8px 0 4px;
+    font-size:clamp(26px,4vw,44px);
+    line-height:1.05;
+    color:#14532d;
+    font-weight:1000;
+  }
+  .gatekeeperSub{
+    margin:0;
+    color:#445d7a;
+    font-weight:800;
+    font-size:16px;
+    line-height:1.3;
+  }
+  .gatekeeperStage{
+    display:grid;
+    grid-template-columns:220px 1fr;
+    gap:18px;
+    align-items:center;
+    background:rgba(255,255,255,.72);
+    border:2px solid rgba(34,197,94,.18);
+    border-radius:24px;
+    padding:16px;
+  }
+  .gatekeeperPortrait{
+    min-height:210px;
+    border-radius:24px;
+    background:radial-gradient(circle at 50% 42%,#ffffff 0 42%,#dff8ff 43% 70%,#c7f9cc 71% 100%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:2px solid #c8f1d2;
+    box-shadow:inset 0 0 28px rgba(255,255,255,.65);
+    overflow:hidden;
+  }
+  .gatekeeperPortrait img{
+    max-width:86%;
+    max-height:190px;
+    object-fit:contain;
+    filter:drop-shadow(0 12px 14px rgba(15,42,74,.22));
+  }
+  .gatekeeperName{font-size:24px;font-weight:1000;color:#0f2a4a;margin-bottom:5px;}
+  .gatekeeperLine{font-size:15px;font-weight:800;color:#4b607a;line-height:1.28;margin-bottom:10px;}
+  .gatekeeperFactBox{
+    border-radius:22px;
+    background:#fff;
+    border:2px solid #dbeafe;
+    padding:14px;
+    box-shadow:0 10px 22px rgba(15,42,74,.09);
+  }
+  .gatekeeperQuestion{
+    font-size:clamp(34px,6vw,58px);
+    line-height:1;
+    font-weight:1000;
+    text-align:center;
+    color:#12345a;
+    margin:6px 0 12px;
+  }
+  .gatekeeperWhy{margin:0 0 12px;text-align:center;color:#475569;font-size:14px;font-weight:800;line-height:1.25;}
+  .gatekeeperAnswers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+  .gatekeeperAnswerBtn{
+    border:0;
+    border-radius:18px;
+    padding:15px 10px;
+    background:linear-gradient(180deg,#60a5fa,#2563eb);
+    color:white;
+    font-family:inherit;
+    font-size:28px;
+    font-weight:1000;
+    cursor:pointer;
+    box-shadow:0 7px 0 #1d4ed8,0 12px 18px rgba(37,99,235,.18);
+    touch-action:manipulation;
+  }
+  .gatekeeperAnswerBtn:active{transform:translateY(3px);box-shadow:0 4px 0 #1d4ed8,0 8px 14px rgba(37,99,235,.18);}
+  .gatekeeperAnswerBtn.correct{background:linear-gradient(180deg,#4ade80,#16a34a);box-shadow:0 7px 0 #15803d;}
+  .gatekeeperAnswerBtn.wrong{background:linear-gradient(180deg,#fb7185,#e11d48);box-shadow:0 7px 0 #be123c;}
+  .gatekeeperFeedback{min-height:30px;margin-top:10px;font-size:15px;font-weight:1000;text-align:center;color:#14532d;}
+  .gatekeeperDots{display:flex;justify-content:center;gap:7px;margin-top:12px;}
+  .gatekeeperDot{width:12px;height:12px;border-radius:999px;background:#cbd5e1;}
+  .gatekeeperDot.done{background:#22c55e;}
+  .gatekeeperDot.active{background:#2563eb;box-shadow:0 0 0 5px rgba(37,99,235,.14);}
+  @media(max-width:760px){
+    .gatekeeperCard{padding:14px;border-radius:22px;}
+    .gatekeeperClose{top:9px;right:9px;font-size:12px;padding:7px 10px;}
+    .gatekeeperHeader{padding-right:88px;}
+    .gatekeeperSub{font-size:13px;}
+    .gatekeeperStage{grid-template-columns:1fr;gap:10px;padding:12px;border-radius:20px;}
+    .gatekeeperPortrait{min-height:130px;}
+    .gatekeeperPortrait img{max-height:120px;}
+    .gatekeeperName{font-size:20px;text-align:center;}
+    .gatekeeperLine{font-size:13px;text-align:center;}
+    .gatekeeperFactBox{padding:11px;border-radius:18px;}
+    .gatekeeperAnswers{gap:8px;}
+    .gatekeeperAnswerBtn{font-size:22px;padding:13px 6px;border-radius:15px;}
+    .gatekeeperWhy{font-size:12px;}
+  }
+
+  /* Mouse-look cursor feedback */
+  #game canvas{cursor:grab;}
+  body.mouseLooking #game canvas{cursor:grabbing;}
 </style>
   <script src="https://cdn.counter.dev/script.js" data-id="825e93b6-ce99-40ef-8bcc-125f13297433" data-utcoffset="8"></script>
 </head>
@@ -1063,14 +1286,14 @@
   <div class="row"><span>Score: <span id="scoreText">0/30</span></span><span>Health: <span id="healthText">♥♥♥</span></span></div>
   <div class="world" id="worldText">World 1: Division Facts</div>
   <div class="rescuedStrip" id="rescuedStrip" aria-label="Rescued animals"></div>
-  <div class="small">Complete the division mission to save the animal.</div>
+  <div class="small">Clear the gatekeepers, then complete the division mission to save the animal.</div>
 </div>
 
 <div class="topRight" style="display:none;"></div>
 
 <div class="bottomTip" id="bottomTip">
-  Move the centre cross onto an animal, then press RESCUE.
-  <span class="sub">Complete the division mission to save the animal.</span>
+  Use the SCREEN arrows beside RESCUE to train the centre crossfire on an animal, then press RESCUE.
+  <span class="sub">Clear the gatekeepers, then complete the division mission to save the animal.</span>
 </div>
 
 <div id="mobileControls">
@@ -1080,7 +1303,11 @@
     <button class="empty"></button><button data-key="ArrowDown">Back</button><button class="empty"></button>
   </div>
   <div class="lookZone" id="lookZone" aria-label="Drag here to look around"></div>
-  <div class="tiltStack" aria-hidden="true"></div>
+  <div class="aimPad" id="aimPad" aria-label="Screen control pad">
+    <button class="aimEmpty" aria-hidden="true" tabindex="-1"></button><button data-look="up" aria-label="Look up">▲</button><button class="aimEmpty" aria-hidden="true" tabindex="-1"></button>
+    <button data-look="left" aria-label="Look left">◀</button><button class="aimCenter" aria-hidden="true" tabindex="-1">SCREEN</button><button data-look="right" aria-label="Look right">▶</button>
+    <button class="aimEmpty" aria-hidden="true" tabindex="-1"></button><button data-look="down" aria-label="Look down">▼</button><button class="aimEmpty" aria-hidden="true" tabindex="-1"></button>
+  </div>
   <button class="fireBtn" id="fireBtn">RESCUE</button>
 </div>
 
@@ -1093,7 +1320,7 @@
     </div>
 
     <p class="coverLead">
-      Aim at an animal, press <b>RESCUE</b>, and complete the long-division mission to save it.
+      Use the SCREEN arrows beside <b>RESCUE</b> to turn the view and train the centre crossfire on an animal. Then press <b>RESCUE</b> to save it.
       Your progress is saved on this device.
     </p>
 
@@ -1106,7 +1333,8 @@
         <summary>How to Play</summary>
         <div class="howBody">
           <ul class="howList">
-            <li>Move the centre cross onto an animal, then press <b>RESCUE</b>. After each world, the animals give the ranger a map to the next forest.</li>
+            <li>Use the SCREEN arrows beside <b>RESCUE</b> to train the centre crossfire on an animal, then press <b>RESCUE</b>. Use WASD or the left direction pad to move. After each world, the animals give the ranger a map to the next forest.</li>
+            <li>Meet the cute gatekeepers first. They ask relevant multiplication facts to prepare for the long-division mission.</li>
             <li>Complete the long-division algorithm to save the animal.</li>
             <li>Use the keypad to fill in the highlighted boxes.</li>
             <li>Your progress is saved on this device.</li>
@@ -1139,6 +1367,33 @@
     <div class="calibrationTitle">Adjusting Screen...</div>
     <p class="calibrationText">The game is adjusting to your screen.</p>
     <div class="calibrationDots"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
+
+
+<div id="gatekeeperPanel" aria-live="polite">
+  <div class="gatekeeperCard">
+    <button class="gatekeeperClose" id="gatekeeperCloseBtn" type="button">Back to Forest</button>
+    <div class="gatekeeperHeader">
+      <span class="gatekeeperKicker">Multiplication Warm-up</span>
+      <h2 class="gatekeeperTitle">Meet the Forest Gatekeepers</h2>
+      <p class="gatekeeperSub" id="gatekeeperMissionText">Answer the helpful multiplication facts before the rescue mission opens.</p>
+    </div>
+    <div class="gatekeeperStage">
+      <div class="gatekeeperPortrait"><img id="gatekeeperImg" src="./owl.png" alt="Gatekeeper"></div>
+      <div class="gatekeeperDialogue">
+        <div class="gatekeeperName" id="gatekeeperName">Wise Owl</div>
+        <div class="gatekeeperLine" id="gatekeeperLine">This fact will help you choose the next quotient digit.</div>
+        <div class="gatekeeperFactBox">
+          <div class="gatekeeperQuestion" id="gatekeeperQuestion">2 × 4 = ?</div>
+          <p class="gatekeeperWhy" id="gatekeeperWhy">Use this fact in the long-division mission.</p>
+          <div class="gatekeeperAnswers" id="gatekeeperAnswers"></div>
+          <div class="gatekeeperFeedback" id="gatekeeperFeedback"></div>
+        </div>
+        <div class="gatekeeperDots" id="gatekeeperDots"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2933,12 +3188,24 @@ const WORLDS = [
 const animalNames = ["Bunny","Panda","Otter","Koala","Deer","Fox","Penguin","Kitten","Puppy","Turtle","Chick","Hamster"];
 
 let allMissions = [], currentWorldIndex = 0, score = 0, health = 3, activeMission = null, completedMissionIds = new Set();
-let scene, camera, renderer, clock, yaw = 0, pitch = -0.08, keys = {}, animals = [], raycaster = new THREE.Raycaster(), particles = [], mouseLocked = false, playerHeight = 1.7;
+let scene, camera, renderer, clock, yaw = 0, pitch = -0.08, keys = {}, lookKeys = {}, animals = [], raycaster = new THREE.Raycaster(), particles = [], mouseLocked = false, playerHeight = 1.7;
 let worldRoot = null;
 let worldBounds = {x:38, zMin:-40, zMax:12};
-let aimNdc = new THREE.Vector2(0, 0); // always centre of the screen
+let aimNdc = new THREE.Vector2(0, 0); // crossfire/raycast stays fixed at the centre of the screen
 let lookDrag = {active:false, x:0, y:0};
 let audioCtx = null;
+
+// ===== Phase 1 restored: cute gatekeepers before each long-division mission =====
+let activeGatekeeperMission = null;
+let gatekeeperFacts = [];
+let gatekeeperIndex = 0;
+let gatekeeperBusy = false;
+const GATEKEEPERS = [
+  { name:"Wise Owl", file:"owl.png", line:"Think first. A useful multiplication fact helps you choose the quotient digit." },
+  { name:"Friendly Frog", file:"frog.png", line:"Hop carefully from one place value to the next. This fact will help you regroup." },
+  { name:"Cheeky Monkey", file:"monkey.png", line:"Check the product before you subtract. Strong facts make strong division." },
+  { name:"Kind Panda", file:"panda.png", line:"Stay calm. This final fact gets you ready for the rescue mission." }
+];
 
 const SAVE_KEY = "divisionRangerProgress_v1";
 
@@ -3203,9 +3470,23 @@ function getMissionNumberInWorld(mission){
 
 
 function updateCrosshairFromFinger(clientX, clientY){
-  // Crosshair is intentionally fixed at the centre.
-  // Dragging changes the camera direction instead.
+  // Crossfire is intentionally fixed at the centre of the screen.
+  // Mouse/touch dragging now moves the camera view instead of moving the crossfire.
   aimNdc.set(0, 0);
+  const dot = document.getElementById("centerDot");
+  if(dot){
+    dot.style.left = "50%";
+    dot.style.top = "50%";
+  }
+}
+
+function getCrosshairScreenPoint(){
+  const game = document.getElementById("game");
+  const rect = game ? game.getBoundingClientRect() : {left:0, top:0, width:window.innerWidth, height:window.innerHeight};
+  return new THREE.Vector2(
+    rect.left + (rect.width || window.innerWidth) / 2,
+    rect.top + (rect.height || window.innerHeight) / 2
+  );
 }
 
 function resetCrosshairToCentre(){
@@ -3258,6 +3539,22 @@ function scheduleResizeGame(){
   setTimeout(()=>resizeGameRenderer(), 80);
   setTimeout(()=>resizeGameRenderer(), 280);
   setTimeout(()=>resizeGameRenderer(), 650);
+}
+
+function enterFPSMouseLook(forceMouse=false){
+  // Counter-Strike style desktop handling:
+  // click once in the 3D area to capture the mouse, then mouse movement turns the view.
+  // The crossfire stays fixed at the centre. Press Esc to release the mouse.
+  if(!renderer || !renderer.domElement) return;
+  if(typeof isOverlayOpen === "function" && isOverlayOpen()) return;
+  if(!forceMouse && isTouchLikeDevice()) return;
+  wakeFoldableControls();
+  resetCrosshairToCentre();
+  try{
+    if(document.pointerLockElement !== renderer.domElement){
+      renderer.domElement.requestPointerLock?.();
+    }
+  }catch(e){}
 }
 
 
@@ -3449,23 +3746,33 @@ function init3D(){
   document.addEventListener("keydown", onKeyDown);
   document.addEventListener("keyup", e=>keys[e.code]=false);
 
-  renderer.domElement.addEventListener("click", ()=>{
-    // Click/tap only activates looking. It must NOT shoot the rescue web.
-    if(document.getElementById("missionPanel").style.display === "flex") return;
+  renderer.domElement.addEventListener("click", (e)=>{
+    // Click alone does not fire or move the crossfire.
+    // Hold the left mouse button and move the mouse to turn the screen.
+    if(isOverlayOpen()) return;
     wakeFoldableControls();
-    if(!isTouchLikeDevice()){
-      try{ renderer.domElement.requestPointerLock?.(); }catch(e){}
-    }
-  });
-  document.addEventListener("pointerlockchange", ()=>{
-    mouseLocked = document.pointerLockElement === renderer.domElement;
-  });
+    resetCrosshairToCentre();
+  }, {passive:true});
+
   document.addEventListener("mousemove", e=>{
-    if(!mouseLocked) return;
-    yaw -= e.movementX * 0.0022;
-    pitch -= e.movementY * 0.0030;
-    pitch = Math.max(-1.45, Math.min(1.35, pitch));
-  });
+    // Preview-safe FPS-style control:
+    // while the LEFT mouse button is held down, mouse movement turns the camera.
+    // This avoids pointer-lock because many previews/iframes block it.
+    if(!gameLookDrag || !gameLookDrag.active || gameLookDrag.pointerId !== "mouse") return;
+    if((e.buttons & 1) !== 1){ endAimDrag(); return; }
+    e.preventDefault();
+    const dx = Number.isFinite(e.movementX) && e.movementX !== 0 ? e.movementX : (e.clientX - gameLookDrag.x);
+    const dy = Number.isFinite(e.movementY) && e.movementY !== 0 ? e.movementY : (e.clientY - gameLookDrag.y);
+    gameLookDrag.x = e.clientX;
+    gameLookDrag.y = e.clientY;
+    applyLookDelta(dx, dy);
+    resetCrosshairToCentre();
+  }, {passive:false});
+
+  document.addEventListener("mouseup", e=>{
+    if(e.button === 0 && gameLookDrag?.pointerId === "mouse") endAimDrag();
+  }, {passive:false});
+  window.addEventListener("blur", ()=>{ if(gameLookDrag?.active) endAimDrag(); });
 
   animate();
 }
@@ -4026,6 +4333,228 @@ function updateHUD(){
   }
 }
 
+
+function getMainDivisionDigits(n){
+  n = Math.max(0, Math.min(999, parseInt(n,10) || 0));
+  return { h:Math.floor(n/100)%10, t:Math.floor(n/10)%10, o:n%10 };
+}
+function getMainPlaceKeys(n){
+  const digits = String(Math.max(0, parseInt(n,10) || 0)).length;
+  if(digits <= 1) return ["o"];
+  if(digits === 2) return ["t","o"];
+  return ["h","t","o"];
+}
+function nextMainPlace(pk){
+  if(pk === "h") return "t";
+  if(pk === "t") return "o";
+  return null;
+}
+function placeShortName(pk){
+  return pk === "h" ? "hundreds" : pk === "t" ? "tens" : "ones";
+}
+function uniquePushFact(list, fact){
+  const key = fact.a + "x" + fact.b + "=" + fact.answer;
+  if(list.some(f => f.key === key)) return;
+  fact.key = key;
+  list.push(fact);
+}
+function buildRelevantGatekeeperFacts(mission){
+  const dividend = parseInt(mission.dividend,10) || 0;
+  const divisor = parseInt(mission.divisor,10) || 1;
+  const keys = getMainPlaceKeys(dividend);
+  const d = getMainDivisionDigits(dividend);
+  const bank = {h:d.h, t:d.t, o:d.o};
+  const facts = [];
+  const stepDigits = [];
+
+  keys.forEach((pk)=>{
+    const currentVal = bank[pk];
+    const qDigit = Math.floor(currentVal / divisor);
+    const remUnits = currentVal % divisor;
+    const product = qDigit * divisor;
+    const nextPk = nextMainPlace(pk);
+    stepDigits.push(qDigit);
+
+    const reason = qDigit === 0
+      ? `This reminds you that ${currentVal} is smaller than ${divisor}, so you regroup to the next place.`
+      : `This fact helps when you divide the ${placeShortName(pk)}: ${currentVal} ÷ ${divisor}.`;
+
+    uniquePushFact(facts, {
+      a:divisor,
+      b:qDigit,
+      answer:product,
+      prompt:`${divisor} × ${qDigit} = ?`,
+      reason
+    });
+
+    if(nextPk){
+      bank[nextPk] = bank[nextPk] + remUnits * 10;
+      bank[pk] = 0;
+    }
+  });
+
+  // Add nearby facts based on actual quotient digits if the mission has too few unique step facts.
+  const nearby = [];
+  stepDigits.forEach(k=>{
+    [k - 1, k + 1, k - 2, k + 2].forEach(v=>{
+      if(Number.isFinite(v) && v >= 0 && v <= 12) nearby.push(v);
+    });
+  });
+  [divisor, 1, 0, 10].forEach(v=>{
+    if(Number.isFinite(v) && v >= 0 && v <= 12) nearby.push(v);
+  });
+  nearby.forEach(k=>{
+    if(facts.length >= 3) return;
+    uniquePushFact(facts, {
+      a:divisor,
+      b:k,
+      answer:divisor * k,
+      prompt:`${divisor} × ${k} = ?`,
+      reason:`This nearby fact helps you choose and check the quotient digit for ${dividend} ÷ ${divisor}.`
+    });
+  });
+
+  return facts.slice(0, 4);
+}
+function shuffleArray(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+function buildGatekeeperChoices(fact){
+  const ans = Number(fact.answer);
+  const a = Math.max(1, Number(fact.a) || 1);
+  const b = Math.max(0, Number(fact.b) || 0);
+  const opts = new Set([ans]);
+  [ans+a, ans-a, ans+1, ans-1, a*(b+1), a*Math.max(0,b-1), a*(b+2), a*2, a*5, 0]
+    .forEach(v=>{ if(Number.isFinite(v) && v >= 0 && v <= 999) opts.add(v); });
+  let n = 1;
+  while(opts.size < 4){ opts.add(Math.max(0, ans + (n++ * a))); }
+  return shuffleArray(Array.from(opts).slice(0,4));
+}
+function openGatekeeperChallenge(mission){
+  activeGatekeeperMission = mission;
+  gatekeeperFacts = buildRelevantGatekeeperFacts(mission);
+  gatekeeperIndex = 0;
+  gatekeeperBusy = false;
+  endAimDrag?.();
+  document.exitPointerLock?.();
+  resetCrosshairToCentre();
+  const panel = document.getElementById("gatekeeperPanel");
+  if(panel){
+    panel.style.display = "flex";
+    panel.classList.add("show");
+  }
+  renderGatekeeperFact();
+}
+function closeGatekeeperChallenge(){
+  const panel = document.getElementById("gatekeeperPanel");
+  if(panel){
+    panel.classList.remove("show");
+    panel.style.display = "none";
+  }
+  activeGatekeeperMission = null;
+  gatekeeperFacts = [];
+  gatekeeperIndex = 0;
+  gatekeeperBusy = false;
+  scheduleResizeGame();
+  setTimeout(resetCrosshairToCentre, 120);
+}
+function completeGatekeeperChallenge(){
+  const mission = activeGatekeeperMission;
+  const panel = document.getElementById("gatekeeperPanel");
+  if(panel){
+    panel.classList.remove("show");
+    panel.style.display = "none";
+  }
+  activeGatekeeperMission = null;
+  gatekeeperFacts = [];
+  gatekeeperIndex = 0;
+  gatekeeperBusy = false;
+  if(mission) openMission(mission);
+}
+function renderGatekeeperDots(){
+  const box = document.getElementById("gatekeeperDots");
+  if(!box) return;
+  box.innerHTML = "";
+  gatekeeperFacts.forEach((_,i)=>{
+    const dot = document.createElement("span");
+    dot.className = "gatekeeperDot" + (i < gatekeeperIndex ? " done" : i === gatekeeperIndex ? " active" : "");
+    box.appendChild(dot);
+  });
+}
+function renderGatekeeperFact(){
+  if(!activeGatekeeperMission || !gatekeeperFacts.length){
+    completeGatekeeperChallenge();
+    return;
+  }
+  const fact = gatekeeperFacts[gatekeeperIndex];
+  const helper = GATEKEEPERS[gatekeeperIndex % GATEKEEPERS.length];
+  const img = document.getElementById("gatekeeperImg");
+  const name = document.getElementById("gatekeeperName");
+  const line = document.getElementById("gatekeeperLine");
+  const q = document.getElementById("gatekeeperQuestion");
+  const why = document.getElementById("gatekeeperWhy");
+  const answers = document.getElementById("gatekeeperAnswers");
+  const feedback = document.getElementById("gatekeeperFeedback");
+  const missionText = document.getElementById("gatekeeperMissionText");
+
+  if(img){
+    img.src = "./" + helper.file + "?v=" + (typeof ASSET_VERSION !== "undefined" ? ASSET_VERSION : "20260601");
+    img.alt = helper.name;
+  }
+  if(name) name.textContent = helper.name;
+  if(line) line.textContent = helper.line;
+  if(q) q.textContent = fact.prompt;
+  if(why) why.textContent = fact.reason;
+  if(feedback) feedback.textContent = "Gatekeeper " + (gatekeeperIndex + 1) + " of " + gatekeeperFacts.length + ". Choose the correct product.";
+  if(missionText){
+    missionText.textContent = `Warm up for ${activeGatekeeperMission.dividend} ÷ ${activeGatekeeperMission.divisor}. These facts will help you solve the rescue mission.`;
+  }
+  if(answers){
+    answers.innerHTML = "";
+    buildGatekeeperChoices(fact).forEach(choice=>{
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "gatekeeperAnswerBtn";
+      btn.textContent = choice;
+      btn.addEventListener("click", ()=>checkGatekeeperAnswer(btn, choice));
+      answers.appendChild(btn);
+    });
+  }
+  renderGatekeeperDots();
+}
+function checkGatekeeperAnswer(btn, choice){
+  if(gatekeeperBusy) return;
+  const fact = gatekeeperFacts[gatekeeperIndex];
+  const feedback = document.getElementById("gatekeeperFeedback");
+  if(Number(choice) !== Number(fact.answer)){
+    btn.classList.add("wrong");
+    playWrong();
+    if(feedback) feedback.textContent = `Good try. Think: ${fact.a} groups of ${fact.b}. Try again.`;
+    setTimeout(()=>btn.classList.remove("wrong"), 500);
+    return;
+  }
+  gatekeeperBusy = true;
+  btn.classList.add("correct");
+  safePlayTone(660,.08,"sine",.08);
+  setTimeout(()=>safePlayTone(880,.08,"sine",.07),90);
+  if(feedback) feedback.textContent = `Correct! ${fact.a} × ${fact.b} = ${fact.answer}.`;
+  gatekeeperIndex++;
+  renderGatekeeperDots();
+  setTimeout(()=>{
+    gatekeeperBusy = false;
+    if(gatekeeperIndex >= gatekeeperFacts.length){
+      if(feedback) feedback.textContent = "All gatekeepers cleared. Opening the rescue mission!";
+      setTimeout(completeGatekeeperChallenge, 450);
+    }else{
+      renderGatekeeperFact();
+    }
+  }, 650);
+}
+
 function openMission(mission){
   activeMission = mission;
   document.exitPointerLock?.();
@@ -4264,12 +4793,24 @@ function updateCamera(dt){
   // Keep the ranger inside the current forest boundary.
   camera.position.x = Math.max(-worldBounds.x + 2, Math.min(worldBounds.x - 2, camera.position.x));
   camera.position.z = Math.max(worldBounds.zMin + 2, Math.min(worldBounds.zMax - 2, camera.position.z));
+
+  // SCREEN arrow pad beside RESCUE: only turns the view so pupils can train
+  // the fixed centre crossfire on the target. It does not move the ranger.
+  const lookSpeed = 1.75;
+  if(lookKeys.left) yaw += lookSpeed * dt;
+  if(lookKeys.right) yaw -= lookSpeed * dt;
+  if(lookKeys.up) pitch -= lookSpeed * dt;
+  if(lookKeys.down) pitch += lookSpeed * dt;
+  pitch = Math.max(-1.45, Math.min(1.35, pitch));
+  resetCrosshairToCentre();
+
   camera.rotation.order = "YXZ";
   camera.rotation.y = yaw;
   camera.rotation.x = pitch;
 }
 function checkNearPods(){
   if(document.getElementById("missionPanel").style.display === "flex") return;
+  if(document.getElementById("gatekeeperPanel")?.style.display === "flex") return;
   let nearest = null, dist = Infinity;
   animals.forEach(p=>{
     if(p.completed) return;
@@ -4277,9 +4818,9 @@ function checkNearPods(){
     if(d < dist){dist=d; nearest=p;}
   });
   if(nearest && dist < 5.0){
-    document.getElementById("bottomTip").innerHTML = 'Press tap RESCUE to start: <b>' + nearest.mission.dividend + ' ÷ ' + nearest.mission.divisor + '</b><span class="sub">' + nearest.mission.focus + '</span>';
+    document.getElementById("bottomTip").innerHTML = 'Aim with SCREEN arrows, then tap RESCUE to start: <b>' + nearest.mission.dividend + ' ÷ ' + nearest.mission.divisor + '</b><span class="sub">' + nearest.mission.focus + '</span>';
   }else{
-    document.getElementById("bottomTip").innerHTML = 'Move the centre cross onto an animal, then press RESCUE.<span class="sub">Complete the division mission to save it.</span>';
+    document.getElementById("bottomTip").innerHTML = 'Use the SCREEN arrows beside RESCUE to train the centre crossfire on an animal, then press RESCUE.<span class="sub">Clear the gatekeepers, then complete the division mission.</span>';
   }
 }
 
@@ -4415,6 +4956,7 @@ function fireRescueBeam(){
   const startScreenEl = document.getElementById("startScreen");
   if(startScreenEl && startScreenEl.style.display !== "none" && getComputedStyle(startScreenEl).display !== "none") return;
   if(document.getElementById("missionPanel").style.display === "flex") return;
+  if(document.getElementById("gatekeeperPanel")?.style.display === "flex") return;
 
   showScreenWeb();
   playWebSound();
@@ -4428,7 +4970,7 @@ function fireRescueBeam(){
     const pod = animals.find(p=>p.cage === cage);
     if(pod){
       try{ castWebEffect(pod.group.position); }catch(e){}
-      setTimeout(()=>openMission(pod.mission), 320);
+      setTimeout(()=>openGatekeeperChallenge(pod.mission), 320);
     }
     return;
   }
@@ -4438,7 +4980,7 @@ function fireRescueBeam(){
   let best = null;
   let bestScore = Infinity;
   const size = getGameSize();
-  const centre = new THREE.Vector2(size.w/2, size.h/2);
+  const centre = getCrosshairScreenPoint();
   animals.filter(p=>!p.completed).forEach(p=>{
     const pos = p.group.position.clone();
     pos.y += 2.2;
@@ -4457,7 +4999,7 @@ function fireRescueBeam(){
 
   if(best && bestScore < Math.min(size.w, size.h) * 0.22){
     try{ castWebEffect(best.group.position); }catch(e){}
-    setTimeout(()=>openMission(best.mission), 320);
+    setTimeout(()=>openGatekeeperChallenge(best.mission), 320);
     return;
   }
 
@@ -4467,7 +5009,7 @@ function fireRescueBeam(){
 
   if(near && near.group.position.distanceTo(camera.position)<7.5){
     try{ castWebEffect(near.group.position); }catch(e){}
-    setTimeout(()=>openMission(near.mission), 320);
+    setTimeout(()=>openGatekeeperChallenge(near.mission), 320);
     return;
   }
 
@@ -4676,6 +5218,31 @@ document.querySelectorAll(".pad button[data-key]").forEach(btn=>{
   btn.addEventListener("pointerup", e=>{e.preventDefault(); keys[code]=false;});
   btn.addEventListener("pointerleave", ()=>{keys[code]=false;});
 });
+
+// SCREEN control pad next to RESCUE. These buttons turn the view only;
+// WASD / left direction pad still move the ranger.
+document.querySelectorAll(".aimPad button[data-look]").forEach(btn=>{
+  const dir = btn.dataset.look;
+  const stop = (e)=>{
+    if(e){ e.preventDefault(); e.stopPropagation(); }
+    lookKeys[dir] = false;
+    btn.classList.remove("active");
+  };
+  btn.addEventListener("pointerdown", e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    wakeFoldableControls();
+    resetCrosshairToCentre();
+    lookKeys[dir] = true;
+    btn.classList.add("active");
+    try{ btn.setPointerCapture?.(e.pointerId); }catch(err){}
+  }, {passive:false});
+  btn.addEventListener("pointerup", stop, {passive:false});
+  btn.addEventListener("pointercancel", stop, {passive:false});
+  btn.addEventListener("pointerleave", stop, {passive:false});
+  btn.addEventListener("lostpointercapture", stop, {passive:false});
+});
+window.addEventListener("blur", ()=>{ lookKeys = {}; document.querySelectorAll(".aimPad button.active").forEach(b=>b.classList.remove("active")); });
 let rescueFireLock = false;
 
 function triggerRescueFromButton(e){
@@ -4732,61 +5299,76 @@ lookZone.addEventListener("pointermove", e=>{
   lookZone.addEventListener(type, ()=>{ lookDrag.active = false; });
 });
 
-// Touch-drag anywhere on the 3D game area to move the view.
-// The crosshair stays fixed in the centre. Only the RESCUE button casts the web.
-// Uses BOTH pointer and touch fallback for Samsung Fold / iOS / Android.
+// Drag anywhere on the 3D game area to move the view.
+// Desktop preview requirement:
+//   1. Crossfire is always fixed at the centre.
+//   2. Hold LEFT mouse button and move the mouse = turn the screen/view.
+//   3. WASD / arrow buttons move the ranger.
+//   4. RESCUE fires at the centre crossfire.
 const gameArea = document.getElementById("game");
 let gameLookDrag = {active:false, x:0, y:0, pointerId:null};
 
 function isOverlayOpen(){
-  return document.getElementById("startScreen").style.display !== "none" ||
-         document.getElementById("missionPanel").style.display === "flex" ||
-         document.getElementById("winScreen").style.display === "flex" ||
-         document.getElementById("calibrationOverlay")?.classList.contains("show");
+  const start = document.getElementById("startScreen");
+  const mission = document.getElementById("missionPanel");
+  const gate = document.getElementById("gatekeeperPanel");
+  const win = document.getElementById("winScreen");
+  const calib = document.getElementById("calibrationOverlay");
+  return (start && getComputedStyle(start).display !== "none") ||
+         (mission && getComputedStyle(mission).display !== "none") ||
+         (gate && getComputedStyle(gate).display !== "none") ||
+         (win && getComputedStyle(win).display !== "none") ||
+         (calib && calib.classList.contains("show"));
 }
 
 function shouldIgnoreAimTarget(target){
   return !!(target && (
     (target.closest(".fireBtn") || target.id === "fireBtn") ||
+    target.closest(".aimPad") ||
     target.closest(".pad") ||
     target.closest(".soundToggle") ||
     target.closest(".controlRefreshBtn") ||
-    target.closest(".bottomTip") ||
-    target.closest(".hud")
+    target.closest(".missionBar") ||
+    target.closest("#gatekeeperPanel") ||
+    target.closest("#missionPanel") ||
+    target.closest("#startScreen") ||
+    target.closest("#winScreen")
   ));
 }
 
 function dragSensitivity(){
   const size = getGameSize();
-  return Math.max(0.0038, Math.min(0.0062, 520 / Math.max(size.w, size.h) * 0.006));
+  // Slightly stronger than before so the screen clearly follows the mouse in preview.
+  return Math.max(0.0048, Math.min(0.0075, 640 / Math.max(size.w, size.h) * 0.0065));
+}
+
+function applyLookDelta(dx, dy){
+  if(!Number.isFinite(dx) || !Number.isFinite(dy)) return;
+  const s = dragSensitivity();
+  yaw -= dx * s;       // mouse right -> view turns right
+  pitch += dy * s;     // mouse up -> view looks up; mouse down -> view looks down
+  pitch = Math.max(-1.45, Math.min(1.35, pitch));
 }
 
 function beginAimDrag(clientX, clientY, pointerId=null){
   if(isOverlayOpen()) return;
   wakeFoldableControls();
+  resetCrosshairToCentre();
   gameLookDrag.active = true;
   gameLookDrag.x = clientX;
   gameLookDrag.y = clientY;
   gameLookDrag.pointerId = pointerId;
-}
-
-function moveAimDrag(clientX, clientY){
-  if(!gameLookDrag.active) return;
-
-  const dx = clientX - gameLookDrag.x;
-  const dy = clientY - gameLookDrag.y;
-  gameLookDrag.x = clientX;
-  gameLookDrag.y = clientY;
-
-  const s = dragSensitivity();
-  yaw -= dx * s;
-  pitch += dy * s; // finger up -> look up; finger down -> look down
-  pitch = Math.max(-1.45, Math.min(1.35, pitch));
+  document.body.classList.add("mouseLooking");
+  const tip = document.getElementById("bottomTip");
+  if(tip){
+    tip.innerHTML = '<b>Mouse look active.</b><span class="sub">Keep holding left mouse and move the mouse to turn. Use WASD to ride. Press RESCUE to save.</span>';
+  }
 }
 
 function endAimDrag(){
   gameLookDrag.active = false;
   gameLookDrag.pointerId = null;
+  document.body.classList.remove("mouseLooking");
 }
 
 function attachAimHandlers(target){
@@ -4794,32 +5376,50 @@ function attachAimHandlers(target){
   target.dataset.aimHandlersAttached = "1";
   target.style.touchAction = "none";
 
+  target.addEventListener("contextmenu", e=>{
+    if(!isOverlayOpen()) e.preventDefault();
+  }, {passive:false});
+
+  target.addEventListener("mousedown", e=>{
+    if(e.button !== 0) return;
+    if(shouldIgnoreAimTarget(e.target) || isOverlayOpen()) return;
+    e.preventDefault();
+    e.stopPropagation();
+    beginAimDrag(e.clientX, e.clientY, "mouse");
+  }, {passive:false});
+
   target.addEventListener("pointerdown", e=>{
-    if(shouldIgnoreAimTarget(e.target)) return;
-    if(isOverlayOpen()) return;
+    if(e.pointerType === "mouse") return; // mouse uses mousedown + document mousemove for preview reliability
+    if(shouldIgnoreAimTarget(e.target) || isOverlayOpen()) return;
     e.preventDefault();
     beginAimDrag(e.clientX, e.clientY, e.pointerId);
     try{ target.setPointerCapture?.(e.pointerId); }catch(err){}
   }, {passive:false});
 
   target.addEventListener("pointermove", e=>{
+    if(e.pointerType === "mouse") return;
     if(!gameLookDrag.active) return;
-    if(gameLookDrag.pointerId !== null && e.pointerId !== gameLookDrag.pointerId) return;
+    if(gameLookDrag.pointerId !== null && e.pointerId !== undefined && e.pointerId !== gameLookDrag.pointerId) return;
     e.preventDefault();
-    moveAimDrag(e.clientX, e.clientY);
+    const dx = e.clientX - gameLookDrag.x;
+    const dy = e.clientY - gameLookDrag.y;
+    gameLookDrag.x = e.clientX;
+    gameLookDrag.y = e.clientY;
+    applyLookDelta(dx, dy);
+    resetCrosshairToCentre();
   }, {passive:false});
 
   ["pointerup","pointercancel","pointerleave"].forEach(type=>{
     target.addEventListener(type, e=>{
+      if(e.pointerType === "mouse") return;
       if(gameLookDrag.pointerId !== null && e.pointerId !== undefined && e.pointerId !== gameLookDrag.pointerId) return;
       endAimDrag();
     }, {passive:false});
   });
 
-  // Touch fallback for foldable/mobile browsers where pointer events stall until reflow.
+  // Touch fallback for older mobile browsers.
   target.addEventListener("touchstart", e=>{
-    if(shouldIgnoreAimTarget(e.target)) return;
-    if(isOverlayOpen()) return;
+    if(shouldIgnoreAimTarget(e.target) || isOverlayOpen()) return;
     const t = e.touches && e.touches[0];
     if(!t) return;
     e.preventDefault();
@@ -4831,13 +5431,16 @@ function attachAimHandlers(target){
     const t = e.touches && e.touches[0];
     if(!t) return;
     e.preventDefault();
-    moveAimDrag(t.clientX, t.clientY);
+    const dx = t.clientX - gameLookDrag.x;
+    const dy = t.clientY - gameLookDrag.y;
+    gameLookDrag.x = t.clientX;
+    gameLookDrag.y = t.clientY;
+    applyLookDelta(dx, dy);
+    resetCrosshairToCentre();
   }, {passive:false});
 
   ["touchend","touchcancel"].forEach(type=>{
-    target.addEventListener(type, e=>{
-      endAimDrag();
-    }, {passive:false});
+    target.addEventListener(type, endAimDrag, {passive:false});
   });
 }
 
