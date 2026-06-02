@@ -908,21 +908,22 @@
   }
 
 
-  /* ===== World map + horse travel overlay ===== */
+  /* ===== World map + 4-second ranger riding transition overlay ===== */
   .travelOverlay{
     position:fixed;
     inset:0;
-    z-index:10010;
+    z-index:10070;
     display:none;
     align-items:center;
     justify-content:center;
-    background:rgba(10,40,24,.62);
-    backdrop-filter:blur(3px);
+    background:rgba(10,40,24,.70);
+    backdrop-filter:blur(4px);
     padding:16px;
+    pointer-events:auto;
   }
   .travelOverlay.show{display:flex;}
   .travelCard{
-    width:min(620px,94vw);
+    width:min(700px,94vw);
     background:linear-gradient(180deg,#fffaf0,#f5ffe8);
     border:3px solid #9bd18b;
     border-radius:28px;
@@ -930,6 +931,7 @@
     padding:20px;
     text-align:center;
     color:#12345a;
+    overflow:hidden;
   }
   .travelTitle{
     margin:0 0 8px;
@@ -938,7 +940,7 @@
     color:#14532d;
   }
   .travelScene{
-    height:130px;
+    height:165px;
     margin:8px auto 12px;
     border-radius:22px;
     overflow:hidden;
@@ -946,7 +948,7 @@
     background:linear-gradient(180deg,#bdefff 0%,#dff9e8 54%,#80c970 55%,#4f9b4a 100%);
     border:2px solid #c5e8b6;
   }
-  .travelForest{position:absolute;left:0;right:0;bottom:42px;height:46px;background:
+  .travelForest{position:absolute;left:0;right:0;bottom:46px;height:55px;background:
     radial-gradient(circle at 6% 70%,#2fbf71 0 18px,transparent 19px),
     radial-gradient(circle at 18% 45%,#1f9d55 0 22px,transparent 23px),
     radial-gradient(circle at 35% 70%,#2fbf71 0 20px,transparent 21px),
@@ -984,29 +986,44 @@
     font-weight:1000;
     font-size:22px;
   }
-  .travelHorse{
-    position:absolute;
-    left:42%;
-    bottom:26px;
-    font-size:58px;
-    filter:drop-shadow(0 5px 4px rgba(0,0,0,.25));
-    animation:horseRide .9s ease-in-out infinite;
-  }
+  .travelHorse,
   .travelRanger{
     position:absolute;
-    left:49%;
-    bottom:70px;
+    z-index:2;
+    filter:drop-shadow(0 5px 4px rgba(0,0,0,.25));
+    will-change:left,transform;
+  }
+  .travelHorse{
+    left:-72px;
+    bottom:30px;
+    font-size:62px;
+  }
+  .travelRanger{
+    left:-46px;
+    bottom:80px;
     font-size:34px;
-    transform:translateX(-50%);
-    animation:rangerBounce .9s ease-in-out infinite;
   }
-  @keyframes horseRide{
-    0%,100%{transform:translateY(0) translateX(-10px);}
-    50%{transform:translateY(-6px) translateX(10px);}
+  .travelOverlay.show .travelHorse{
+    animation:horseRideAcross 4s ease-in-out forwards, horseBob .48s ease-in-out infinite;
   }
-  @keyframes rangerBounce{
-    0%,100%{transform:translateX(-50%) translateY(0);}
-    50%{transform:translateX(-50%) translateY(-5px);}
+  .travelOverlay.show .travelRanger{
+    animation:rangerRideAcross 4s ease-in-out forwards, rangerBob .48s ease-in-out infinite;
+  }
+  @keyframes horseRideAcross{
+    0%{left:-72px;}
+    100%{left:calc(100% + 35px);}
+  }
+  @keyframes rangerRideAcross{
+    0%{left:-46px;}
+    100%{left:calc(100% + 61px);}
+  }
+  @keyframes horseBob{
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(-7px);}
+  }
+  @keyframes rangerBob{
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(-6px);}
   }
   .travelMsg{
     margin:0;
@@ -1017,7 +1034,7 @@
   }
   .travelProgress{
     margin:14px auto 0;
-    width:min(360px,80vw);
+    width:min(400px,80vw);
     height:14px;
     border-radius:999px;
     background:#dff0d8;
@@ -1029,10 +1046,19 @@
     height:100%;
     width:0%;
     background:linear-gradient(90deg,#22c55e,#84cc16);
+  }
+  .travelOverlay.show .travelProgress span{
     animation:travelFill 4s ease-out forwards;
   }
   @keyframes travelFill{to{width:100%;}}
 
+  @media(max-width:760px){
+    .travelCard{padding:16px;border-radius:22px;}
+    .travelScene{height:138px;border-radius:18px;}
+    .travelHorse{font-size:52px;bottom:24px;}
+    .travelRanger{font-size:29px;bottom:67px;}
+    .travelMsg{font-size:15px;}
+  }
 
   /* ===== Uploaded picture reward overlay for world completion ===== */
   .rewardImageBox{
@@ -4145,22 +4171,34 @@ function rebuildWorldForCurrentStage(){
 function showTravelToNextWorld(nextWorldIndex, done){
   const overlay = document.getElementById("travelOverlay");
   const msg = document.getElementById("travelMsg");
+  const nextWorldName = WORLDS[nextWorldIndex]?.name || "the next world";
+
   if(msg){
-    msg.textContent = "The rescued animals pass the ranger a map. Ride the horse to " + WORLDS[nextWorldIndex].name + "!";
+    msg.textContent = "The rescued animals pass the ranger a map. Ride for 4 seconds to " + nextWorldName + "!";
   }
+
   if(overlay){
+    // Force a clean restart of the 4-second rider animation every time.
+    overlay.classList.remove("show");
+    overlay.style.display = "none";
+    overlay.querySelectorAll(".travelHorse,.travelRanger,.travelProgress span").forEach(el=>{
+      el.getAnimations?.().forEach(a=>a.cancel());
+      el.style.animation = "none";
+      void el.offsetWidth;
+      el.style.animation = "";
+    });
+
+    overlay.style.display = "flex";
+    void overlay.offsetWidth;
     overlay.classList.add("show");
-    overlay.querySelector(".travelProgress span")?.getAnimations?.().forEach(a=>a.cancel());
-    const bar = overlay.querySelector(".travelProgress span");
-    if(bar){
-      bar.style.animation = "none";
-      void bar.offsetWidth;
-      bar.style.animation = "";
-    }
   }
+
   // No tada here: tada.mp3 should play only when the world-completion reward appears.
   setTimeout(()=>{
-    if(overlay) overlay.classList.remove("show");
+    if(overlay){
+      overlay.classList.remove("show");
+      overlay.style.display = "none";
+    }
     if(typeof done === "function") done();
   }, 4000);
 }
