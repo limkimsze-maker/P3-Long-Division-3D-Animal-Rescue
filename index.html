@@ -191,7 +191,7 @@
     .aimPad button{font-size:16px;border-radius:11px;}
     .aimPad .aimCenter{font-size:9px;}
   }
-  .credit{position:fixed; right:8px; bottom:4px; z-index:7; font-size:11px; color:rgba(255,255,255,.86); text-shadow:0 1px 3px rgba(0,0,0,.7); pointer-events:none}
+  .credit{position:fixed; right:8px; bottom:4px; z-index:7; font-size:11px; color:#fff; font-weight:900; -webkit-text-stroke:.45px #000; paint-order:stroke fill; text-shadow:-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 4px rgba(0,0,0,.85); pointer-events:none}
 
   /* Mission overlay */
   #missionPanel{
@@ -1509,6 +1509,37 @@
     }
   }
 
+  /* ===== Reward screen quick controls: place beside Continue, not over the picture/message ===== */
+  .hudControls.rewardMode{
+    position:fixed !important;
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:7px !important;
+    width:auto !important;
+    max-width:calc(100vw - 16px) !important;
+    z-index:10060 !important;
+  }
+  .hudControls.rewardMode .soundToggle,
+  .hudControls.rewardMode .mainPageBtn{
+    width:auto !important;
+    text-align:center !important;
+    padding:9px 11px !important;
+    font-size:12px !important;
+    line-height:1.1 !important;
+    box-shadow:0 4px 0 rgba(0,0,0,.22),0 8px 18px rgba(0,0,0,.18) !important;
+  }
+  @media(max-width:760px){
+    .hudControls.rewardMode{ gap:5px !important; }
+    .hudControls.rewardMode .soundToggle,
+    .hudControls.rewardMode .mainPageBtn{
+      padding:7px 8px !important;
+      font-size:11px !important;
+    }
+  }
+
+
 </style>
   <script src="https://cdn.counter.dev/script.js" data-id="825e93b6-ce99-40ef-8bcc-125f13297433" data-utcoffset="8"></script>
 </head>
@@ -1732,6 +1763,45 @@ function updateHudControlsPosition(){
   const viewportH = window.innerHeight || document.documentElement.clientHeight || 0;
   const gap = 8;
 
+  // Reward / world-complete screen: put Sound + Main Page beside the Continue button.
+  const rewardOverlay = document.getElementById("rangerOverlay");
+  const rewardContinue = document.getElementById("rangerContinueBtn");
+  const rewardOpen = rewardOverlay && rewardOverlay.classList.contains("show") && getComputedStyle(rewardOverlay).display !== "none" && rewardContinue;
+  if(rewardOpen){
+    controls.classList.remove("gatekeeperMode");
+    controls.classList.remove("missionMode");
+    controls.classList.add("rewardMode");
+    controls.style.right = "auto";
+    controls.style.width = "auto";
+    controls.style.maxWidth = Math.max(180, viewportW - 16) + "px";
+    controls.style.gap = viewportW <= 760 ? "5px" : "7px";
+
+    const btnRect = rewardContinue.getBoundingClientRect();
+    const controlsRect = controls.getBoundingClientRect();
+    const controlsW = Math.ceil(controlsRect.width || (viewportW <= 760 ? 180 : 230));
+    const controlsH = Math.ceil(controlsRect.height || 36);
+
+    let left = Math.round(btnRect.left - controlsW - gap);
+    let top = Math.round(btnRect.top + (btnRect.height - controlsH) / 2);
+
+    // Prefer the blank space to the left of Continue. If that is too narrow, use the right side.
+    if(left < 8){
+      left = Math.round(btnRect.right + gap);
+    }
+    // If neither side fits, place the controls just above Continue, centred.
+    if(left + controlsW > viewportW - 8){
+      left = Math.round(btnRect.left + (btnRect.width - controlsW) / 2);
+      top = Math.round(btnRect.top - controlsH - gap);
+    }
+
+    left = Math.max(8, Math.min(left, viewportW - controlsW - 8));
+    top = Math.max(8, Math.min(top, viewportH - controlsH - 8));
+
+    controls.style.left = left + "px";
+    controls.style.top = top + "px";
+    return;
+  }
+
   // Mission screen: tuck Sound + Main Page directly under Exit Mission, not inside the algorithm area.
   if(missionOpen){
     const rect = exitMission.getBoundingClientRect();
@@ -1740,6 +1810,7 @@ function updateHudControlsPosition(){
     const top = Math.max(8, Math.round(rect.bottom + gap));
 
     controls.classList.remove("gatekeeperMode");
+    controls.classList.remove("rewardMode");
     controls.classList.add("missionMode");
     controls.style.left = left + "px";
     controls.style.right = "auto";
@@ -1758,6 +1829,7 @@ function updateHudControlsPosition(){
     const top = Math.max(8, Math.round(rect.bottom + gap));
 
     controls.classList.remove("missionMode");
+    controls.classList.remove("rewardMode");
     controls.classList.add("gatekeeperMode");
     controls.style.left = left + "px";
     controls.style.right = "auto";
@@ -1770,6 +1842,7 @@ function updateHudControlsPosition(){
 
   controls.classList.remove("gatekeeperMode");
   controls.classList.remove("missionMode");
+  controls.classList.remove("rewardMode");
   if(!hud) return;
 
   const rect = hud.getBoundingClientRect();
@@ -5080,11 +5153,13 @@ function showRangerStageComplete(worldIndex, onContinue){
 
   overlay.style.display = "flex";
   overlay.classList.add("show");
+  scheduleHudControlsPosition?.();
 
   btn.onclick = () => {
     overlay.classList.remove("show");
     overlay.style.display = "none";
     if(onContinue) onContinue();
+    scheduleHudControlsPosition?.();
   };
 
   playTada();
