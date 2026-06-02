@@ -1297,6 +1297,73 @@
     }
     .coverResetNotice{font-size:12px;padding:8px 10px;margin-top:8px;}
   }
+
+
+  /* ===== HUD-safe quick controls: always below HUD, never covering score/health/world ===== */
+  .hudControls{
+    position:fixed;
+    top:calc(142px + var(--safeTop)); /* fallback before JS measures actual HUD */
+    left:12px;
+    z-index:10045;
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+    width:min(380px, calc(100vw - 24px));
+    pointer-events:auto;
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-touch-callout:none;
+  }
+  .hudControls .soundToggle,
+  .hudControls .mainPageBtn{
+    position:static !important;
+    top:auto !important;
+    left:auto !important;
+    right:auto !important;
+    transform:none !important;
+    margin:0 !important;
+    min-width:0 !important;
+    max-width:100%;
+    white-space:nowrap;
+    pointer-events:auto;
+    touch-action:manipulation;
+    z-index:auto !important;
+  }
+  .hudControls .soundToggle{text-align:center;}
+  .hudControls .mainPageBtn.hidden{display:none !important;}
+
+  @media(max-width:760px){
+    .hudControls{
+      top:calc(148px + var(--safeTop)); /* fallback: below mobile HUD max height */
+      left:8px;
+      right:8px;
+      width:auto;
+      max-width:calc(100vw - 16px);
+      gap:7px;
+    }
+    .hudControls .soundToggle,
+    .hudControls .mainPageBtn{
+      font-size:12px !important;
+      padding:8px 10px !important;
+      line-height:1.1;
+    }
+  }
+  @media(max-width:760px) and (orientation:landscape){
+    .hudControls{
+      top:calc(116px + var(--safeTop)); /* fallback: below landscape HUD max height */
+      left:8px;
+      right:auto;
+      width:43vw;
+      max-width:43vw;
+      gap:6px;
+    }
+    .hudControls .soundToggle,
+    .hudControls .mainPageBtn{
+      padding:7px 9px !important;
+      font-size:11px !important;
+    }
+  }
 </style>
   <script src="https://cdn.counter.dev/script.js" data-id="825e93b6-ce99-40ef-8bcc-125f13297433" data-utcoffset="8"></script>
 </head>
@@ -1305,8 +1372,10 @@
 <div id="runtimeErrorBox" style="display:none;position:fixed;left:10px;right:10px;bottom:80px;z-index:99;background:#fff1f2;color:#7f1d1d;border:2px solid #ef4444;border-radius:14px;padding:10px;font-weight:bold;font-family:Arial,sans-serif;"></div>
 <div id="centerDot"></div>
 <button class="controlRefreshBtn" id="controlRefreshBtn" type="button" aria-hidden="true"></button>
-<button class="soundToggle" id="soundToggle" type="button" aria-label="Toggle sound">🔊 Sound On</button>
-<button class="mainPageBtn hidden" id="mainPageBtn" type="button" aria-label="Go back to main page">🏠 Main Page</button>
+<div class="hudControls" id="hudControls" aria-label="Game quick controls">
+  <button class="soundToggle" id="soundToggle" type="button" aria-label="Toggle sound">🔊 Sound On</button>
+  <button class="mainPageBtn hidden" id="mainPageBtn" type="button" aria-label="Go back to main page">🏠 Main Page</button>
+</div>
 
 
 <div class="screenWeb" id="screenWeb" aria-hidden="true">
@@ -1499,6 +1568,57 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
+
+
+/* Keep the Sound and Main Page buttons tucked just below the HUD on all screen sizes. */
+function updateHudControlsPosition(){
+  const hud = document.querySelector(".hud");
+  const controls = document.getElementById("hudControls");
+  if(!hud || !controls) return;
+
+  const rect = hud.getBoundingClientRect();
+  const gap = 8;
+  const viewportW = window.innerWidth || document.documentElement.clientWidth || 0;
+  const viewportH = window.innerHeight || document.documentElement.clientHeight || 0;
+
+  // Place controls directly under the HUD, never on top of the score/health/world panel.
+  const left = Math.max(8, Math.round(rect.left));
+  const top = Math.max(Math.round(rect.bottom + gap), Math.round(rect.top + rect.height + gap));
+  const maxWidth = Math.max(132, Math.round(Math.min(rect.width, viewportW - left - 8)));
+
+  controls.style.left = left + "px";
+  controls.style.right = "auto";
+  controls.style.top = top + "px";
+  controls.style.maxWidth = maxWidth + "px";
+  controls.style.width = maxWidth + "px";
+
+  // On very short landscape phones, let the buttons wrap but still stay below the HUD.
+  if(viewportH && top > viewportH - 86){
+    controls.style.gap = "5px";
+  }else{
+    controls.style.gap = "8px";
+  }
+}
+function scheduleHudControlsPosition(){
+  updateHudControlsPosition();
+  setTimeout(updateHudControlsPosition, 60);
+  setTimeout(updateHudControlsPosition, 250);
+  setTimeout(updateHudControlsPosition, 800);
+}
+window.addEventListener("resize", scheduleHudControlsPosition, {passive:true});
+window.addEventListener("orientationchange", scheduleHudControlsPosition, {passive:true});
+window.addEventListener("pageshow", scheduleHudControlsPosition, {passive:true});
+document.addEventListener("visibilitychange", scheduleHudControlsPosition);
+document.addEventListener("DOMContentLoaded", ()=>{
+  scheduleHudControlsPosition();
+  const hud = document.querySelector(".hud");
+  if(window.ResizeObserver && hud){
+    new ResizeObserver(scheduleHudControlsPosition).observe(hud);
+  }
+  if(window.MutationObserver && hud){
+    new MutationObserver(scheduleHudControlsPosition).observe(hud, {childList:true, subtree:true, characterData:true});
+  }
+});
 
 // ===== 30 PNG animal files uploaded in the GitHub repository root =====
 // Sequence follows the uploaded file list order.
@@ -5614,4 +5734,4 @@ updateHUD();
 saveLocalProgress();
 </script>
 </body>
-    </html>
+</html>
