@@ -1364,6 +1364,125 @@
       font-size:11px !important;
     }
   }
+
+
+  /* ===== Final HUD safety + gatekeeper quick controls ===== */
+  .hud{
+    width:330px !important;
+    min-width:0 !important;
+    max-width:calc(100vw - 24px) !important;
+    height:154px !important;
+    max-height:154px !important;
+    overflow:hidden !important;
+  }
+  .hud h1,
+  .hud .row,
+  .hud .world,
+  .hud .small,
+  .rescuedStrip{
+    flex-shrink:0;
+  }
+  .hud .world{
+    max-height:34px;
+    overflow:hidden;
+  }
+  .hud .small{
+    max-height:32px;
+    overflow:hidden;
+  }
+  .rescuedStrip{
+    height:32px !important;
+    max-height:32px !important;
+    overflow:hidden !important;
+    flex-wrap:nowrap !important;
+    align-items:center;
+  }
+  .rescuedSummary{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    max-width:100%;
+    padding:2px 8px 2px 2px;
+    border-radius:999px;
+    background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.22);
+    color:#dff8ff;
+    font-size:16px;
+    font-weight:1000;
+    line-height:1;
+    white-space:nowrap;
+  }
+  .rescuedSummary .rescuedIcon{
+    width:28px;
+    height:28px;
+    margin:0;
+  }
+  .rescuedSummaryText{
+    letter-spacing:1px;
+  }
+  .hudControls.gatekeeperMode,
+  .hudControls.missionMode{
+    position:fixed !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    gap:7px !important;
+    width:138px !important;
+    max-width:138px !important;
+    z-index:10060 !important;
+  }
+  .hudControls.gatekeeperMode .soundToggle,
+  .hudControls.gatekeeperMode .mainPageBtn,
+  .hudControls.missionMode .soundToggle,
+  .hudControls.missionMode .mainPageBtn{
+    width:100% !important;
+    text-align:center !important;
+    justify-content:center;
+  }
+  @media(max-width:760px){
+    .hud{
+      width:auto !important;
+      height:126px !important;
+      max-height:126px !important;
+      left:8px !important;
+      right:8px !important;
+      max-width:none !important;
+    }
+    .hud .world{max-height:30px;}
+    .rescuedStrip{
+      height:28px !important;
+      max-height:28px !important;
+    }
+    .rescuedSummary .rescuedIcon{
+      width:23px;
+      height:23px;
+    }
+    .rescuedSummary{
+      font-size:14px;
+      padding-right:7px;
+    }
+    .hudControls.gatekeeperMode,
+  .hudControls.missionMode{
+      width:126px !important;
+      max-width:126px !important;
+      gap:6px !important;
+    }
+  }
+  @media(max-width:760px) and (orientation:landscape){
+    .hud{
+      width:43vw !important;
+      max-width:43vw !important;
+      right:auto !important;
+      height:108px !important;
+      max-height:108px !important;
+    }
+    .hud .world{max-height:26px;}
+    .rescuedStrip{
+      height:25px !important;
+      max-height:25px !important;
+    }
+  }
+
 </style>
   <script src="https://cdn.counter.dev/script.js" data-id="825e93b6-ce99-40ef-8bcc-125f13297433" data-utcoffset="8"></script>
 </head>
@@ -1574,14 +1693,62 @@
 function updateHudControlsPosition(){
   const hud = document.querySelector(".hud");
   const controls = document.getElementById("hudControls");
-  if(!hud || !controls) return;
+  if(!controls) return;
 
-  const rect = hud.getBoundingClientRect();
-  const gap = 8;
+  const gatePanel = document.getElementById("gatekeeperPanel");
+  const gateClose = document.getElementById("gatekeeperCloseBtn");
+  const gateOpen = gatePanel && (gatePanel.classList.contains("show") || gatePanel.style.display === "flex") && gateClose;
+  const missionPanel = document.getElementById("missionPanel");
+  const exitMission = document.getElementById("exitMissionBtn");
+  const missionOpen = missionPanel && getComputedStyle(missionPanel).display !== "none" && exitMission;
+
   const viewportW = window.innerWidth || document.documentElement.clientWidth || 0;
   const viewportH = window.innerHeight || document.documentElement.clientHeight || 0;
+  const gap = 8;
 
-  // Place controls directly under the HUD, never on top of the score/health/world panel.
+  // Mission screen: tuck Sound + Main Page directly under Exit Mission, not inside the algorithm area.
+  if(missionOpen){
+    const rect = exitMission.getBoundingClientRect();
+    const width = Math.max(Math.round(rect.width), viewportW <= 760 ? 126 : 138);
+    const left = Math.max(8, Math.min(Math.round(rect.right - width), viewportW - width - 8));
+    const top = Math.max(8, Math.round(rect.bottom + gap));
+
+    controls.classList.remove("gatekeeperMode");
+    controls.classList.add("missionMode");
+    controls.style.left = left + "px";
+    controls.style.right = "auto";
+    controls.style.top = top + "px";
+    controls.style.width = width + "px";
+    controls.style.maxWidth = width + "px";
+    controls.style.gap = viewportW <= 760 ? "6px" : "7px";
+    return;
+  }
+
+  // Gatekeeper screen: put Sound + Main Page directly under Back to Forest.
+  if(gateOpen){
+    const rect = gateClose.getBoundingClientRect();
+    const width = Math.max(Math.round(rect.width), viewportW <= 760 ? 126 : 138);
+    const left = Math.max(8, Math.min(Math.round(rect.left), viewportW - width - 8));
+    const top = Math.max(8, Math.round(rect.bottom + gap));
+
+    controls.classList.remove("missionMode");
+    controls.classList.add("gatekeeperMode");
+    controls.style.left = left + "px";
+    controls.style.right = "auto";
+    controls.style.top = top + "px";
+    controls.style.width = width + "px";
+    controls.style.maxWidth = width + "px";
+    controls.style.gap = viewportW <= 760 ? "6px" : "7px";
+    return;
+  }
+
+  controls.classList.remove("gatekeeperMode");
+  controls.classList.remove("missionMode");
+  if(!hud) return;
+
+  const rect = hud.getBoundingClientRect();
+
+  // Place controls directly under the fixed-size HUD, never on top of score/health/world/rescued icons.
   const left = Math.max(8, Math.round(rect.left));
   const top = Math.max(Math.round(rect.bottom + gap), Math.round(rect.top + rect.height + gap));
   const maxWidth = Math.max(132, Math.round(Math.min(rect.width, viewportW - left - 8)));
@@ -4454,23 +4621,37 @@ function updateRescuedStrip(){
   const strip = document.getElementById("rescuedStrip");
   if (!strip) return;
   const rescued = allMissions.filter(m => completedMissionIds.has(m.id));
-  const maxIcons = 12;
-  const visible = rescued.slice(-maxIcons);
   strip.innerHTML = "";
-  visible.forEach(m => {
+  if(!rescued.length) return;
+
+  // Keep the HUD a fixed, tidy size. When many animals are rescued,
+  // show the latest animal icon +++ instead of allowing icons to overflow.
+  const maxIconsBeforeSummary = (window.innerWidth || 0) <= 760 ? 4 : 6;
+
+  function makeAnimalIcon(m){
     const file = getAnimalFileForMission(m);
     const img = document.createElement("img");
     img.className = "rescuedIcon";
     img.src = "./" + file + "?v=" + (typeof ASSET_VERSION !== "undefined" ? ASSET_VERSION : "20260531g");
     img.alt = niceAnimalName(file);
     img.title = img.alt;
-    strip.appendChild(img);
-  });
-  if (rescued.length > maxIcons) {
-    const more = document.createElement("span");
-    more.className = "rescuedMore";
-    more.textContent = "+" + (rescued.length - maxIcons);
-    strip.appendChild(more);
+    return img;
+  }
+
+  if(rescued.length > maxIconsBeforeSummary){
+    const latest = rescued[rescued.length - 1];
+    const summary = document.createElement("span");
+    summary.className = "rescuedSummary";
+    summary.title = rescued.length + " animals rescued";
+    summary.appendChild(makeAnimalIcon(latest));
+
+    const plus = document.createElement("span");
+    plus.className = "rescuedSummaryText";
+    plus.textContent = "+++";
+    summary.appendChild(plus);
+    strip.appendChild(summary);
+  }else{
+    rescued.forEach(m => strip.appendChild(makeAnimalIcon(m)));
   }
 }
 
@@ -4614,6 +4795,7 @@ function openGatekeeperChallenge(mission){
     panel.classList.add("show");
   }
   renderGatekeeperFact();
+  scheduleHudControlsPosition?.();
 }
 function closeGatekeeperChallenge(){
   const panel = document.getElementById("gatekeeperPanel");
@@ -4626,6 +4808,7 @@ function closeGatekeeperChallenge(){
   gatekeeperIndex = 0;
   gatekeeperBusy = false;
   scheduleResizeGame();
+  scheduleHudControlsPosition?.();
   setTimeout(resetCrosshairToCentre, 120);
 }
 function completeGatekeeperChallenge(){
@@ -4730,12 +4913,15 @@ function openMission(mission){
   const frame = document.getElementById("algoFrame");
   frame.srcdoc = srcdoc;
   document.getElementById("missionPanel").style.display = "flex";
+  scheduleHudControlsPosition?.();
+  setTimeout(()=>scheduleHudControlsPosition?.(), 120);
   setTimeout(()=>{ try{ frame.contentWindow.postMessage({type:"soundState", soundOn:soundEnabled}, "*"); }catch(e){} }, 250);
 }
 
 function closeMission(){
   document.getElementById("missionPanel").style.display = "none";
   document.getElementById("algoFrame").srcdoc = "";
+  scheduleHudControlsPosition?.();
   // Returning from iframe can change viewport on some phones/foldables.
   androidNotificationShadeWake();
   scheduleResizeGame();
@@ -5367,6 +5553,7 @@ function updateMainPageButtonVisibility(){
   if(!btn || !start) return;
   const onMainPage = getComputedStyle(start).display !== "none";
   btn.classList.toggle("hidden", onMainPage);
+  scheduleHudControlsPosition?.();
 }
 
 function goToMainPage(){
@@ -5421,6 +5608,14 @@ if(mainPageBtn){
     e.preventDefault();
     e.stopPropagation();
     goToMainPage();
+  });
+}
+const gatekeeperCloseBtn = document.getElementById("gatekeeperCloseBtn");
+if(gatekeeperCloseBtn){
+  gatekeeperCloseBtn.addEventListener("click", (e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    closeGatekeeperChallenge();
   });
 }
 updateMainPageButtonVisibility();
@@ -5552,6 +5747,7 @@ function shouldIgnoreAimTarget(target){
     target.closest(".soundToggle") ||
     target.closest(".controlRefreshBtn") ||
     target.closest(".mainPageBtn") ||
+    target.closest(".hudControls") ||
     target.closest(".missionBar") ||
     target.closest("#gatekeeperPanel") ||
     target.closest("#missionPanel") ||
@@ -5734,4 +5930,4 @@ updateHUD();
 saveLocalProgress();
 </script>
 </body>
-</html>
+    </html>
